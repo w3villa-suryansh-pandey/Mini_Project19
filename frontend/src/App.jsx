@@ -126,7 +126,9 @@ function App() {
           ...credentials,
           name: String(formData.get('name') || '').trim(),
         })
-        window.location.assign(result.user.role === 'admin' ? '/admin' : '/dashboard')
+        setMode('login')
+        setNotice(result.message)
+        setVerificationEmail(email)
       } else {
         const result = await signIn(credentials)
         window.location.assign(result.user.role === 'admin' ? '/admin' : '/dashboard')

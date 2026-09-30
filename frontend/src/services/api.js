@@ -2,13 +2,18 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV
 	? 'http://localhost:5000'
 	: 'https://mini-project19.onrender.com')
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
+const ADMIN_SESSION_CACHE_KEY = 'w3villa-admin-session-verified'
 
 function cacheUserSession(user) {
 	try {
 		if (user?.role === 'user') {
 			window.sessionStorage.setItem(USER_SESSION_CACHE_KEY, 'true')
-		} else {
+			window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
+		} else if (user?.role === 'admin') {
+			window.sessionStorage.setItem(ADMIN_SESSION_CACHE_KEY, 'true')
 			window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
+		} else {
+			clearCachedUserSession()
 		}
 	} catch {
 		// Session storage may be unavailable; protected routes will verify normally.
@@ -23,9 +28,34 @@ export function hasCachedUserSession() {
 	}
 }
 
+export function hasCachedAdminSession() {
+	try {
+		return window.sessionStorage.getItem(ADMIN_SESSION_CACHE_KEY) === 'true'
+	} catch {
+		return false
+	}
+}
+
+export function cacheAdminSession() {
+	try {
+		window.sessionStorage.setItem(ADMIN_SESSION_CACHE_KEY, 'true')
+	} catch {
+		// Session storage may be unavailable; protected routes will verify normally.
+	}
+}
+
+export function clearCachedAdminSession() {
+	try {
+		window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
+	} catch {
+		// Session storage may be unavailable.
+	}
+}
+
 export function clearCachedUserSession() {
 	try {
 		window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
+		window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
 	} catch {
 		// Session storage may be unavailable.
 	}

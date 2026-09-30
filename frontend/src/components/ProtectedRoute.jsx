@@ -1,15 +1,26 @@
 import { useEffect, useState } from 'react'
-import { clearCachedUserSession, hasCachedUserSession } from '../services/api.js'
+import {
+	cacheAdminSession,
+	clearCachedAdminSession,
+	clearCachedUserSession,
+	hasCachedAdminSession,
+	hasCachedUserSession,
+} from '../services/api.js'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_URL = import.meta.env.VITE_API_URL || 'https://mini-project19.onrender.com'
 
 function ProtectedRoute({ children, requiredRole = 'admin' }) {
-	const [accessState, setAccessState] = useState('checking')
+	const [accessState, setAccessState] = useState(() => (
+		(requiredRole === 'user' && hasCachedUserSession())
+		|| (requiredRole === 'admin' && hasCachedAdminSession())
+			? 'allowed'
+			: 'checking'
+	))
 
 	useEffect(() => {
 		const controller = new AbortController()
-		if (requiredRole === 'user' && hasCachedUserSession()) {
-			setAccessState('allowed')
+		if ((requiredRole === 'user' && hasCachedUserSession())
+			|| (requiredRole === 'admin' && hasCachedAdminSession())) {
 			return () => controller.abort()
 		}
 
@@ -24,8 +35,10 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 					clearCachedUserSession()
 					setAccessState('unauthenticated')
 				} else if (response.status === 403) {
+					clearCachedAdminSession()
 					setAccessState('forbidden')
 				} else if (response.ok && requiredRole === 'admin') {
+					cacheAdminSession()
 					setAccessState('allowed')
 				} else if (response.ok) {
 					setAccessState('allowed')
