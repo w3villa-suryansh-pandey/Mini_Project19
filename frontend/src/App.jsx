@@ -10,7 +10,7 @@ import PricingPlans from './pages/admin/PricingPlans.jsx'
 import Cronjobs from './pages/admin/Cronjobs.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import VerifyEmail from './pages/VerifyEmail.jsx'
-import { resendVerification, signIn, signUp, startFacebookLogin, startGoogleLogin } from './services/api.js'
+import { signIn, signUp, startFacebookLogin, startGoogleLogin } from './services/api.js'
 import './App.css'
 
 function App() {
@@ -19,8 +19,6 @@ function App() {
   const [showPassword, setShowPassword] = useState(false)
   const [notice, setNotice] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isResending, setIsResending] = useState(false)
-  const [verificationEmail, setVerificationEmail] = useState('')
 
   const isSignup = mode === 'signup'
 
@@ -103,14 +101,12 @@ function App() {
     setMode(nextMode)
     if (nextMode === 'signup') setSelectedRole('user')
     setNotice('')
-    setVerificationEmail('')
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
     setIsSubmitting(true)
     setNotice('')
-    setVerificationEmail('')
 
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get('email') || '').trim()
@@ -126,33 +122,15 @@ function App() {
           ...credentials,
           name: String(formData.get('name') || '').trim(),
         })
-        setMode('login')
-        setNotice(result.message)
-        setVerificationEmail(email)
+        window.location.assign(result.user.role === 'admin' ? '/admin' : '/dashboard')
       } else {
         const result = await signIn(credentials)
         window.location.assign(result.user.role === 'admin' ? '/admin' : '/dashboard')
       }
     } catch (error) {
       setNotice(error.message)
-      if (error.code === 'EMAIL_NOT_VERIFIED' || error.code === 'EMAIL_SEND_FAILED') {
-        setVerificationEmail(email)
-      }
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  async function handleResendVerification() {
-    setIsResending(true)
-    try {
-      const result = await resendVerification(verificationEmail)
-      setNotice(result.message)
-      setVerificationEmail('')
-    } catch (error) {
-      setNotice(error.message)
-    } finally {
-      setIsResending(false)
     }
   }
 
@@ -166,7 +144,6 @@ function App() {
       return
     }
     setNotice(`${provider} authentication is not connected yet. No data was sent.`)
-    setVerificationEmail('')
   }
 
   return (
@@ -303,7 +280,6 @@ function App() {
               <span aria-hidden="true">→</span>
             </button>
             <p className="form-notice" aria-live="polite">{notice}</p>
-            {verificationEmail && <button className="resend-verification-button" type="button" onClick={handleResendVerification} disabled={isResending}>{isResending ? 'Sending…' : 'Resend verification email'}</button>}
           </form>
 
           <p className="switch-prompt">

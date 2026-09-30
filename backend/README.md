@@ -8,7 +8,7 @@ cp .env.example .env
 npm run dev
 ```
 
-The API listens on port `5000` by default. Configure `MONGO_URI`, a random `AUTH_TOKEN_SECRET` with at least 32 characters, SMTP settings, `FRONTEND_URL`, and comma-separated `CLIENT_URLS` in `.env`. Generate a session secret with `openssl rand -base64 48`.
+The API listens on port `5000` by default. Configure `MONGO_URI`, a random `AUTH_TOKEN_SECRET` with at least 32 characters, `FRONTEND_URL`, and comma-separated `CLIENT_URLS` in `.env`. Generate a session secret with `openssl rand -base64 48`.
 
 Google sign-in requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from a Google OAuth web client. Set the authorized redirect URI to `http://localhost:5000/api/auth/google/callback` (or match `GOOGLE_CALLBACK_URL`). Start sign-in at `GET /api/auth/google`; Google returns to `GET /api/auth/google/callback`, which creates the app session cookie.
 
@@ -16,7 +16,7 @@ Facebook sign-in requires a Facebook app with Facebook Login enabled. Set `FACEB
 
 Create an admin from the backend directory with `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` set in the environment, then run `npm run create-admin`. If the email already belongs to a user, the script promotes that account without changing its password. For a new account, the password must be 8 to 72 characters and is stored as a bcrypt hash.
 
-For Gmail SMTP, use `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, and `SMTP_SECURE=false`. Set `SMTP_USER` to the sending Gmail address, `SMTP_FROM` to `W3Villa <that-address@gmail.com>`, and `SMTP_PASS` to a Google App Password. App Passwords require 2-Step Verification; do not use your normal Google account password. Replace the example values in your private `.env`, then restart the backend.
+Email verification and verification email delivery are currently disabled. Signup creates the account and signs the user in immediately; SMTP settings are not required for authentication.
 
 ### Stripe PDF passes
 
@@ -30,10 +30,10 @@ Default day/month plans are inserted when the plans collection is empty. Admins 
 - `GET /api` returns API metadata.
 - `GET /api/health` returns service health and uptime.
 - `GET /api/plans` returns active plans for the user pricing page.
-- `POST /api/auth/signup` creates an unverified email/password account and sends a verification link.
-- `POST /api/auth/verify-email` accepts the token from that link and verifies the account.
-- `POST /api/auth/resend-verification` sends a replacement verification link.
-- `POST /api/auth/login` signs in a verified account and sets an HttpOnly session cookie.
+- `POST /api/auth/signup` creates an email/password account and signs the user in immediately.
+- `POST /api/auth/verify-email` verifies an unexpired token from a previously issued verification link.
+- `POST /api/auth/resend-verification` is temporarily disabled.
+- `POST /api/auth/login` signs in an account and sets an HttpOnly session cookie.
 - `GET /api/auth/google` starts Google OAuth; `/api/auth/google/callback` validates the response and creates the app session.
 - `GET /api/auth/facebook` starts Facebook signup/login; `/api/auth/facebook/callback` validates the response and creates the app session.
 - `GET /api/auth/facebook` starts Facebook sign-up/login; `/api/auth/facebook/callback` validates the response and creates the app session.

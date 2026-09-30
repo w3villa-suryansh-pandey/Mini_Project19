@@ -15,7 +15,7 @@ module.exports = Object.freeze({
 	port: Number.parseInt(process.env.PORT, 10) || 5000,
 	nodeEnv: process.env.NODE_ENV || 'development',
 	clientOrigins: allowedClientOrigins,
-	frontendUrl: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? googleFrontendUrl : clientOrigins[0]),
+	frontendUrl: process.env.FRONTEND_URL || clientOrigins[0],
 	googleFrontendUrl,
 	googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL || 'https://mini-project19.onrender.com/api/auth/google/callback',
 	googleClientId: process.env.GOOGLE_CLIENT_ID || '',

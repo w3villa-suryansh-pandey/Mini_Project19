@@ -110,13 +110,6 @@ export function verifyEmail(token) {
 	})
 }
 
-export function resendVerification(email) {
-	return request('/api/auth/resend-verification', {
-		method: 'POST',
-		body: JSON.stringify({ email }),
-	})
-}
-
 export function signOut() {
 	return request('/api/auth/logout', { method: 'POST' }).finally(clearCachedUserSession)
 }

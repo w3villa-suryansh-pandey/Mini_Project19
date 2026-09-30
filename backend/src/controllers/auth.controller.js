@@ -2,9 +2,7 @@ const jwt = require('jsonwebtoken')
 const User = require('../../models/User')
 const { authTokenSecret } = require('../config/env')
 const { authenticate, sessionCookieOptions } = require('../middleware/authenticate')
-const { sendVerificationEmail } = require('../services/email.service')
 const {
-	createVerificationToken,
 	hashPassword,
 	hashVerificationToken,
 	verifyPassword,
@@ -69,16 +67,13 @@ async function signUp(req, res) {
 		return respondWithError(res, 409, 'EMAIL_IN_USE', 'An account with this email already exists.')
 	}
 
-	const verification = createVerificationToken()
 	let user
 	try {
 		user = await User.create({
 			name: name.trim(),
 			email: normalizedEmail,
 			password: await hashPassword(password),
-			emailVerifiedAt: null,
-			emailVerificationTokenHash: verification.tokenHash,
-			emailVerificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+			emailVerifiedAt: new Date(),
 			role: 'user',
 			authProviders: { email: true },
 		})
@@ -89,13 +84,15 @@ async function signUp(req, res) {
 		throw error
 	}
 
-	try {
-		await sendVerificationEmail({ email: user.email, name: user.name, token: verification.token })
-	} catch {
-		return respondWithError(res, 503, 'EMAIL_SEND_FAILED', 'Your account was created, but we could not send the verification email. Use the resend option to try again.')
-	}
-
-	return res.status(201).json({ message: 'Account created. Check your email for a verification link.' })
+	const sessionToken = jwt.sign({ sub: user._id.toString() }, authTokenSecret, {
+		algorithm: 'HS256',
+		expiresIn: SESSION_WINDOW,
+	})
+	res.cookie('w3villa_session', sessionToken, sessionCookieOptions())
+	return res.status(201).json({
+		message: 'Account created and signed in.',
+		user: publicUser(user),
+	})
 }
 
 async function verifyEmail(req, res) {
@@ -141,7 +138,7 @@ async function resendVerification(req, res) {
 		}
 	}
 
-	return res.json({ message: 'If this address belongs to an unverified account, a new verification link has been sent.' })
+	return res.json({ message: 'Email verification is temporarily disabled. You can sign in without verification.' })
 }
 
 async function login(req, res) {
@@ -166,10 +163,6 @@ async function login(req, res) {
 	if (user.role !== role) {
 		return respondWithError(res, 403, 'ROLE_MISMATCH', `This account is registered as ${user.role}. Choose that account type to sign in.`)
 	}
-	if (user.password && !user.emailVerifiedAt) {
-		return respondWithError(res, 403, 'EMAIL_NOT_VERIFIED', 'Verify your email address before signing in.')
-	}
-
 	const sessionToken = jwt.sign({ sub: user._id.toString() }, authTokenSecret, {
 		algorithm: 'HS256',
 		expiresIn: SESSION_WINDOW,
