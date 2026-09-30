@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL 
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV
+	? 'http://localhost:5000'
+	: 'https://mini-project19.onrender.com')
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
 
 function cacheUserSession(user) {

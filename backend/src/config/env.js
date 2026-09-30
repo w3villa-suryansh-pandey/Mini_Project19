@@ -4,14 +4,20 @@ const clientOrigins = (process.env.CLIENT_URLS || 'http://localhost:5173,http://
 	.split(',')
 	.map((origin) => origin.trim())
 	.filter(Boolean)
+const googleFrontendUrl = process.env.GOOGLE_FRONTEND_URL || process.env.FRONTEND_URL || 'https://mini-project19.vercel.app/'
+const allowedClientOrigins = [...new Set([
+	...clientOrigins,
+	process.env.FRONTEND_URL,
+	googleFrontendUrl,
+].filter(Boolean).map((origin) => new URL(origin).origin))]
 
 module.exports = Object.freeze({
 	port: Number.parseInt(process.env.PORT, 10) || 5000,
 	nodeEnv: process.env.NODE_ENV || 'development',
-	clientOrigins,
+	clientOrigins: allowedClientOrigins,
 	frontendUrl: process.env.FRONTEND_URL || clientOrigins[0],
-	googleFrontendUrl: process.env.GOOGLE_FRONTEND_URL || process.env.FRONTEND_URL || 'https://mini-project19.vercel.app/',
-	googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
+	googleFrontendUrl,
+	googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL || 'https://mini-project19.onrender.com/api/auth/google/callback',
 	googleClientId: process.env.GOOGLE_CLIENT_ID || '',
 	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
 	facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL || 'http://localhost:5000/api/auth/facebook/callback',
