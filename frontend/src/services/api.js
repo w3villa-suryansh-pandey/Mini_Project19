@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.VITE_API_URL 
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
 
 function cacheUserSession(user) {
