@@ -1,11 +1,12 @@
 process.env.AUTH_TOKEN_SECRET ||= 'test-auth-token-secret-with-more-than-32-characters'
+process.env.NODE_ENV = 'production'
 
 const assert = require('node:assert/strict')
 const jwt = require('jsonwebtoken')
 const test = require('node:test')
 const User = require('../models/User')
 const { authTokenSecret } = require('../src/config/env')
-const { authenticate } = require('../src/middleware/authenticate')
+const { authenticate, sessionCookieOptions } = require('../src/middleware/authenticate')
 
 function makeResponse() {
 	return {
@@ -21,6 +22,12 @@ function makeResponse() {
 		},
 	}
 }
+
+test('production session cookies support cross-site frontend API requests', () => {
+	const options = sessionCookieOptions()
+	assert.equal(options.sameSite, 'none')
+	assert.equal(options.secure, true)
+})
 
 test('accepts an active authenticated account without requiring email verification', async () => {
 	const originalFindById = User.findById

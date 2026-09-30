@@ -37,7 +37,7 @@ function sessionCookieOptions() {
 	return {
 		httpOnly: true,
 		secure: nodeEnv === 'production',
-		sameSite: 'lax',
+		sameSite: nodeEnv === 'production' ? 'none' : 'lax',
 		path: '/',
 		maxAge: 7 * 24 * 60 * 60 * 1000,
 	}
