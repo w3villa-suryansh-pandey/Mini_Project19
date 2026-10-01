@@ -1,15 +1,12 @@
 const { port, nodeEnv } = require('./src/config/env')
 const app = require('./src/app')
 const connectDB = require('./config/db')
-const passport = require("./config/passport");
 const { ensureDefaultPlans } = require('./src/services/plan.service')
 const {
   ensureSubscriptionExpiryJob,
   startSubscriptionExpiryScheduler,
   stopSubscriptionExpiryScheduler,
 } = require('./src/services/subscription-expiry.service')
-
-app.use(passport.initialize());
 
 async function startServer() {
   await connectDB()
