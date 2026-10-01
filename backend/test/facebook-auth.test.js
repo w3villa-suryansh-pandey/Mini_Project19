@@ -38,10 +38,18 @@ test('Facebook OAuth creates a user account from a provider email', async () => 
 	}
 })
 
-test('Facebook OAuth does not silently claim an existing email account', async () => {
+test('Facebook OAuth merges into an existing Google account with the same email', async () => {
 	const originalFindOne = User.findOne
 	let lookupCount = 0
-	const existingUser = { _id: 'password-user', isActive: true }
+	const existingUser = {
+		_id: 'google-user',
+		email: 'facebook.user@example.com',
+		googleId: 'google-user-1',
+		facebookId: undefined,
+		authProviders: { email: false, google: true, facebook: false },
+		isActive: true,
+		async save() { this.saved = true },
+	}
 	User.findOne = () => ({
 		select: async () => {
 			lookupCount += 1
@@ -50,10 +58,13 @@ test('Facebook OAuth does not silently claim an existing email account', async (
 	})
 
 	try {
-		await assert.rejects(
-			resolveFacebookUser(facebookProfile()),
-			(error) => error.facebookAuthCode === 'facebook_account_link_required',
-		)
+		const user = await resolveFacebookUser(facebookProfile())
+		assert.equal(user, existingUser)
+		assert.equal(user.googleId, 'google-user-1')
+		assert.equal(user.facebookId, 'facebook-user-1')
+		assert.equal(user.authProviders.google, true)
+		assert.equal(user.authProviders.facebook, true)
+		assert.equal(user.saved, true)
 	} finally {
 		User.findOne = originalFindOne
 	}

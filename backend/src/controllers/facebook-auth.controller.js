@@ -30,7 +30,7 @@ function getFacebookEmail(profile) {
 
 async function resolveFacebookUser(profile) {
 	let user = await User.findOne({ facebookId: profile.id })
-		.select('_id name email role facebookId emailVerifiedAt authProviders isActive')
+		.select('_id name email role googleId facebookId emailVerifiedAt authProviders isActive')
 	if (user) {
 		if (!user.isActive) throw facebookAuthError('facebook_account_disabled', 'This account is disabled.')
 		user.authProviders = { ...user.authProviders?.toObject?.(), ...user.authProviders, facebook: true }
@@ -40,10 +40,16 @@ async function resolveFacebookUser(profile) {
 
 	const email = getFacebookEmail(profile)
 	user = await User.findOne({ email })
-		.select('_id name email role facebookId emailVerifiedAt authProviders isActive')
+		.select('_id name email role googleId facebookId emailVerifiedAt authProviders isActive')
 	if (user) {
 		if (!user.isActive) throw facebookAuthError('facebook_account_disabled', 'This account is disabled.')
-		throw facebookAuthError('facebook_account_link_required', 'This email already has an account. Sign in first, then connect Facebook from your profile.')
+		if (user.facebookId && user.facebookId !== profile.id) {
+			throw facebookAuthError('facebook_account_linked_elsewhere', 'This account already has a different Facebook account linked.')
+		}
+		user.facebookId = profile.id
+		user.authProviders = { ...user.authProviders?.toObject?.(), ...user.authProviders, facebook: true }
+		await user.save()
+		return user
 	}
 
 	return User.create({
