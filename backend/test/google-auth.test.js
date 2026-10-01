@@ -93,6 +93,46 @@ test('links a different verified Google address only to the authenticated accoun
 	}
 })
 
+test('merges Google into an existing Facebook account with the same email', async () => {
+	const originalFindById = User.findById
+	const originalFindOne = User.findOne
+	const facebookUser = {
+		_id: { toString: () => 'facebook-user-id' },
+		email: 'member@example.com',
+		googleId: undefined,
+		authProviders: { email: false, google: false, facebook: true },
+		isActive: true,
+		async save() { this.wasSaved = true },
+	}
+
+	User.findById = (userId) => {
+		assert.equal(userId, 'facebook-user-id')
+		return { select: async () => facebookUser }
+	}
+	User.findOne = (query) => {
+		assert.deepEqual(query, { googleId: 'google-subject-facebook-email' })
+		return { select: async () => null }
+	}
+
+	try {
+		const mergedUser = await linkGoogleUser('facebook-user-id', {
+			id: 'google-subject-facebook-email',
+			emails: [{ value: 'Member@Example.com', verified: true }],
+			_json: { email_verified: true },
+		})
+
+		assert.equal(mergedUser, facebookUser)
+		assert.equal(mergedUser.email, 'member@example.com')
+		assert.equal(mergedUser.googleId, 'google-subject-facebook-email')
+		assert.equal(mergedUser.authProviders.facebook, true)
+		assert.equal(mergedUser.authProviders.google, true)
+		assert.equal(mergedUser.wasSaved, true)
+	} finally {
+		User.findById = originalFindById
+		User.findOne = originalFindOne
+	}
+})
+
 test('reclaims a Google identity from a passwordless Google-only account during explicit linking', async () => {
 	const originalFindById = User.findById
 	const originalFindOne = User.findOne
