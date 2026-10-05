@@ -1769,7 +1769,12 @@
 }
 
 .editor-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   flex: 0 0 auto;
+  gap: 8px;
 }
 
 .editor-file-input {
@@ -1804,6 +1809,38 @@
 .editor-open-button:hover,
 .editor-download-link:hover {
   background: #f2f7f3;
+}
+
+.editor-open-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-open-button.is-active {
+  border-color: #386f58;
+  color: #fff;
+  background: #386f58;
+}
+
+.editor-save-button {
+  border-color: #386f58;
+  color: #fff;
+  background: #386f58;
+}
+
+.editor-save-button:hover:not(:disabled) {
+  background: #2f5d4a;
+}
+
+.prime-pdf-file-summary {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.prime-pdf-file-meta {
+  color: #849089;
+  font-size: 9px;
 }
 
 .document-editor-body {
@@ -1914,6 +1951,31 @@
 
 .prime-pdf-text-layer span.prime-pdf-text-editing {
   outline: 1px solid #559381;
+}
+
+.prime-pdf-workspace.is-adding-text .prime-pdf-page {
+  cursor: crosshair;
+}
+
+.prime-pdf-added-text {
+  position: absolute;
+  z-index: 4;
+  width: 180px;
+  min-height: 32px;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  border: 1px dashed #559381;
+  outline: none;
+  color: #171c19;
+  background: rgb(255 255 255 / 90%);
+  font-family: Arial, sans-serif;
+  line-height: 1.2;
+  resize: both;
+}
+
+.prime-pdf-added-text:focus {
+  border-style: solid;
+  box-shadow: 0 0 0 2px rgb(56 111 88 / 18%);
 }
 
 .prime-pdf-loading,
@@ -2058,6 +2120,7 @@
 
   .editor-toolbar-actions {
     width: 100%;
+    justify-content: flex-start;
   }
 
   .document-editor-body {

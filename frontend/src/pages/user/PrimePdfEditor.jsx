@@ -52,11 +52,16 @@ function parseColor(color, rgb) {
 	return rgb(values[0] / 255, values[1] / 255, values[2] / 255)
 }
 
-function PdfPage({ document, pdfjsLibrary, pageNumber, editsEnabled, onTextEdit }) {
+function PdfPage({ document, pdfjsLibrary, pageNumber, editsEnabled, addTextMode, addedTexts, onTextEdit }) {
 	const pageRef = useRef(null)
 	const canvasRef = useRef(null)
 	const textLayerRef = useRef(null)
+	const addTextModeRef = useRef(addTextMode)
 	const [pageError, setPageError] = useState('')
+
+	useEffect(() => {
+		addTextModeRef.current = addTextMode
+	}, [addTextMode])
 
 	useEffect(() => {
 		let isCurrent = true
@@ -102,6 +107,7 @@ function PdfPage({ document, pdfjsLibrary, pageNumber, editsEnabled, onTextEdit 
 				if (!text?.trim()) return
 
 				textDiv.dataset.pdfTextIndex = String(itemIndex)
+				textDiv.dataset.pdfTextKey = `${pageNumber}:${itemIndex}`
 				textDiv.setAttribute('role', 'textbox')
 				textDiv.setAttribute('aria-label', `PDF text: ${text}`)
 				textDiv.setAttribute('aria-multiline', 'true')
@@ -151,14 +157,35 @@ function PdfPage({ document, pdfjsLibrary, pageNumber, editsEnabled, onTextEdit 
 				if (!textDiv || textDiv.dataset.pdfEdited) return
 				textDiv.classList.remove('prime-pdf-text-editing')
 			}
+			const handlePageClick = (event) => {
+				if (!addTextModeRef.current || event.target.closest('[data-pdf-text-index], [data-added-text]')) return
+				const bounds = pageElement.getBoundingClientRect()
+				const left = event.clientX - bounds.left
+				const top = event.clientY - bounds.top
+				const [x, y] = viewport.convertToPdfPoint(left, top)
+				onTextEdit({
+					type: 'add',
+					pageNumber,
+					x,
+					y,
+					left,
+					top,
+					text: 'New text',
+					fontSize: 12,
+					color: '#171c19',
+					fontFamily: 'Arial',
+				})
+			}
 			const textLayerElement = textLayerRef.current
 			textLayerElement.addEventListener('focusin', handleFocus)
 			textLayerElement.addEventListener('focusout', handleBlur)
 			textLayerElement.addEventListener('input', handleInput)
+			pageElement.addEventListener('click', handlePageClick)
 			cleanupTextEvents = () => {
 				textLayerElement.removeEventListener('focusin', handleFocus)
 				textLayerElement.removeEventListener('focusout', handleBlur)
 				textLayerElement.removeEventListener('input', handleInput)
+				pageElement.removeEventListener('click', handlePageClick)
 			}
 		}
 
@@ -178,6 +205,18 @@ function PdfPage({ document, pdfjsLibrary, pageNumber, editsEnabled, onTextEdit 
 		<article className="prime-pdf-page" ref={pageRef} aria-label={`PDF page ${pageNumber}`}>
 			<canvas ref={canvasRef} className="prime-pdf-canvas" />
 			<div className={`textLayer prime-pdf-text-layer ${editsEnabled ? 'is-editable' : ''}`} ref={textLayerRef} />
+			{addedTexts.filter((item) => item.pageNumber === pageNumber).map((item) => (
+				<textarea
+					key={item.id}
+					data-added-text={item.id}
+					className="prime-pdf-added-text"
+					aria-label="Added PDF text"
+					value={item.text}
+					placeholder="Type text"
+					onChange={(event) => onTextEdit({ ...item, text: event.target.value })}
+					style={{ left: item.left, top: item.top, fontSize: `${item.fontSize * PAGE_SCALE}px` }}
+				/>
+			))}
 			{pageError && <p className="prime-pdf-page-error" role="alert">{pageError}</p>}
 		</article>
 	)
@@ -191,11 +230,21 @@ function PrimePdfEditor() {
 	const [pdfBytes, setPdfBytes] = useState(null)
 	const [pageCount, setPageCount] = useState(0)
 	const [edits, setEdits] = useState({})
+	const [addedTexts, setAddedTexts] = useState([])
 	const [notice, setNotice] = useState('')
 	const [isLoading, setIsLoading] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
 	const [subscriptionActive, setSubscriptionActive] = useState(false)
 	const [subscriptionChecked, setSubscriptionChecked] = useState(false)
+	const [isAddingText, setIsAddingText] = useState(false)
+	const [canUndo, setCanUndo] = useState(false)
+	const [canRedo, setCanRedo] = useState(false)
+	const [isSaved, setIsSaved] = useState(true)
+	const [historyRestoreVersion, setHistoryRestoreVersion] = useState(0)
+	const editsRef = useRef({})
+	const addedTextsRef = useRef([])
+	const historyRef = useRef([{ edits: {}, addedTexts: [] }])
+	const historyIndexRef = useRef(0)
 
 	useEffect(() => {
 		let isCurrent = true
@@ -251,10 +300,103 @@ function PrimePdfEditor() {
 		}
 	}, [file])
 
-	const recordEdit = useCallback((edit) => {
-		const key = `${edit.pageNumber}:${edit.itemIndex}`
-		setEdits((current) => ({ ...current, [key]: edit }))
+	const recordChange = useCallback((nextEdits, nextAddedTexts) => {
+		const history = historyRef.current.slice(0, historyIndexRef.current + 1)
+		history.push({ edits: nextEdits, addedTexts: nextAddedTexts })
+		if (history.length > 100) history.shift()
+		historyRef.current = history
+		historyIndexRef.current = history.length - 1
+		editsRef.current = nextEdits
+		addedTextsRef.current = nextAddedTexts
+		setEdits(nextEdits)
+		setAddedTexts(nextAddedTexts)
+		setCanUndo(historyIndexRef.current > 0)
+		setCanRedo(false)
+		setIsSaved(false)
 	}, [])
+
+	const recordEdit = useCallback((edit) => {
+		if (edit.type === 'add') {
+			recordChange(editsRef.current, [...addedTextsRef.current, { ...edit, id: crypto.randomUUID() }])
+			setIsAddingText(false)
+			setNotice('Text box added. Type into it, then save/download the PDF.')
+			return
+		}
+		if (edit.id) {
+			const nextAddedTexts = addedTextsRef.current.map((item) => item.id === edit.id ? edit : item)
+			recordChange(editsRef.current, nextAddedTexts)
+			return
+		}
+
+		const key = `${edit.pageNumber}:${edit.itemIndex}`
+		recordChange({ ...editsRef.current, [key]: edit }, addedTextsRef.current)
+	}, [recordChange])
+
+	const restoreHistory = useCallback((index) => {
+		if (index < 0 || index >= historyRef.current.length || index === historyIndexRef.current) return
+		historyIndexRef.current = index
+		const snapshot = historyRef.current[index]
+		editsRef.current = snapshot.edits
+		addedTextsRef.current = snapshot.addedTexts
+		setEdits(snapshot.edits)
+		setAddedTexts(snapshot.addedTexts)
+		setCanUndo(index > 0)
+		setCanRedo(index < historyRef.current.length - 1)
+		setIsSaved(false)
+		setHistoryRestoreVersion((version) => version + 1)
+		setNotice(index < historyRef.current.length - 1 ? 'Edit undone.' : 'Edit restored.')
+	}, [])
+
+	function undoEdit() {
+		restoreHistory(historyIndexRef.current - 1)
+	}
+
+	function redoEdit() {
+		restoreHistory(historyIndexRef.current + 1)
+	}
+
+	function discardEdits() {
+		if (!Object.keys(editsRef.current).length && !addedTextsRef.current.length) return
+		const emptySnapshot = { edits: {}, addedTexts: [] }
+		historyRef.current = [emptySnapshot]
+		historyIndexRef.current = 0
+		editsRef.current = emptySnapshot.edits
+		addedTextsRef.current = emptySnapshot.addedTexts
+		setEdits(emptySnapshot.edits)
+		setAddedTexts(emptySnapshot.addedTexts)
+		setCanUndo(false)
+		setCanRedo(false)
+		setIsSaved(true)
+		setHistoryRestoreVersion((version) => version + 1)
+		setIsAddingText(false)
+		setNotice('All unsaved edits were discarded.')
+	}
+
+	useEffect(() => {
+		if (!historyRestoreVersion) return
+		document.querySelectorAll('.prime-pdf-text-layer [data-pdf-text-key]').forEach((textElement) => {
+			const edit = edits[textElement.dataset.pdfTextKey]
+			const originalText = textElement.getAttribute('aria-label')?.replace(/^PDF text: /, '') || ''
+			textElement.textContent = edit?.replacementText ?? originalText
+			textElement.classList.toggle('prime-pdf-text-edited', Boolean(edit))
+			if (edit) textElement.dataset.pdfEdited = 'true'
+			else delete textElement.dataset.pdfEdited
+		})
+	}, [edits, historyRestoreVersion])
+
+	useEffect(() => {
+		function handleHistoryShortcut(event) {
+			if (!(event.ctrlKey || event.metaKey)) return
+			if (!event.target.closest?.('.prime-pdf-workspace')) return
+			const key = event.key.toLowerCase()
+			if (key !== 'z' && !(key === 'y' && !event.metaKey)) return
+			event.preventDefault()
+			if (event.shiftKey || key === 'y') redoEdit()
+			else undoEdit()
+		}
+		document.addEventListener('keydown', handleHistoryShortcut)
+		return () => document.removeEventListener('keydown', handleHistoryShortcut)
+	})
 
 	function openFile(nextFile) {
 		if (!nextFile) return
@@ -266,14 +408,24 @@ function PrimePdfEditor() {
 			setNotice('Choose a PDF smaller than 50 MB.')
 			return
 		}
+		if (!isSaved && (Object.keys(editsRef.current).length || addedTextsRef.current.length) &&
+			!window.confirm('You have unsaved PDF edits. Discard them and open another file?')) return
 		setIsLoading(true)
 		setNotice('')
+		editsRef.current = {}
+		addedTextsRef.current = []
+		historyRef.current = [{ edits: {}, addedTexts: [] }]
+		historyIndexRef.current = 0
 		setEdits({})
+		setAddedTexts([])
+		setCanUndo(false)
+		setCanRedo(false)
+		setIsSaved(true)
+		setIsAddingText(false)
 		setFile(nextFile)
 		setPdfDocument(null)
 		setPdfBytes(null)
 		setPageCount(0)
-		setEdits({})
 	}
 
 	function handleFileChange(event) {
@@ -287,7 +439,7 @@ function PrimePdfEditor() {
 	}
 
 	async function downloadEditedPdf() {
-		if (!pdfBytes || !Object.keys(edits).length) return
+		if (!pdfBytes || (!Object.keys(edits).length && !addedTexts.length)) return
 		if (!subscriptionActive) {
 			setNotice('An active editing pass is required to download the edited PDF.')
 			return
@@ -334,7 +486,22 @@ function PrimePdfEditor() {
 						maxWidth: availableWidth,
 					})
 				}
+			}
 
+			for (const addedText of addedTexts) {
+				if (!addedText.text.trim()) continue
+				const page = output.getPage(addedText.pageNumber - 1)
+				const fontName = fontNameForFamily(addedText.fontFamily, StandardFonts)
+				if (!fonts.has(fontName)) fonts.set(fontName, await output.embedFont(fontName))
+				const font = fonts.get(fontName)
+				page.drawText(addedText.text, {
+					x: addedText.x,
+					y: addedText.y - font.descentAtSize(addedText.fontSize),
+					size: addedText.fontSize,
+					font,
+					color: parseColor(addedText.color, rgb),
+					maxWidth: Math.max(page.getWidth() - addedText.x, 1),
+				})
 			}
 
 			const result = await output.save()
@@ -344,7 +511,8 @@ function PrimePdfEditor() {
 			link.download = `${file.name.replace(/\.pdf$/i, '')}-edited.pdf`
 			link.click()
 			setTimeout(() => URL.revokeObjectURL(url), 0)
-			setNotice('Edited PDF downloaded. Text changes use visual covers; original text may remain embedded underneath.')
+			setIsSaved(true)
+			setNotice('Edited PDF saved to your device. Your original file was not changed.')
 		} catch (error) {
 			setNotice(error.message || 'Could not export the edited PDF.')
 		} finally {
@@ -352,7 +520,7 @@ function PrimePdfEditor() {
 		}
 	}
 
-	const editCount = Object.keys(edits).length
+	const editCount = Object.keys(edits).length + addedTexts.length
 
 	return (
 		<main className="dashboard-layout">
@@ -379,7 +547,10 @@ function PrimePdfEditor() {
 						<div className="document-editor-toolbar">
 							<div className="editor-file-details">
 								<span className="editor-file-mark" aria-hidden="true">PDF</span>
-								<span className="editor-file-name">{file?.name || 'No document open'}</span>
+								<div className="prime-pdf-file-summary">
+									<span className="editor-file-name">{file?.name || 'No document open'}</span>
+									{pdfDocument && <span className="prime-pdf-file-meta">{pageCount} pages · {isSaved ? 'Saved' : 'Unsaved changes'}</span>}
+								</div>
 							</div>
 							<div className="editor-toolbar-actions">
 								<input
@@ -394,15 +565,37 @@ function PrimePdfEditor() {
 									Open PDF
 								</button>
 								{pdfDocument && (
-									<button className="editor-open-button" type="button" onClick={downloadEditedPdf} disabled={!editCount || !subscriptionChecked || !subscriptionActive || isSaving}>
-										{isSaving ? 'Preparing PDF…' : `Download edited PDF${editCount ? ` (${editCount})` : ''}`}
-									</button>
+									<>
+										<button className="editor-open-button" type="button" onClick={undoEdit} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">Undo</button>
+										<button className="editor-open-button" type="button" onClick={redoEdit} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)">Redo</button>
+										<button
+											className={`editor-open-button ${isAddingText ? 'is-active' : ''}`}
+											type="button"
+											onClick={() => {
+												setIsAddingText((current) => !current)
+												setNotice(isAddingText ? '' : 'Click anywhere on a PDF page to place a new text box.')
+											}}
+											aria-pressed={isAddingText}
+										>
+											{isAddingText ? 'Cancel add text' : 'Add text'}
+										</button>
+										<button className="editor-open-button" type="button" onClick={discardEdits} disabled={!editCount}>
+											Discard edits
+										</button>
+										<button className="editor-open-button editor-save-button" type="button" onClick={downloadEditedPdf} disabled={!editCount || !subscriptionChecked || !subscriptionActive || isSaving}>
+											{isSaving ? 'Saving PDF…' : 'Save / Download PDF'}
+										</button>
+									</>
 								)}
 							</div>
 						</div>
 
 						{notice && <p className="prime-pdf-notice" role="status">{notice}</p>}
-						<div className="prime-pdf-workspace" onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>
+						<div
+							className={`prime-pdf-workspace ${isAddingText ? 'is-adding-text' : ''}`}
+							onDragOver={(event) => event.preventDefault()}
+							onDrop={handleDrop}
+						>
 							{isLoading && <p className="prime-pdf-loading">Opening PDF…</p>}
 							{pdfDocument && Array.from({ length: pageCount }, (_, index) => (
 								<PdfPage
@@ -411,6 +604,8 @@ function PrimePdfEditor() {
 									pdfjsLibrary={pdfjsLibrary}
 									pageNumber={index + 1}
 									editsEnabled
+									addTextMode={isAddingText}
+									addedTexts={addedTexts}
 									onTextEdit={recordEdit}
 								/>
 							))}
@@ -426,9 +621,11 @@ function PrimePdfEditor() {
 					</section>
 					<div className="document-editor-footer">
 						<p>{pdfDocument
-							? editCount
-								? `${editCount} text area${editCount === 1 ? '' : 's'} changed. Click text, select a word, then type or press Backspace.`
-								: 'Click within PDF text to place the caret; select a word, then type to replace it or press Backspace to erase it.'
+							? isAddingText
+								? 'Add text mode: click a page to place a text box, then type. Click Add text again to exit.'
+								: editCount
+									? `${editCount} edit${editCount === 1 ? '' : 's'} · select PDF text to change it, or use Undo, Redo, Discard, and Save / Download.`
+									: 'Click PDF text to edit it. Select a word to replace it or press Backspace to erase. Use Add text to insert text anywhere.'
 							: subscriptionActive
 								? 'Edits are processed in your browser; PDFs are not uploaded to the server.'
 								: 'An active editing pass is required to download edited PDFs.'}</p>
