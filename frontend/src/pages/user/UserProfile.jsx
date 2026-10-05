@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
-import { downloadUserProfile, getUserProfile, startFacebookLink, startGoogleLink, updateUserProfile } from '../../services/api.js'
+import {
+	downloadUserProfile,
+	getUserProfile,
+	getUserSubscription,
+	startFacebookLink,
+	startGoogleLink,
+	updateUserProfile,
+} from '../../services/api.js'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -42,6 +49,9 @@ function UserProfile() {
 	const [isSaving, setIsSaving] = useState(false)
 	const [googleLinked, setGoogleLinked] = useState(false)
 	const [facebookLinked, setFacebookLinked] = useState(false)
+	const [subscription, setSubscription] = useState(null)
+	const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true)
+	const [subscriptionError, setSubscriptionError] = useState('')
 	const [mapsStatus, setMapsStatus] = useState(GOOGLE_MAPS_API_KEY ? 'loading' : 'missing-key')
 	const addressInputRef = useRef(null)
 
@@ -73,6 +83,22 @@ function UserProfile() {
 			})
 			.finally(() => {
 				if (isCurrent) setIsLoading(false)
+			})
+
+		return () => { isCurrent = false }
+	}, [])
+
+	useEffect(() => {
+		let isCurrent = true
+		getUserSubscription()
+			.then(({ subscription: currentSubscription }) => {
+				if (isCurrent) setSubscription(currentSubscription)
+			})
+			.catch((error) => {
+				if (isCurrent) setSubscriptionError(error.message)
+			})
+			.finally(() => {
+				if (isCurrent) setIsSubscriptionLoading(false)
 			})
 
 		return () => { isCurrent = false }
@@ -221,6 +247,23 @@ function UserProfile() {
 						Download profile
 					</button>
 				</div>
+
+				<section className="profile-section workspace-notice subscription-profile-notice" aria-labelledby="profile-subscription-heading">
+					<span className="subscription-active-mark" aria-hidden="true">{subscription?.active ? '✓' : '₹'}</span>
+					<div>
+						<h2 id="profile-subscription-heading">Subscription</h2>
+						{isSubscriptionLoading
+							? <p>Loading subscription status…</p>
+							: subscriptionError
+								? <p role="alert">{subscriptionError}</p>
+								: subscription?.active
+									? <p>{subscription.planName || subscription.planId} · Active until {new Date(subscription.expiresAt).toLocaleString()}</p>
+									: <p>No active subscription.</p>}
+					</div>
+					{!isSubscriptionLoading && !subscriptionError && !subscription?.active && (
+						<a href="/pricing">View plans <span aria-hidden="true">→</span></a>
+					)}
+				</section>
 
 				<section className="profile-section google-link-section" aria-labelledby="google-link-heading">
 					<div className="profile-section-heading">
