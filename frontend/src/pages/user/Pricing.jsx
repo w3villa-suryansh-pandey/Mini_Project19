@@ -71,7 +71,7 @@ function Pricing() {
 					{isLoading && <p className="pricing-checkout-note">Loading available plans…</p>}
 					{notice && <p className="pricing-checkout-note" role="alert">{notice}</p>}
 					{!isLoading && !notice && plans.length === 0 && <p className="pricing-checkout-note">No plans are currently available.</p>}
-					{plans.length > 0 && <p className="pricing-checkout-note">Your pass activates only after Stripe confirms payment.</p>}
+					{plans.length > 0 && <p className="pricing-checkout-note">Your pass activates only after Razorpay confirms payment.</p>}
 				</div>
 			</section>
 		</main>

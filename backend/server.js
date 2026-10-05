@@ -1,6 +1,7 @@
 const { port, nodeEnv } = require('./src/config/env')
 const app = require('./src/app')
 const connectDB = require('./config/db')
+const Subscription = require('./models/Subscription')
 const { ensureDefaultPlans } = require('./src/services/plan.service')
 const {
   ensureSubscriptionExpiryJob,
@@ -8,8 +9,20 @@ const {
   stopSubscriptionExpiryScheduler,
 } = require('./src/services/subscription-expiry.service')
 
+async function removeLegacyPaymentIndex() {
+  const collectionExists = await Subscription.db.db
+    .listCollections({ name: Subscription.collection.name }, { nameOnly: true })
+    .hasNext()
+  if (!collectionExists) return
+
+  const indexes = await Subscription.collection.indexes()
+  const legacyIndex = indexes.find((index) => index.key?.stripeCheckoutSessionId)
+  if (legacyIndex) await Subscription.collection.dropIndex(legacyIndex.name)
+}
+
 async function startServer() {
   await connectDB()
+  await removeLegacyPaymentIndex()
   await ensureDefaultPlans()
   await ensureSubscriptionExpiryJob()
   startSubscriptionExpiryScheduler()

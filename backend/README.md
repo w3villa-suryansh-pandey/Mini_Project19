@@ -18,9 +18,9 @@ Create an admin from the backend directory with `ADMIN_EMAIL`, `ADMIN_NAME`, and
 
 Email verification and verification email delivery are currently disabled. Signup creates the account and signs the user in immediately; SMTP settings are not required for authentication.
 
-### Stripe PDF passes
+### Razorpay PDF passes
 
-Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in the backend `.env`. Never put Stripe secret keys in the frontend environment. For local testing, run `stripe listen --forward-to localhost:5000/api/payments/webhook` and set `STRIPE_WEBHOOK_SECRET` to the signing secret printed by Stripe CLI. Configure the Stripe account for INR payments. The day pass is a one-time ₹10 payment for 24 hours; the monthly pass is a one-time ₹200 payment for one calendar month. Access is recorded only after Stripe confirms payment.
+Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` in the backend `.env` (all are listed in `.env.example`). Use Razorpay test-mode API credentials while developing. The key ID is returned to the frontend to initialize Checkout; keep the key secret and webhook secret on the backend only. Configure a webhook for `https://<your-api-host>/api/payments/webhook` with the `payment.captured` event, then copy its webhook secret into `RAZORPAY_WEBHOOK_SECRET`. Set the webhook URL to your local tunnel URL when testing webhooks locally. Configure the account for INR payments. The day pass is a one-time ₹10 payment for 24 hours; the monthly pass is a one-time ₹200 payment for one calendar month. Access is recorded only after Razorpay confirms the captured payment. On backend startup, the obsolete Stripe payment-ID index is removed; existing subscription records are preserved.
 
 Default day/month plans are inserted when the plans collection is empty. Admins can create, update, draft, and delete plans from the admin panel. A plan with purchase history is archived instead of physically removed. Plan duration supports hours, days, weeks, months, or years.
 
@@ -44,10 +44,10 @@ Default day/month plans are inserted when the plans collection is empty. Admins 
 - `GET /api/admin/cronjobs/subscription-expiry` returns the subscription expiry job status.
 - `POST /api/admin/cronjobs/subscription-expiry` creates or recreates the expiry job; `DELETE` removes it from scheduling.
 - `PATCH /api/admin/cronjobs/subscription-expiry` pauses or enables the scheduled job; `POST /api/admin/cronjobs/subscription-expiry/run` executes it immediately.
-- `POST /api/payments/checkout` creates an authenticated Stripe Checkout session for the day or month pass.
-- `POST /api/payments/confirm` verifies a completed Checkout session for the signed-in user.
+- `POST /api/payments/checkout` creates an authenticated Razorpay order for an active plan.
+- `POST /api/payments/confirm` verifies the Razorpay payment signature and captured payment for the signed-in user.
 - `GET /api/payments/subscription` returns the signed-in user's current pass status.
-- `POST /api/payments/webhook` accepts Stripe-signed Checkout completion events.
+- `POST /api/payments/webhook` accepts Razorpay-signed `payment.captured` events.
 
 Unknown routes and request errors return JSON error responses. JSON request bodies are limited to 1 MB, and CORS origins are configured through `CLIENT_URLS`.
 

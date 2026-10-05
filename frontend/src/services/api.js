@@ -202,17 +202,17 @@ export function getUserSubscription() {
 	return request('/api/payments/subscription')
 }
 
-export function createCheckoutSession(planId) {
+export function createRazorpayOrder(planId) {
 	return request('/api/payments/checkout', {
 		method: 'POST',
 		body: JSON.stringify({ planId }),
 	})
 }
 
-export function confirmCheckoutSession(sessionId) {
+export function confirmRazorpayPayment(paymentDetails) {
 	return request('/api/payments/confirm', {
 		method: 'POST',
-		body: JSON.stringify({ sessionId }),
+		body: JSON.stringify(paymentDetails),
 	})
 }
 

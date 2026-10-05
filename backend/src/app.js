@@ -5,7 +5,7 @@ const passport = require('passport')
 const { clientOrigins } = require('./config/env')
 const errorHandler = require('./middleware/error-handler')
 const notFound = require('./middleware/not-found')
-const { handleStripeWebhook } = require('./controllers/payment.controller')
+const { handleRazorpayWebhook } = require('./controllers/payment.controller')
 const apiRoutes = require('./routes/api.routes')
 
 const app = express()
@@ -23,7 +23,7 @@ app.use(cors({
 	},
 	credentials: true,
 }))
-app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook)
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleRazorpayWebhook)
 app.use(express.json({ limit: '5mb' }))
 app.use(express.urlencoded({ extended: false, limit: '1mb' }))
 app.use(cookieParser())

@@ -25,6 +25,7 @@ module.exports = Object.freeze({
 	facebookClientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
 	facebookFrontendUrl: process.env.FACEBOOK_FRONTEND_URL || process.env.FRONTEND_URL || 'https://mini-project19.vercel.app/',
 	authTokenSecret: process.env.AUTH_TOKEN_SECRET || '',
-	stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
-	stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+	razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
+	razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
+	razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
 })

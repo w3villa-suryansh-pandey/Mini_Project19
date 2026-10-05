@@ -1,11 +1,43 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
-import { confirmCheckoutSession, createCheckoutSession, getPricingPlans, getUserSubscription } from '../../services/api.js'
+import {
+	confirmRazorpayPayment,
+	createRazorpayOrder,
+	getPricingPlans,
+	getUserSubscription,
+} from '../../services/api.js'
+
+let razorpayScriptPromise
+
+function loadRazorpay() {
+	if (window.Razorpay) return Promise.resolve()
+	if (!razorpayScriptPromise) {
+		razorpayScriptPromise = new Promise((resolve, reject) => {
+			const script = document.createElement('script')
+			script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+			script.onload = () => {
+				if (window.Razorpay) resolve()
+				else {
+					script.remove()
+					reject(new Error('Razorpay Checkout could not be loaded.'))
+				}
+			}
+			script.onerror = () => {
+				script.remove()
+				reject(new Error('Razorpay Checkout could not be loaded.'))
+			}
+			document.body.appendChild(script)
+		}).catch((error) => {
+			razorpayScriptPromise = null
+			throw error
+		})
+	}
+	return razorpayScriptPromise
+}
 
 function Payment() {
 	const searchParams = new URLSearchParams(window.location.search)
 	const selectedPlanId = searchParams.get('plan')
-	const sessionId = searchParams.get('payment') === 'success' ? searchParams.get('session_id') : ''
 	const [plans, setPlans] = useState([])
 	const [subscription, setSubscription] = useState(null)
 	const [isLoading, setIsLoading] = useState(true)
@@ -36,17 +68,9 @@ function Payment() {
 
 	useEffect(() => {
 		let isCurrent = true
-		const fetchSubscription = sessionId
-			? confirmCheckoutSession(sessionId)
-			: getUserSubscription()
-
-		fetchSubscription
+		getUserSubscription()
 			.then(({ subscription: currentSubscription }) => {
-				if (isCurrent) {
-					setSubscription(currentSubscription)
-					if (sessionId && currentSubscription.active) setNotice('Payment confirmed. Your PDF editing pass is active.')
-					else if (sessionId) setNotice('Payment is still processing. Refresh this page shortly to check again.')
-				}
+				if (isCurrent) setSubscription(currentSubscription)
 			})
 			.catch((error) => {
 				if (isCurrent) setNotice(error.message)
@@ -56,22 +80,51 @@ function Payment() {
 			})
 
 		return () => { isCurrent = false }
-	}, [sessionId])
+	}, [])
 
 	async function startCheckout() {
 		if (!selectedPlan) return
 		setIsStartingCheckout(true)
 		setNotice('')
 		try {
-			const { checkoutUrl } = await createCheckoutSession(selectedPlan.id)
-			window.location.assign(checkoutUrl)
+			const checkout = await createRazorpayOrder(selectedPlan.id)
+			await loadRazorpay()
+			const razorpay = new window.Razorpay({
+				key: checkout.keyId,
+				order_id: checkout.order.id,
+				amount: checkout.order.amount,
+				currency: checkout.order.currency,
+				name: 'W3Villa',
+				description: checkout.description,
+				prefill: { email: checkout.email },
+				handler: async (paymentDetails) => {
+					try {
+						const { subscription: currentSubscription } = await confirmRazorpayPayment(paymentDetails)
+						setSubscription(currentSubscription)
+						setNotice(currentSubscription.active
+							? 'Payment confirmed. Your PDF editing pass is active.'
+							: 'Payment is still processing. Refresh this page shortly to check again.')
+					} catch (error) {
+						setNotice(error.message)
+					} finally {
+						setIsStartingCheckout(false)
+					}
+				},
+				modal: {
+					ondismiss: () => setIsStartingCheckout(false),
+				},
+			})
+			razorpay.on('payment.failed', (event) => {
+				setNotice(event.error?.description || 'Razorpay could not complete the payment.')
+				setIsStartingCheckout(false)
+			})
+			razorpay.open()
 		} catch (error) {
 			setNotice(error.message)
 			setIsStartingCheckout(false)
 		}
 	}
 
-	const paymentCancelled = searchParams.get('payment') === 'cancelled'
 	const formattedExpiry = subscription?.expiresAt
 		? new Date(subscription.expiresAt).toLocaleString()
 		: ''
@@ -109,8 +162,7 @@ function Payment() {
 							<h2 id="payment-notice-title">{selectedPlan ? 'Review your pass' : 'Choose a pass'}</h2>
 							{selectedPlan
 								? <p className="payment-selected-plan">{selectedPlan.name} · {selectedPrice} · {selectedDuration}</p>
-								: <p>{isPlansLoading ? 'Loading available plans…' : 'Select a plan to continue to secure Stripe checkout.'}</p>}
-							{paymentCancelled && <p>Checkout was cancelled. No payment was taken.</p>}
+								: <p>{isPlansLoading ? 'Loading available plans…' : 'Select a plan to continue to secure Razorpay checkout.'}</p>}
 						</div>
 						{selectedPlan
 							? <button className="payment-checkout-button" type="button" onClick={startCheckout} disabled={isLoading || isStartingCheckout}>
@@ -118,7 +170,7 @@ function Payment() {
 							</button>
 							: <a href="/pricing">View passes <span aria-hidden="true">→</span></a>}
 					</section>
-					<p className="subscription-expiry-note">Access is activated only after Stripe verifies successful payment. {subscription?.active ? `Your current pass is valid until ${formattedExpiry}.` : ''}</p>
+					<p className="subscription-expiry-note">Access is activated only after Razorpay verifies successful payment. {subscription?.active ? `Your current pass is valid until ${formattedExpiry}.` : ''}</p>
 				</div>
 			</section>
 		</main>

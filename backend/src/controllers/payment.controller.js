@@ -1,16 +1,27 @@
-const Stripe = require('stripe')
+const crypto = require('node:crypto')
+const Razorpay = require('razorpay')
 const Plan = require('../../models/Plan')
 const Subscription = require('../../models/Subscription')
-const { clientOrigins, stripeSecretKey, stripeWebhookSecret } = require('../config/env')
+const {
+	clientOrigins,
+	razorpayKeyId,
+	razorpayKeySecret,
+	razorpayWebhookSecret,
+} = require('../config/env')
 
 const DURATION_UNITS = new Set(['hour', 'day', 'week', 'month', 'year'])
 
-let stripeClient
+let razorpayClient
 
-function getStripe() {
-	if (!stripeSecretKey) return null
-	if (!stripeClient) stripeClient = new Stripe(stripeSecretKey)
-	return stripeClient
+function getRazorpay() {
+	if (!razorpayKeyId || !razorpayKeySecret) return null
+	if (!razorpayClient) {
+		razorpayClient = new Razorpay({
+			key_id: razorpayKeyId,
+			key_secret: razorpayKeySecret,
+		})
+	}
+	return razorpayClient
 }
 
 function calculateExpiration(durationValue, durationUnit, startsAt) {
@@ -50,40 +61,68 @@ async function findActiveSubscription(userId) {
 	}).sort({ expiresAt: -1 }).lean()
 }
 
-async function savePaidSession(session) {
-	const metadata = session.metadata || {}
-	const planId = metadata.planId
-	const planName = metadata.planName
-	const userId = session.metadata?.userId
-	const amountInPaise = Number(metadata.amountInPaise)
-	const durationValue = Number(metadata.durationValue)
-	const durationUnit = metadata.durationUnit
+function verifyPaymentSignature(orderId, paymentId, signature) {
 	if (
-		!planId || !planName || !userId || session.client_reference_id !== userId ||
-		session.mode !== 'payment' || session.payment_status !== 'paid' ||
-		!Number.isInteger(amountInPaise) || session.amount_total !== amountInPaise || session.currency !== 'inr' ||
-		!Number.isInteger(durationValue) || durationValue < 1 || durationValue > 3650 || !DURATION_UNITS.has(durationUnit)
+		typeof orderId !== 'string' || !orderId ||
+		typeof paymentId !== 'string' || !paymentId ||
+		typeof signature !== 'string' || !/^[a-f\d]{64}$/i.test(signature)
+	) {
+		return false
+	}
+
+	const expected = crypto
+		.createHmac('sha256', razorpayKeySecret)
+		.update(`${orderId}|${paymentId}`)
+		.digest()
+	const actual = Buffer.from(signature, 'hex')
+	return actual.length === expected.length && crypto.timingSafeEqual(actual, expected)
+}
+
+function capturedPaymentDetails(order, payment) {
+	const notes = order?.notes || {}
+	const amountInPaise = Number(notes.amountInPaise)
+	const durationValue = Number(notes.durationValue)
+	const userId = notes.userId
+	const planId = notes.planId
+	const planName = notes.planName
+	if (
+		!order?.id || !payment?.id || payment.order_id !== order.id ||
+		order.status !== 'paid' || payment.status !== 'captured' ||
+		!userId || !planId || !planName ||
+		!Number.isInteger(amountInPaise) || amountInPaise < 1 ||
+		order.amount !== amountInPaise || order.amount_paid !== amountInPaise ||
+		payment.amount !== amountInPaise ||
+		String(order.currency).toLowerCase() !== 'inr' ||
+		String(payment.currency).toLowerCase() !== 'inr' ||
+		!Number.isInteger(durationValue) || durationValue < 1 || durationValue > 3650 ||
+		!DURATION_UNITS.has(notes.durationUnit)
 	) {
 		return null
 	}
 
-	const startsAt = new Date()
+	return { userId, planId, planName, amountInPaise, durationValue, durationUnit: notes.durationUnit }
+}
 
+async function saveCapturedPayment(order, payment) {
+	const details = capturedPaymentDetails(order, payment)
+	if (!details) return null
+
+	const startsAt = new Date()
 	try {
 		return await Subscription.findOneAndUpdate(
-			{ stripeCheckoutSessionId: session.id },
+			{ razorpayPaymentId: payment.id },
 			{
 				$setOnInsert: {
-					userId,
-					stripeCheckoutSessionId: session.id,
-					planId,
-					planName,
-					amountInPaise,
+					userId: details.userId,
+					razorpayPaymentId: payment.id,
+					planId: details.planId,
+					planName: details.planName,
+					amountInPaise: details.amountInPaise,
 					currency: 'inr',
-					durationValue,
-					durationUnit,
+					durationValue: details.durationValue,
+					durationUnit: details.durationUnit,
 					startsAt,
-					expiresAt: calculateExpiration(durationValue, durationUnit, startsAt),
+					expiresAt: calculateExpiration(details.durationValue, details.durationUnit, startsAt),
 					status: 'active',
 				},
 			},
@@ -91,7 +130,7 @@ async function savePaidSession(session) {
 		).lean()
 	} catch (error) {
 		if (error.code !== 11000) throw error
-		return Subscription.findOne({ stripeCheckoutSessionId: session.id }).lean()
+		return Subscription.findOne({ razorpayPaymentId: payment.id }).lean()
 	}
 }
 
@@ -99,66 +138,72 @@ function respondWithError(res, status, message) {
 	return res.status(status).json({ error: { message } })
 }
 
-async function createCheckoutSession(req, res) {
+async function createCheckoutOrder(req, res) {
 	const planId = typeof req.body?.planId === 'string' ? req.body.planId : ''
 	const plan = await Plan.findOne({ id: planId, isActive: true }).lean()
 	if (!plan) return respondWithError(res, 400, 'Choose a valid subscription plan.')
 
-	const stripe = getStripe()
-	if (!stripe) return respondWithError(res, 503, 'Stripe payments are not configured yet.')
+	const razorpay = getRazorpay()
+	if (!razorpay) return respondWithError(res, 503, 'Razorpay payments are not configured yet.')
 
 	const origin = req.get('origin')
 	if (!clientOrigins.includes(origin)) {
 		return respondWithError(res, 403, 'This frontend origin is not allowed to start checkout.')
 	}
 
-	const session = await stripe.checkout.sessions.create({
-		mode: 'payment',
-		customer_email: req.user.email,
-		client_reference_id: req.user._id.toString(),
-		metadata: {
-			userId: req.user._id.toString(),
+	const userId = req.user._id.toString()
+	const order = await razorpay.orders.create({
+		amount: plan.priceInPaise,
+		currency: 'INR',
+		receipt: `plan-${crypto.randomUUID().replaceAll('-', '')}`,
+		notes: {
+			userId,
 			planId: plan.id,
 			planName: plan.name,
 			amountInPaise: String(plan.priceInPaise),
 			durationValue: String(plan.durationValue),
 			durationUnit: plan.durationUnit,
 		},
-		line_items: [{
-			price_data: {
-				currency: 'inr',
-				unit_amount: plan.priceInPaise,
-				product_data: { name: plan.name },
-			},
-			quantity: 1,
-		}],
-		success_url: `${origin}/payment?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-		cancel_url: `${origin}/payment?payment=cancelled&plan=${encodeURIComponent(plan.id)}`,
 	})
 
-	return res.json({ checkoutUrl: session.url })
+	return res.json({
+		keyId: razorpayKeyId,
+		order: {
+			id: order.id,
+			amount: order.amount,
+			currency: order.currency,
+		},
+		name: plan.name,
+		description: `${plan.name} PDF editing pass`,
+		email: req.user.email,
+	})
 }
 
-async function confirmCheckoutSession(req, res) {
-	const stripe = getStripe()
-	if (!stripe) return respondWithError(res, 503, 'Stripe payments are not configured yet.')
+async function confirmRazorpayPayment(req, res) {
+	const razorpay = getRazorpay()
+	if (!razorpay) return respondWithError(res, 503, 'Razorpay payments are not configured yet.')
 
-	const sessionId = req.body?.sessionId
-	if (typeof sessionId !== 'string' || !sessionId.startsWith('cs_')) {
-		return respondWithError(res, 400, 'A valid checkout session is required.')
+	const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = req.body || {}
+	if (!verifyPaymentSignature(orderId, paymentId, signature)) {
+		return respondWithError(res, 400, 'Razorpay payment signature verification failed.')
 	}
 
-	const session = await stripe.checkout.sessions.retrieve(sessionId)
+	const order = await razorpay.orders.fetch(orderId)
 	const userId = req.user._id.toString()
-	if (session.client_reference_id !== userId || session.metadata?.userId !== userId) {
-		return respondWithError(res, 404, 'The checkout session could not be found for this account.')
+	if (order.notes?.userId !== userId) {
+		return respondWithError(res, 404, 'The payment could not be found for this account.')
 	}
-	if (session.payment_status !== 'paid') {
+
+	const payment = await razorpay.payments.fetch(paymentId)
+	if (payment.order_id !== orderId) {
+		return respondWithError(res, 400, 'The payment does not match its Razorpay order.')
+	}
+	if (payment.status !== 'captured') {
 		return res.status(202).json({ subscription: subscriptionDetails(await findActiveSubscription(userId)) })
 	}
 
-	const savedSession = await savePaidSession(session)
-	if (!savedSession) return respondWithError(res, 400, 'The paid session does not match an available plan.')
+	const savedPayment = await saveCapturedPayment(order, payment)
+	if (!savedPayment) return respondWithError(res, 400, 'The captured payment does not match the order.')
 
 	return res.json({ subscription: subscriptionDetails(await findActiveSubscription(userId)) })
 }
@@ -167,30 +212,45 @@ async function getSubscription(req, res) {
 	return res.json({ subscription: subscriptionDetails(await findActiveSubscription(req.user._id)) })
 }
 
-async function handleStripeWebhook(req, res) {
-	const stripe = getStripe()
-	if (!stripe || !stripeWebhookSecret) {
-		return respondWithError(res, 503, 'Stripe webhooks are not configured yet.')
+async function handleRazorpayWebhook(req, res) {
+	const razorpay = getRazorpay()
+	if (!razorpay || !razorpayWebhookSecret) {
+		return respondWithError(res, 503, 'Razorpay webhooks are not configured yet.')
+	}
+	if (!Buffer.isBuffer(req.body)) {
+		return respondWithError(res, 400, 'Razorpay webhook body must be raw JSON.')
 	}
 
-	let event
-	try {
-		event = stripe.webhooks.constructEvent(req.body, req.get('stripe-signature'), stripeWebhookSecret)
-	} catch {
-		return respondWithError(res, 400, 'Stripe webhook signature verification failed.')
+	const signature = req.get('x-razorpay-signature')
+	const expected = crypto.createHmac('sha256', razorpayWebhookSecret).update(req.body).digest()
+	const actual = typeof signature === 'string' && /^[a-f\d]{64}$/i.test(signature)
+		? Buffer.from(signature, 'hex')
+		: Buffer.alloc(0)
+	if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) {
+		return respondWithError(res, 400, 'Razorpay webhook signature verification failed.')
 	}
 
-	if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
-		await savePaidSession(event.data.object)
+	const event = JSON.parse(req.body.toString('utf8'))
+	if (event.event === 'payment.captured') {
+		const payment = event.payload?.payment?.entity
+		if (!payment?.order_id || !payment.id) {
+			return respondWithError(res, 400, 'The Razorpay webhook did not contain a valid captured payment.')
+		}
+		const order = await razorpay.orders.fetch(payment.order_id)
+		const savedPayment = await saveCapturedPayment(order, payment)
+		if (!savedPayment) return respondWithError(res, 400, 'The captured payment does not match its Razorpay order.')
 	}
+
 	return res.json({ received: true })
 }
 
 module.exports = {
 	calculateExpiration,
-	confirmCheckoutSession,
-	createCheckoutSession,
+	capturedPaymentDetails,
+	confirmRazorpayPayment,
+	createCheckoutOrder,
 	getSubscription,
-	handleStripeWebhook,
+	handleRazorpayWebhook,
 	subscriptionDetails,
+	verifyPaymentSignature,
 }

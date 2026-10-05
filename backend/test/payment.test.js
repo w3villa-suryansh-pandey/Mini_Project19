@@ -1,6 +1,12 @@
 const assert = require('node:assert/strict')
 const test = require('node:test')
-const { calculateExpiration, subscriptionDetails } = require('../src/controllers/payment.controller')
+const {
+	calculateExpiration,
+	capturedPaymentDetails,
+	subscriptionDetails,
+	verifyPaymentSignature,
+} = require('../src/controllers/payment.controller')
+const Subscription = require('../models/Subscription')
 const { validatePlan } = require('../src/controllers/plan.controller')
 const { DEFAULT_PLANS } = require('../src/services/plan.service')
 
@@ -76,4 +82,59 @@ test('subscription access is active only within its paid time window', () => {
 	assert.equal(active.planId, 'day')
 	assert.equal(expired.active, false)
 	assert.equal(expired.planId, null)
+})
+
+test('Razorpay signatures bind a payment to its order', () => {
+	const crypto = require('node:crypto')
+	const { razorpayKeySecret } = require('../src/config/env')
+	const orderId = 'order_123'
+	const paymentId = 'pay_123'
+	const signature = crypto.createHmac('sha256', razorpayKeySecret).update(`${orderId}|${paymentId}`).digest('hex')
+
+	assert.equal(verifyPaymentSignature(orderId, paymentId, signature), true)
+	assert.equal(verifyPaymentSignature(orderId, paymentId, `${signature.slice(0, -1)}0`), false)
+	assert.equal(verifyPaymentSignature(orderId, paymentId, 'invalid'), false)
+})
+
+test('captured Razorpay payment details must match the paid order and plan notes', () => {
+	const order = {
+		id: 'order_123',
+		status: 'paid',
+		amount: 1000,
+		amount_paid: 1000,
+		currency: 'INR',
+		notes: {
+			userId: 'user_123',
+			planId: 'day',
+			planName: 'Day pass',
+			amountInPaise: '1000',
+			durationValue: '1',
+			durationUnit: 'day',
+		},
+	}
+	const payment = {
+		id: 'pay_123',
+		order_id: 'order_123',
+		status: 'captured',
+		amount: 1000,
+		currency: 'INR',
+	}
+
+	assert.deepEqual(capturedPaymentDetails(order, payment), {
+		userId: 'user_123',
+		planId: 'day',
+		planName: 'Day pass',
+		amountInPaise: 1000,
+		durationValue: 1,
+		durationUnit: 'day',
+	})
+	assert.equal(capturedPaymentDetails(order, { ...payment, amount: 999 }), null)
+	assert.equal(capturedPaymentDetails(order, { ...payment, order_id: 'order_other' }), null)
+})
+
+test('Razorpay payment IDs use a sparse unique index for existing subscriptions', () => {
+	const paymentIdPath = Subscription.schema.path('razorpayPaymentId')
+
+	assert.equal(paymentIdPath.options.unique, true)
+	assert.equal(paymentIdPath.options.sparse, true)
 })
