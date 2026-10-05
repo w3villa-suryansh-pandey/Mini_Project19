@@ -946,6 +946,23 @@
   font-weight: 400;
 }
 
+.address-location-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.address-location-actions .profile-download {
+  min-height: 34px;
+  font-size: 11px;
+}
+
+.address-location-actions .profile-download:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .bio-count {
   justify-self: end;
   color: #98a29c;

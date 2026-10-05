@@ -52,6 +52,9 @@ function UserProfile() {
 	const [subscription, setSubscription] = useState(null)
 	const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true)
 	const [subscriptionError, setSubscriptionError] = useState('')
+	const [isLocating, setIsLocating] = useState(false)
+	const [locationNotice, setLocationNotice] = useState('')
+	const [isLocationError, setIsLocationError] = useState(false)
 	const [mapsStatus, setMapsStatus] = useState(GOOGLE_MAPS_API_KEY ? 'loading' : 'missing-key')
 	const addressInputRef = useRef(null)
 
@@ -137,6 +140,69 @@ function UserProfile() {
 		const { name, value } = event.target
 		setProfile((currentProfile) => ({ ...currentProfile, [name]: value }))
 		setNotice('')
+		if (name === 'address') {
+			setLocationNotice('')
+			setIsLocationError(false)
+		}
+	}
+
+	async function fillAddressFromCurrentLocation() {
+		if (!GOOGLE_MAPS_API_KEY) {
+			setLocationNotice('Configure a Google Maps API key to look up your location.')
+			setIsLocationError(true)
+			return
+		}
+		if (!navigator.geolocation) {
+			setLocationNotice('Location is not available in this browser.')
+			setIsLocationError(true)
+			return
+		}
+
+		setIsLocating(true)
+		setLocationNotice('')
+		setIsLocationError(false)
+		try {
+			await loadGooglePlaces()
+			const position = await new Promise((resolve, reject) => {
+				navigator.geolocation.getCurrentPosition(resolve, reject, {
+					enableHighAccuracy: false,
+					timeout: 15000,
+					maximumAge: 60000,
+				})
+			})
+			const geocoder = new window.google.maps.Geocoder()
+			const results = await new Promise((resolve, reject) => {
+				geocoder.geocode(
+					{ location: { lat: position.coords.latitude, lng: position.coords.longitude } },
+					(addresses, status) => {
+						if (status === 'OK') resolve(addresses)
+						else reject(new Error(status === 'ZERO_RESULTS'
+							? 'Google Maps could not find an address for your location.'
+							: 'Google Maps could not look up your current location. Check that Geocoding is enabled for the API key.'))
+					},
+				)
+			})
+			const address = results[0]?.formatted_address
+			if (!address) throw new Error('Google Maps could not find an address for your location.')
+			setProfile((currentProfile) => ({ ...currentProfile, address }))
+			setLocationNotice('Address filled from your current location.')
+			setIsLocationError(false)
+		} catch (error) {
+			if ([1, 2, 3].includes(error.code)) {
+				const message = error.code === 1
+					? 'Location permission was denied. Allow location access in your browser and try again.'
+					: error.code === 2
+						? 'Your current location is unavailable.'
+						: 'Location lookup timed out. Try again.'
+				setLocationNotice(message)
+				setIsLocationError(true)
+			} else {
+				setLocationNotice(error.message || 'Could not fill the address from your current location.')
+				setIsLocationError(true)
+			}
+		} finally {
+			setIsLocating(false)
+		}
 	}
 
 	function handlePhotoChange(event) {
@@ -363,8 +429,8 @@ function UserProfile() {
 								onChange={updateField}
 							/>
 						</label>
-						<label className="profile-field profile-address-field" htmlFor="profile-address">
-							Address
+						<div className="profile-field profile-address-field">
+							<label htmlFor="profile-address">Address</label>
 							<input
 								id="profile-address"
 								ref={addressInputRef}
@@ -376,13 +442,23 @@ function UserProfile() {
 								value={profile.address}
 								onChange={updateField}
 							/>
-							<span className="address-hint" aria-live="polite">
-								{mapsStatus === 'ready' && 'Select a suggested address to use its Google Maps location.'}
-								{mapsStatus === 'loading' && 'Loading Google Maps address suggestions…'}
-								{mapsStatus === 'missing-key' && 'Manual entry is available. Configure a Google Maps API key to enable map suggestions.'}
-								{mapsStatus === 'unavailable' && 'Google Maps is unavailable. You can still enter your address manually.'}
-							</span>
-						</label>
+							<div className="address-location-actions">
+								<button
+									className="profile-download"
+									type="button"
+									onClick={fillAddressFromCurrentLocation}
+									disabled={isLocating || isLoading || !GOOGLE_MAPS_API_KEY}
+								>
+									{isLocating ? 'Finding location…' : 'Use current location'}
+								</button>
+								<span className="address-hint" aria-live="polite" role={isLocationError ? 'alert' : 'status'}>
+									{locationNotice || (mapsStatus === 'ready' && 'Choose a suggestion or use your current location.')}
+									{!locationNotice && mapsStatus === 'loading' && 'Loading Google Maps address suggestions…'}
+									{!locationNotice && mapsStatus === 'missing-key' && 'Manual entry is available. Configure a Google Maps API key to enable location lookup and suggestions.'}
+									{!locationNotice && mapsStatus === 'unavailable' && 'Google Maps is unavailable. You can still enter your address manually.'}
+								</span>
+							</div>
+						</div>
 						<label className="profile-field" htmlFor="profile-company">
 							Company
 							<input
