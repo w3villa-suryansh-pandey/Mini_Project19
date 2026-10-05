@@ -92,7 +92,8 @@ test('Razorpay signatures bind a payment to its order', () => {
 	const signature = crypto.createHmac('sha256', razorpayKeySecret).update(`${orderId}|${paymentId}`).digest('hex')
 
 	assert.equal(verifyPaymentSignature(orderId, paymentId, signature), true)
-	assert.equal(verifyPaymentSignature(orderId, paymentId, `${signature.slice(0, -1)}0`), false)
+	const changedSignature = `${signature[0] === '0' ? '1' : '0'}${signature.slice(1)}`
+	assert.equal(verifyPaymentSignature(orderId, paymentId, changedSignature), false)
 	assert.equal(verifyPaymentSignature(orderId, paymentId, 'invalid'), false)
 })
 

@@ -142,6 +142,9 @@ async function createCheckoutOrder(req, res) {
 	const planId = typeof req.body?.planId === 'string' ? req.body.planId : ''
 	const plan = await Plan.findOne({ id: planId, isActive: true }).lean()
 	if (!plan) return respondWithError(res, 400, 'Choose a valid subscription plan.')
+	if (!Number.isInteger(plan.priceInPaise) || plan.priceInPaise < 100) {
+		return respondWithError(res, 400, 'The selected plan must cost at least ₹1.00.')
+	}
 
 	const razorpay = getRazorpay()
 	if (!razorpay) return respondWithError(res, 503, 'Razorpay payments are not configured yet.')
