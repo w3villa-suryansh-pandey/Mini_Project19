@@ -82,12 +82,34 @@ function DocumentEditor() {
 	useEffect(() => {
 		if (viewerStatus !== 'ready' || !documentFile || !viewerInstanceRef.current) return undefined
 
-		const documentViewer = viewerInstanceRef.current.Core.documentViewer
-		const handleDocumentLoaded = () => setIsDocumentReady(true)
+		const instance = viewerInstanceRef.current
+		const documentViewer = instance.Core.documentViewer
+		let isCurrentDocument = true
+		const handleDocumentLoaded = async () => {
+			if (!isCurrentDocument) return
+			setIsDocumentReady(true)
+			const contentEditManager = documentViewer.getContentEditManager()
+			try {
+				await contentEditManager.startContentEditMode()
+				if (!isCurrentDocument) {
+					contentEditManager.endContentEditMode()
+					return
+				}
+				setIsEditingText(true)
+				setNotice('Double-click a word to select it, then type to replace it or press Backspace to erase it.')
+			} catch (error) {
+				if (isCurrentDocument) {
+					setNotice(error.message || 'Text editing could not be started for this PDF.')
+				}
+			}
+		}
 		documentViewer.addEventListener('documentLoaded', handleDocumentLoaded)
-		viewerInstanceRef.current.UI.loadDocument(documentFile, { filename: documentFile.name })
+		instance.UI.loadDocument(documentFile, { filename: documentFile.name })
 
-		return () => documentViewer.removeEventListener('documentLoaded', handleDocumentLoaded)
+		return () => {
+			isCurrentDocument = false
+			documentViewer.removeEventListener('documentLoaded', handleDocumentLoaded)
+		}
 	}, [documentFile, viewerStatus])
 
 	useEffect(() => {
@@ -107,10 +129,8 @@ function DocumentEditor() {
 			return
 		}
 
-		if (isEditingText) {
-			viewerInstanceRef.current?.Core.documentViewer.getContentEditManager().endContentEditMode()
-			setIsEditingText(false)
-		}
+		viewerInstanceRef.current?.Core.documentViewer.getContentEditManager().endContentEditMode()
+		setIsEditingText(false)
 		setIsDocumentReady(false)
 		setDocumentFile(file)
 		setDocumentUrl(URL.createObjectURL(file))
@@ -130,7 +150,7 @@ function DocumentEditor() {
 			} else {
 				await contentEditManager.startContentEditMode()
 				setIsEditingText(true)
-				setNotice('Click a text box to edit it. Its original font and formatting are retained where supported by the PDF.')
+				setNotice('Double-click a word to select it, then type to replace it or press Backspace to erase it.')
 			}
 		} catch (error) {
 			setNotice(error.message || 'PDF text editing could not be started for this document.')
