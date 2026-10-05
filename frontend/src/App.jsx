@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import UserProfile from './pages/user/UserProfile.jsx'
 import UserDashboard from './pages/user/UserDashboard.jsx'
 import Pricing from './pages/user/Pricing.jsx'
 import Payment from './pages/user/Payment.jsx'
-import DocumentEditor from './pages/user/DocumentEditor.jsx'
+const PrimePdfEditor = lazy(() => import('./pages/user/PrimePdfEditor.jsx'))
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 import AdminUsers from './pages/admin/Users.jsx'
 import PricingPlans from './pages/admin/PricingPlans.jsx'
@@ -78,7 +78,13 @@ function App() {
   }
 
   if (window.location.pathname === '/editor') {
-    return <ProtectedRoute requiredRole="user"><DocumentEditor /></ProtectedRoute>
+    return (
+      <ProtectedRoute requiredRole="user">
+        <Suspense fallback={<p className="prime-pdf-loading">Loading PDF editor…</p>}>
+          <PrimePdfEditor />
+        </Suspense>
+      </ProtectedRoute>
+    )
   }
 
   if (window.location.pathname === '/admin') {

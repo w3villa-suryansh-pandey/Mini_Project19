@@ -1834,6 +1834,120 @@
   box-shadow: 0 2px 12px rgb(29 43 35 / 12%);
 }
 
+.prime-pdf-workspace {
+  display: flex;
+  min-height: 520px;
+  max-height: 78vh;
+  overflow: auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 22px;
+  background: #edf0ed;
+}
+
+.prime-pdf-page {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 12px rgb(29 43 35 / 16%);
+}
+
+.prime-pdf-canvas {
+  display: block;
+}
+
+.prime-pdf-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color-scheme: only light;
+  text-align: initial;
+  line-height: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
+  transform-origin: 0 0;
+  caret-color: CanvasText;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.prime-pdf-text-layer span,
+.prime-pdf-text-layer br {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0 0;
+  user-select: text;
+}
+
+.prime-pdf-text-layer > :not(.markedContent),
+.prime-pdf-text-layer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.prime-pdf-text-layer .markedContent {
+  display: contents;
+}
+
+.prime-pdf-text-layer span[contenteditable="true"] {
+  pointer-events: auto;
+  cursor: text;
+}
+
+.prime-pdf-text-layer span.prime-pdf-text-editing,
+.prime-pdf-text-layer span.prime-pdf-text-edited {
+  z-index: 2;
+  color: #171c19 !important;
+  background: #fff;
+  -webkit-text-fill-color: #171c19;
+  box-shadow: 0 0 0 1px rgb(56 111 88 / 25%);
+}
+
+.prime-pdf-text-layer span.prime-pdf-text-editing {
+  outline: 1px solid #559381;
+}
+
+.prime-pdf-loading,
+.prime-pdf-page-error {
+  margin: 24px;
+  color: #536158;
+  font-size: 12px;
+}
+
+.prime-pdf-page-error {
+  position: absolute;
+  inset: 12px;
+  height: fit-content;
+  padding: 12px;
+  color: #8a3d31;
+  background: #fff;
+}
+
+.prime-pdf-notice {
+  margin: 0;
+  padding: 10px 16px;
+  color: #536158;
+  background: #f8faf8;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.prime-pdf-disclaimer {
+  margin: 0;
+  color: #8b968f;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .editor-empty-state {
   display: grid;
   width: min(100%, 420px);
@@ -1954,6 +2068,12 @@
   .editor-pdf-preview {
     height: 68vh;
     min-height: 420px;
+  }
+
+  .prime-pdf-workspace {
+    min-height: 440px;
+    max-height: 68vh;
+    padding: 12px;
   }
 
   .apryse-viewer-host {

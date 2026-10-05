@@ -12,6 +12,8 @@
   "dependencies": {
     "@pdftron/webviewer": "^12.1.0",
     "@vis.gl/react-google-maps": "^1.10.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
