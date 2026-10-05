@@ -14,6 +14,8 @@ function DocumentEditor() {
 	const [documentFile, setDocumentFile] = useState(null)
 	const [documentUrl, setDocumentUrl] = useState('')
 	const [notice, setNotice] = useState('')
+	const [isDocumentReady, setIsDocumentReady] = useState(false)
+	const [isEditingText, setIsEditingText] = useState(false)
 	const [viewerStatus, setViewerStatus] = useState(APRYSE_LICENSE_KEY ? 'loading' : 'missing-key')
 	const [subscriptionStatus, setSubscriptionStatus] = useState('checking')
 	const [subscriptionExpiry, setSubscriptionExpiry] = useState('')
@@ -55,6 +57,7 @@ function DocumentEditor() {
 		viewerPromiseRef.current
 			.then((instance) => {
 				if (!isActive) return
+				instance.UI.enableFeatures([instance.UI.Feature.ContentEdit])
 				viewerInstanceRef.current = instance
 				setViewerStatus('ready')
 			})
@@ -77,9 +80,14 @@ function DocumentEditor() {
 	}, [])
 
 	useEffect(() => {
-		if (viewerStatus === 'ready' && documentFile) {
-			viewerInstanceRef.current?.UI.loadDocument(documentFile, { filename: documentFile.name })
-		}
+		if (viewerStatus !== 'ready' || !documentFile || !viewerInstanceRef.current) return undefined
+
+		const documentViewer = viewerInstanceRef.current.Core.documentViewer
+		const handleDocumentLoaded = () => setIsDocumentReady(true)
+		documentViewer.addEventListener('documentLoaded', handleDocumentLoaded)
+		viewerInstanceRef.current.UI.loadDocument(documentFile, { filename: documentFile.name })
+
+		return () => documentViewer.removeEventListener('documentLoaded', handleDocumentLoaded)
 	}, [documentFile, viewerStatus])
 
 	useEffect(() => {
@@ -99,9 +107,35 @@ function DocumentEditor() {
 			return
 		}
 
+		if (isEditingText) {
+			viewerInstanceRef.current?.Core.documentViewer.getContentEditManager().endContentEditMode()
+			setIsEditingText(false)
+		}
+		setIsDocumentReady(false)
 		setDocumentFile(file)
 		setDocumentUrl(URL.createObjectURL(file))
 		setNotice('')
+	}
+
+	async function toggleTextEditing() {
+		const instance = viewerInstanceRef.current
+		if (!instance || !documentFile || !isDocumentReady) return
+
+		const contentEditManager = instance.Core.documentViewer.getContentEditManager()
+		setNotice('')
+		try {
+			if (isEditingText) {
+				contentEditManager.endContentEditMode()
+				setIsEditingText(false)
+			} else {
+				await contentEditManager.startContentEditMode()
+				setIsEditingText(true)
+				setNotice('Click a text box to edit it. Its original font and formatting are retained where supported by the PDF.')
+			}
+		} catch (error) {
+			setNotice(error.message || 'PDF text editing could not be started for this document.')
+			setIsEditingText(false)
+		}
 	}
 
 	function handleFileChange(event) {
@@ -156,6 +190,16 @@ function DocumentEditor() {
 								<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()}>
 									Open PDF
 								</button>
+								{viewerStatus === 'ready' && documentFile && (
+									<button
+										className="editor-open-button"
+										type="button"
+										onClick={toggleTextEditing}
+										disabled={!isDocumentReady}
+									>
+										{!isDocumentReady ? 'Loading PDF…' : isEditingText ? 'Done editing' : 'Edit PDF text'}
+									</button>
+								)}
 							</div>
 						</div>
 
