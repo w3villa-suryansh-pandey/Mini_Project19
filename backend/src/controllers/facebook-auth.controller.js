@@ -34,6 +34,7 @@ async function resolveFacebookUser(profile) {
 	if (user) {
 		if (!user.isActive) throw facebookAuthError('facebook_account_disabled', 'This account is disabled.')
 		user.authProviders = { ...user.authProviders?.toObject?.(), ...user.authProviders, facebook: true }
+		user.emailVerifiedAt ||= new Date()
 		await user.save()
 		return user
 	}
@@ -48,6 +49,7 @@ async function resolveFacebookUser(profile) {
 		}
 		user.facebookId = profile.id
 		user.authProviders = { ...user.authProviders?.toObject?.(), ...user.authProviders, facebook: true }
+		user.emailVerifiedAt ||= new Date()
 		await user.save()
 		return user
 	}
@@ -57,6 +59,7 @@ async function resolveFacebookUser(profile) {
 		email,
 		role: 'user',
 		facebookId: profile.id,
+		emailVerifiedAt: new Date(),
 		profilePicture: profile.photos?.[0]?.value || '',
 		authProviders: { facebook: true },
 	})

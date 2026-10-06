@@ -88,7 +88,7 @@ export function signUp(credentials) {
 		method: 'POST',
 		body: JSON.stringify(credentials),
 	}).then((result) => {
-		cacheUserSession(result.user)
+		clearCachedUserSession()
 		return result
 	})
 }
@@ -107,6 +107,13 @@ export function verifyEmail(token) {
 	return request('/api/auth/verify-email', {
 		method: 'POST',
 		body: JSON.stringify({ token }),
+	})
+}
+
+export function resendVerification(email) {
+	return request('/api/auth/resend-verification', {
+		method: 'POST',
+		body: JSON.stringify({ email }),
 	})
 }
 

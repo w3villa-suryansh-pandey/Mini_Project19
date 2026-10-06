@@ -10,7 +10,7 @@ import PricingPlans from './pages/admin/PricingPlans.jsx'
 import Cronjobs from './pages/admin/Cronjobs.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import VerifyEmail from './pages/VerifyEmail.jsx'
-import { signIn, signUp, startFacebookLogin, startGoogleLogin } from './services/api.js'
+import { resendVerification, signIn, signUp, startFacebookLogin, startGoogleLogin } from './services/api.js'
 import './App.css'
 
 function App() {
@@ -19,6 +19,8 @@ function App() {
   const [showPassword, setShowPassword] = useState(false)
   const [notice, setNotice] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resendEmail, setResendEmail] = useState('')
+  const [canResendVerification, setCanResendVerification] = useState(false)
 
   const isSignup = mode === 'signup'
 
@@ -107,15 +109,18 @@ function App() {
     setMode(nextMode)
     if (nextMode === 'signup') setSelectedRole('user')
     setNotice('')
+    setCanResendVerification(false)
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
     setIsSubmitting(true)
     setNotice('')
+    setCanResendVerification(false)
 
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get('email') || '').trim()
+    setResendEmail(email)
     const credentials = {
       email,
       password: String(formData.get('password') || ''),
@@ -128,11 +133,26 @@ function App() {
           ...credentials,
           name: String(formData.get('name') || '').trim(),
         })
-        window.location.assign(result.user.role === 'admin' ? '/admin' : '/dashboard')
+        setNotice(result.message)
+        setCanResendVerification(true)
       } else {
         const result = await signIn(credentials)
         window.location.assign(result.user.role === 'admin' ? '/admin' : '/dashboard')
       }
+    } catch (error) {
+      setNotice(error.message)
+      setCanResendVerification(error.code === 'EMAIL_NOT_VERIFIED' || error.code === 'EMAIL_SEND_FAILED' || error.code === 'EMAIL_NOT_CONFIGURED')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleResendVerification() {
+    setIsSubmitting(true)
+    setNotice('')
+    try {
+      const result = await resendVerification(resendEmail)
+      setNotice(result.message)
     } catch (error) {
       setNotice(error.message)
     } finally {
@@ -286,6 +306,16 @@ function App() {
               <span aria-hidden="true">→</span>
             </button>
             <p className="form-notice" aria-live="polite">{notice}</p>
+            {canResendVerification && resendEmail && (
+              <button
+                className="resend-verification-button"
+                type="button"
+                onClick={handleResendVerification}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Please wait…' : 'Resend verification email'}
+              </button>
+            )}
           </form>
 
           <p className="switch-prompt">

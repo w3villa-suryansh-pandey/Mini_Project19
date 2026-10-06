@@ -16,7 +16,7 @@ Facebook sign-in requires a Facebook app with Facebook Login enabled. Set `FACEB
 
 Create an admin from the backend directory with `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` set in the environment, then run `npm run create-admin`. If the email already belongs to a user, the script promotes that account without changing its password. For a new account, the password must be 8 to 72 characters and is stored as a bcrypt hash.
 
-Email verification and verification email delivery are currently disabled. Signup creates the account and signs the user in immediately; SMTP settings are not required for authentication.
+Email/password signup requires email verification before sign-in. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in `.env` for delivery; `SMTP_FROM` defaults to `SMTP_USER`. Verification links expire after 24 hours. Users can request another link from the sign-in page.
 
 ### Razorpay PDF passes
 
@@ -30,10 +30,10 @@ Default day/month plans are inserted when the plans collection is empty. Admins 
 - `GET /api` returns API metadata.
 - `GET /api/health` returns service health and uptime.
 - `GET /api/plans` returns active plans for the user pricing page.
-- `POST /api/auth/signup` creates an email/password account and signs the user in immediately.
+- `POST /api/auth/signup` creates an unverified email/password account and sends a verification link.
 - `POST /api/auth/verify-email` verifies an unexpired token from a previously issued verification link.
-- `POST /api/auth/resend-verification` is temporarily disabled.
-- `POST /api/auth/login` signs in an account and sets an HttpOnly session cookie.
+- `POST /api/auth/resend-verification` sends a new link to an unverified account without confirming whether the email is registered.
+- `POST /api/auth/login` signs in a verified account and sets an HttpOnly session cookie.
 - `GET /api/auth/google` starts Google OAuth; `/api/auth/google/callback` validates the response and creates the app session.
 - `GET /api/auth/facebook` starts Facebook signup/login; `/api/auth/facebook/callback` validates the response and creates the app session.
 - `GET /api/auth/facebook` starts Facebook sign-up/login; `/api/auth/facebook/callback` validates the response and creates the app session.
@@ -64,4 +64,4 @@ The subscription expiry worker runs every minute after backend startup. The admi
 
 Passwords are hashed with bcrypt. Verification tokens are single-use, stored as hashes, and expire after 24 hours. Session cookies are HttpOnly and use Secure in production. User roles are assigned by the server/database; signup never accepts a role from the client.
 
-SMTP and session signing configuration are required for signup/login. The frontend and backend must use matching local/production origins for credentialed CORS. Password reset and other business routes are not implemented yet.
+SMTP and session signing configuration are required for email/password signup/login. The frontend and backend must use matching local/production origins for credentialed CORS. Password reset and other business routes are not implemented yet.

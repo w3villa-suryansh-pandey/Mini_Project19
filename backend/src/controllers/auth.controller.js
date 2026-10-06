@@ -3,12 +3,15 @@ const User = require('../../models/User')
 const { authTokenSecret } = require('../config/env')
 const { authenticate, sessionCookieOptions } = require('../middleware/authenticate')
 const {
+	createVerificationToken,
 	hashPassword,
 	hashVerificationToken,
 	verifyPassword,
 } = require('../utils/auth.utils')
+const emailService = require('../services/email.service')
 
 const SESSION_WINDOW = '7d'
+const VERIFICATION_WINDOW = 24 * 60 * 60 * 1000
 
 function respondWithError(res, status, code, message) {
 	return res.status(status).json({ error: { code, message } })
@@ -67,13 +70,16 @@ async function signUp(req, res) {
 		return respondWithError(res, 409, 'EMAIL_IN_USE', 'An account with this email already exists.')
 	}
 
+	const verification = createVerificationToken()
+	const verificationExpiresAt = new Date(Date.now() + VERIFICATION_WINDOW)
 	let user
 	try {
 		user = await User.create({
 			name: name.trim(),
 			email: normalizedEmail,
 			password: await hashPassword(password),
-			emailVerifiedAt: new Date(),
+			emailVerificationTokenHash: verification.tokenHash,
+			emailVerificationExpiresAt: verificationExpiresAt,
 			role: 'user',
 			authProviders: { email: true },
 		})
@@ -84,14 +90,22 @@ async function signUp(req, res) {
 		throw error
 	}
 
-	const sessionToken = jwt.sign({ sub: user._id.toString() }, authTokenSecret, {
-		algorithm: 'HS256',
-		expiresIn: SESSION_WINDOW,
-	})
-	res.cookie('w3villa_session', sessionToken, sessionCookieOptions())
+	try {
+		await emailService.sendVerificationEmail({ email: user.email, name: user.name, token: verification.token })
+	} catch (error) {
+		if (error.code === 'EMAIL_NOT_CONFIGURED') {
+			return respondWithError(res, 503, error.code, error.message)
+		}
+		return respondWithError(
+			res,
+			503,
+			'EMAIL_SEND_FAILED',
+			'Your account was created, but we could not send the verification email. Request another email to try again.',
+		)
+	}
+
 	return res.status(201).json({
-		message: 'Account created and signed in.',
-		user: publicUser(user),
+		message: 'Account created. Check your email for a verification link before signing in.',
 	})
 }
 
@@ -129,16 +143,19 @@ async function resendVerification(req, res) {
 	if (user?.isActive && user.authProviders?.email && !user.emailVerifiedAt) {
 		const verification = createVerificationToken()
 		user.emailVerificationTokenHash = verification.tokenHash
-		user.emailVerificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+		user.emailVerificationExpiresAt = new Date(Date.now() + VERIFICATION_WINDOW)
 		await user.save()
 		try {
-			await sendVerificationEmail({ email: user.email, name: user.name, token: verification.token })
-		} catch {
+			await emailService.sendVerificationEmail({ email: user.email, name: user.name, token: verification.token })
+		} catch (error) {
+			if (error.code === 'EMAIL_NOT_CONFIGURED') {
+				return respondWithError(res, 503, error.code, error.message)
+			}
 			return respondWithError(res, 503, 'EMAIL_SEND_FAILED', 'We could not send the verification email. Check the email service configuration and try again.')
 		}
 	}
 
-	return res.json({ message: 'Email verification is temporarily disabled. You can sign in without verification.' })
+	return res.json({ message: 'If an unverified account exists for that email, a verification link will be sent shortly.' })
 }
 
 async function login(req, res) {
@@ -159,6 +176,9 @@ async function login(req, res) {
 	}
 	if (!user.isActive) {
 		return respondWithError(res, 403, 'ACCOUNT_DISABLED', 'This account is disabled.')
+	}
+	if (!user.emailVerifiedAt) {
+		return respondWithError(res, 403, 'EMAIL_NOT_VERIFIED', 'Verify your email address before signing in.')
 	}
 	if (user.role !== role) {
 		return respondWithError(res, 403, 'ROLE_MISMATCH', `This account is registered as ${user.role}. Choose that account type to sign in.`)

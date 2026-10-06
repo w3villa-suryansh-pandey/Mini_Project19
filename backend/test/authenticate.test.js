@@ -29,7 +29,7 @@ test('production session cookies support cross-site frontend API requests', () =
 	assert.equal(options.secure, true)
 })
 
-test('accepts an active authenticated account without requiring email verification', async () => {
+test('rejects an active authenticated account without email verification', async () => {
 	const originalFindById = User.findById
 	User.findById = () => ({
 		select() { return this },
@@ -52,8 +52,9 @@ test('accepts an active authenticated account without requiring email verificati
 			response,
 			() => { nextCalled = true },
 		)
-		assert.equal(nextCalled, true)
-		assert.equal(response.statusCode, 200)
+			assert.equal(nextCalled, false)
+			assert.equal(response.statusCode, 403)
+			assert.equal(response.body.error.code, 'EMAIL_NOT_VERIFIED')
 	} finally {
 		User.findById = originalFindById
 	}

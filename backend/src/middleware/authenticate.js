@@ -22,11 +22,16 @@ async function authenticate(req, res, next) {
 	}
 
 	const user = await User.findById(payload.sub)
-		.select('_id name email role isActive')
+		.select('_id name email role isActive emailVerifiedAt')
 		.lean()
 
 	if (!user || !user.isActive) {
 		return res.status(401).json({ error: { message: 'Authentication required' } })
+	}
+	if (!user.emailVerifiedAt) {
+		return res.status(403).json({
+			error: { code: 'EMAIL_NOT_VERIFIED', message: 'Verify your email address before continuing.' },
+		})
 	}
 
 	req.user = user
