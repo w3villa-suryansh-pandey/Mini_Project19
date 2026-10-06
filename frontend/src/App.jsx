@@ -1,23 +1,65 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import UserProfile from './pages/user/UserProfile.jsx'
-import UserDashboard from './pages/user/UserDashboard.jsx'
-import Pricing from './pages/user/Pricing.jsx'
-import Payment from './pages/user/Payment.jsx'
-const PrimePdfEditor = lazy(() => import('./pages/user/PrimePdfEditor.jsx'))
-import AdminDashboard from './pages/admin/AdminDashboard.jsx'
-import AdminUsers from './pages/admin/Users.jsx'
-import PricingPlans from './pages/admin/PricingPlans.jsx'
-import Cronjobs from './pages/admin/Cronjobs.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
-import VerifyEmail from './pages/VerifyEmail.jsx'
 import { resendVerification, signIn, signUp, startFacebookLogin, startGoogleLogin } from './services/api.js'
 import './App.css'
+
+const UserProfile = lazy(() => import('./pages/user/UserProfile.jsx'))
+const UserDashboard = lazy(() => import('./pages/user/UserDashboard.jsx'))
+const Pricing = lazy(() => import('./pages/user/Pricing.jsx'))
+const Payment = lazy(() => import('./pages/user/Payment.jsx'))
+const PrimePdfEditor = lazy(() => import('./pages/user/PrimePdfEditor.jsx'))
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'))
+const AdminUsers = lazy(() => import('./pages/admin/Users.jsx'))
+const PricingPlans = lazy(() => import('./pages/admin/PricingPlans.jsx'))
+const Cronjobs = lazy(() => import('./pages/admin/Cronjobs.jsx'))
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail.jsx'))
+
+const AUTH_ERROR_MESSAGES = {
+  google_not_configured: 'Google sign-in is not configured on the server yet.',
+  facebook_not_configured: 'Facebook sign-in is not configured on the server yet.',
+  auth_not_configured: 'Authentication is not configured on the server yet.',
+  google_login_cancelled: 'Google sign-in was cancelled.',
+  google_email_unverified: 'Your Google account did not provide a verified email address.',
+  google_account_linked_elsewhere: 'This email is already linked to a different Google account.',
+  google_account_disabled: 'This account is disabled. Contact an administrator.',
+  google_state_missing: 'Google sign-in state was missing. Restart sign-in and try again.',
+  google_state_mismatch: 'Google sign-in state did not match. Restart sign-in and try again.',
+  google_state_expired: 'Google sign-in took too long. Restart sign-in and try again.',
+  google_state_invalid: 'Google sign-in could not be verified. Restart sign-in and try again.',
+  google_provider_error: 'Google could not complete sign-in. Check the backend log and OAuth callback URL.',
+  google_auth_failed: 'Google sign-in failed. Check your Google account and try again.',
+  facebook_login_cancelled: 'Facebook sign-in was cancelled.',
+  facebook_email_missing: 'Facebook did not share an email. Allow email access and try again.',
+  facebook_account_link_required: 'This email already has an account. Sign in and connect Facebook from your profile.',
+  facebook_account_linked_elsewhere: 'This Facebook account is already linked to another account.',
+  facebook_account_disabled: 'This account is disabled. Contact an administrator.',
+  facebook_state_missing: 'Facebook sign-in state was missing. Restart sign-in and try again.',
+  facebook_state_mismatch: 'Facebook sign-in state did not match. Restart sign-in and try again.',
+  facebook_state_expired: 'Facebook sign-in took too long. Restart sign-in and try again.',
+  facebook_state_invalid: 'Facebook sign-in could not be verified. Restart sign-in and try again.',
+  facebook_link_account_mismatch: 'Facebook could not be linked to this account. Sign in and try again.',
+  facebook_provider_error: 'Facebook sign-in failed. Check the Facebook app settings and callback URL.',
+  facebook_auth_failed: 'Facebook sign-in failed. Check your Facebook account and try again.',
+}
+
+function LazyRoute({ Page, requiredRole }) {
+	return (
+		<Suspense fallback={<main className="route-loading" role="status">Loading page…</main>}>
+			<ProtectedRoute {...(requiredRole ? { requiredRole } : {})}>
+				<Page />
+			</ProtectedRoute>
+		</Suspense>
+	)
+}
 
 function App() {
   const [mode, setMode] = useState('signup')
   const [selectedRole, setSelectedRole] = useState('user')
   const [showPassword, setShowPassword] = useState(false)
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState(() => {
+    const authError = new URLSearchParams(window.location.search).get('authError')
+    return authError ? AUTH_ERROR_MESSAGES[authError] || AUTH_ERROR_MESSAGES.google_auth_failed : ''
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [resendEmail, setResendEmail] = useState('')
   const [canResendVerification, setCanResendVerification] = useState(false)
@@ -25,84 +67,53 @@ function App() {
   const isSignup = mode === 'signup'
 
   useEffect(() => {
-    const authError = new URLSearchParams(window.location.search).get('authError')
-    if (!authError) return
-
-    const messages = {
-      google_not_configured: 'Google sign-in is not configured on the server yet.',
-      facebook_not_configured: 'Facebook sign-in is not configured on the server yet.',
-      auth_not_configured: 'Authentication is not configured on the server yet.',
-      google_login_cancelled: 'Google sign-in was cancelled.',
-      google_email_unverified: 'Your Google account did not provide a verified email address.',
-      google_account_linked_elsewhere: 'This email is already linked to a different Google account.',
-      google_account_disabled: 'This account is disabled. Contact an administrator.',
-      google_state_missing: 'Google sign-in state was missing. Restart sign-in and try again.',
-      google_state_mismatch: 'Google sign-in state did not match. Restart sign-in and try again.',
-      google_state_expired: 'Google sign-in took too long. Restart sign-in and try again.',
-      google_state_invalid: 'Google sign-in could not be verified. Restart sign-in and try again.',
-      google_provider_error: 'Google could not complete sign-in. Check the backend log and OAuth callback URL.',
-      google_auth_failed: 'Google sign-in failed. Check your Google account and try again.',
-      facebook_login_cancelled: 'Facebook sign-in was cancelled.',
-      facebook_email_missing: 'Facebook did not share an email. Allow email access and try again.',
-      facebook_account_link_required: 'This email already has an account. Sign in and connect Facebook from your profile.',
-      facebook_account_linked_elsewhere: 'This Facebook account is already linked to another account.',
-      facebook_account_disabled: 'This account is disabled. Contact an administrator.',
-      facebook_state_missing: 'Facebook sign-in state was missing. Restart sign-in and try again.',
-      facebook_state_mismatch: 'Facebook sign-in state did not match. Restart sign-in and try again.',
-      facebook_state_expired: 'Facebook sign-in took too long. Restart sign-in and try again.',
-      facebook_state_invalid: 'Facebook sign-in could not be verified. Restart sign-in and try again.',
-      facebook_link_account_mismatch: 'Facebook could not be linked to this account. Sign in and try again.',
-      facebook_provider_error: 'Facebook sign-in failed. Check the Facebook app settings and callback URL.',
-      facebook_auth_failed: 'Facebook sign-in failed. Check your Facebook account and try again.',
+    if (new URLSearchParams(window.location.search).has('authError')) {
+      window.history.replaceState({}, '', window.location.pathname)
     }
-    setNotice(messages[authError] || messages.google_auth_failed)
-    window.history.replaceState({}, '', window.location.pathname)
   }, [])
 
   if (window.location.pathname === '/verify-email') {
-    return <VerifyEmail />
-  }
-
-  if (window.location.pathname === '/profile') {
-    return <ProtectedRoute requiredRole="user"><UserProfile /></ProtectedRoute>
-  }
-
-  if (window.location.pathname === '/dashboard') {
-    return <ProtectedRoute requiredRole="user"><UserDashboard /></ProtectedRoute>
-  }
-
-  if (window.location.pathname === '/pricing') {
-    return <ProtectedRoute requiredRole="user"><Pricing /></ProtectedRoute>
-  }
-
-  if (window.location.pathname === '/payment') {
-    return <ProtectedRoute requiredRole="user"><Payment /></ProtectedRoute>
-  }
-
-  if (window.location.pathname === '/editor') {
     return (
-      <ProtectedRoute requiredRole="user">
-        <Suspense fallback={<p className="prime-pdf-loading">Loading PDF editor…</p>}>
-          <PrimePdfEditor />
-        </Suspense>
-      </ProtectedRoute>
+      <Suspense fallback={<main className="route-loading" role="status">Loading verification…</main>}>
+        <VerifyEmail />
+      </Suspense>
     )
   }
 
+  if (window.location.pathname === '/profile') {
+    return <LazyRoute requiredRole="user" Page={UserProfile} />
+  }
+
+  if (window.location.pathname === '/dashboard') {
+    return <LazyRoute requiredRole="user" Page={UserDashboard} />
+  }
+
+  if (window.location.pathname === '/pricing') {
+    return <LazyRoute requiredRole="user" Page={Pricing} />
+  }
+
+  if (window.location.pathname === '/payment') {
+    return <LazyRoute requiredRole="user" Page={Payment} />
+  }
+
+  if (window.location.pathname === '/editor') {
+    return <LazyRoute requiredRole="user" Page={PrimePdfEditor} />
+  }
+
   if (window.location.pathname === '/admin') {
-    return <ProtectedRoute><AdminDashboard /></ProtectedRoute>
+    return <LazyRoute Page={AdminDashboard} />
   }
 
   if (window.location.pathname === '/admin/users') {
-    return <ProtectedRoute><AdminUsers /></ProtectedRoute>
+    return <LazyRoute Page={AdminUsers} />
   }
 
   if (window.location.pathname === '/admin/plans') {
-    return <ProtectedRoute><PricingPlans /></ProtectedRoute>
+    return <LazyRoute Page={PricingPlans} />
   }
 
   if (window.location.pathname === '/admin/cronjobs') {
-    return <ProtectedRoute><Cronjobs /></ProtectedRoute>
+    return <LazyRoute Page={Cronjobs} />
   }
 
   function changeMode(nextMode) {

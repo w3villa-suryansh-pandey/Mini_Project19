@@ -5,6 +5,15 @@
   background: var(--paper);
 }
 
+.route-loading {
+  display: grid;
+  min-height: 100vh;
+  margin: 0;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .auth-layout.auth-simple-layout {
   display: flex;
   min-height: 100vh;
