@@ -1,21 +1,28 @@
 const nodemailer = require('nodemailer')
-const { frontendUrl } = require('../config/env')
+const {
+	frontendUrl,
+	smtpHost,
+	smtpPort,
+	smtpSecure,
+	smtpUser,
+	smtpPass,
+	smtpFrom,
+} = require('../config/env')
 const EMAIL_CONFIGURATION_MESSAGE = 'Outgoing email is not configured. Add SMTP_HOST, SMTP_FROM, and your provider credentials if required to backend/.env, then restart the backend.'
 
 function getEmailConfig() {
-	const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env
-	const from = SMTP_FROM || SMTP_USER
+	const from = smtpFrom || smtpUser
 
-	if (!SMTP_HOST || !from || Boolean(SMTP_USER) !== Boolean(SMTP_PASS)) {
+	if (!smtpHost || !from || Boolean(smtpUser) !== Boolean(smtpPass)) {
 		return null
 	}
 
 	return {
-		host: SMTP_HOST,
-		port: Number.parseInt(SMTP_PORT, 10) || 587,
-		secure: SMTP_SECURE === 'true',
+		host: smtpHost,
+		port: smtpPort,
+		secure: smtpSecure,
 		from,
-		auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+		auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
 	}
 }
 
