@@ -1,4 +1,5 @@
 import { signOut } from '../services/api.js'
+import logo from '../assets/logo.png'
 
 const navigationItems = [
 	{ label: 'Overview', href: '/dashboard', icon: 'overview' },
@@ -39,7 +40,7 @@ function Sidebar({ active = 'overview' }) {
 	return (
 		<aside className="dashboard-sidebar">
 			<a className="dashboard-brand" href="/dashboard" aria-label="S19 dashboard">
-				<span className="dashboard-brand-mark" aria-hidden="true">S19</span>
+				<img className="dashboard-brand-mark" src={logo} alt="S19 logo" />
 				<span>S19</span>
 			</a>
 			<div className="dashboard-nav-label">WORKSPACE</div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import logo from '../assets/logo.png'
 import { verifyEmail } from '../services/api.js'
 
 function VerifyEmail() {
@@ -32,7 +33,7 @@ function VerifyEmail() {
   return (
     <main className="verify-page">
       <section className="verify-content" aria-live="polite">
-        <span className="verify-mark" aria-hidden="true">S19</span>
+        <img className="verify-mark" src={logo} alt="S19 logo" />
         <p className="eyebrow">S19 ACCOUNT</p>
         <h1>{status === 'verified' ? 'Email verified' : status === 'error' ? 'Verification link issue' : 'Verify your email'}</h1>
         <p>{message}</p>

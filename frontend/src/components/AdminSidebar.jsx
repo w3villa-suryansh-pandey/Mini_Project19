@@ -1,4 +1,5 @@
 import { signOut } from '../services/api.js'
+import logo from '../assets/logo.png'
 
 const adminNavigation = [
   { label: 'Overview', href: '/admin', icon: 'overview' },
@@ -31,7 +32,7 @@ function AdminSidebar({ active = 'overview' }) {
   return (
     <aside className="admin-sidebar">
       <a className="admin-brand" href="/admin" aria-label="S19 admin overview">
-        <span className="admin-brand-mark" aria-hidden="true">S19</span>
+        <img className="admin-brand-mark" src={logo} alt="S19 logo" />
         <span>S19 <small>ADMIN</small></span>
       </a>
       <p className="admin-nav-label">MANAGE</p>

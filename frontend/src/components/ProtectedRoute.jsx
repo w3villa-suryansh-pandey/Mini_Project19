@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import logo from '../assets/logo.png'
 import {
 	cacheAdminSession,
 	clearCachedAdminSession,
@@ -78,7 +79,7 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 	return (
 		<main className="admin-access-page">
 			<section className="admin-access-message" aria-live="polite">
-				<span className="admin-access-mark" aria-hidden="true">S19</span>
+				<img className="admin-access-mark" src={logo} alt="S19 logo" />
 				<p className="admin-eyebrow">S19 {requiredRole.toUpperCase()}</p>
 				<h1>{title}</h1>
 				<p>{message}</p>

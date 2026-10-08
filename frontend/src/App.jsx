@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { resendVerification, signIn, signUp, startFacebookLogin, startGoogleLogin } from './services/api.js'
+import logo from './assets/logo.png'
 import './App.css'
 
 const UserProfile = lazy(() => import('./pages/user/UserProfile.jsx'))
@@ -202,7 +203,7 @@ function App() {
     <main className="auth-layout auth-simple-layout">
       <header className="w3-brand-header">
         <a className="w3-brand" href="#top" aria-label="S19 home">
-          <span className="w3-brand-mark" aria-hidden="true">S19</span>
+          <img className="w3-brand-mark" src={logo} alt="S19 logo" />
           <span className="w3-brand-name">S19</span>
           <span className="w3-brand-description">PDF or document editor</span>
         </a>

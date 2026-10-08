@@ -81,15 +81,12 @@
 }
 
 .w3-brand-mark {
-  display: grid;
-  width: 45px;
-  height: 45px;
-  place-items: center;
-  border-radius: 6px;
-  color: #fff;
-  background: var(--blue);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 16px;
+  display: block;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 10px;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .w3-brand-name {
@@ -727,15 +724,12 @@
 }
 
 .profile-brand-mark {
-  display: grid;
+  display: block;
   width: 30px;
   height: 30px;
-  place-items: center;
+  object-fit: contain;
   border-radius: 50%;
-  color: #fff;
-  background: var(--blue);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 16px;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .profile-back-link {
@@ -1100,15 +1094,12 @@
 }
 
 .dashboard-brand-mark {
-  display: grid;
+  display: block;
   width: 30px;
   height: 30px;
-  place-items: center;
+  object-fit: contain;
   border-radius: 50%;
-  color: #fff;
-  background: var(--blue);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 16px;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .dashboard-nav-label {
@@ -3163,16 +3154,13 @@
 }
 
 .admin-access-mark {
-  display: grid;
+  display: block;
   width: 44px;
   height: 44px;
   margin: 0 auto 21px;
-  place-items: center;
+  object-fit: contain;
   border-radius: 50%;
-  color: #fff;
-  background: #202c3d;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 20px;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .admin-access-message .admin-eyebrow {
@@ -3221,16 +3209,13 @@
 }
 
 .verify-mark {
-  display: grid;
+  display: block;
   width: 44px;
   height: 44px;
   margin: 0 auto 21px;
-  place-items: center;
+  object-fit: contain;
   border-radius: 50%;
-  color: #fff;
-  background: var(--blue);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 20px;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .verify-content .eyebrow {
@@ -3437,15 +3422,13 @@
 }
 
 .admin-brand-mark {
-  display: grid;
+  display: block;
   width: 32px;
   height: 32px;
-  place-items: center;
+  object-fit: contain;
   border: 1px solid rgb(255 255 255 / 48%);
   border-radius: 50%;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 17px;
-  font-weight: 400;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .admin-nav-label {
