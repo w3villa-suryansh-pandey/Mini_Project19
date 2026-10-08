@@ -2622,6 +2622,276 @@
   background: #fff;
 }
 
+.writing-pad-shell {
+  overflow: hidden;
+  border: 1px solid #dfe6e1;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.writing-pad-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 11px 13px;
+  border-bottom: 1px solid #e7ece8;
+  background: #fff;
+}
+
+.writing-pad-tool-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+  border-right: 1px solid #e7ece8;
+}
+
+.writing-pad-tool-group:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.writing-pad-tool-group button,
+.writing-pad-select-label select {
+  min-height: 31px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #536158;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.writing-pad-tool-group button:hover,
+.writing-pad-select-label select:hover {
+  border-color: #dce5df;
+  background: #f5f8f6;
+}
+
+.writing-pad-select-label select {
+  border-color: #dce5df;
+  background: #fff;
+}
+
+.writing-pad-color {
+  position: relative;
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #263a31;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.writing-pad-color:hover {
+  border-color: #dce5df;
+}
+
+.writing-pad-color::after {
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  left: 5px;
+  height: 3px;
+  background: #263a31;
+  content: '';
+}
+
+.writing-pad-color input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.writing-pad-insert-tools {
+  margin-left: auto;
+}
+
+.writing-pad-stickers {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 8px 15px;
+  border-bottom: 1px solid #edf0ed;
+  background: #fafcfb;
+}
+
+.writing-pad-stickers > span {
+  margin-right: 5px;
+  color: #89948d;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.writing-pad-stickers button {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.writing-pad-stickers button:hover {
+  border-color: #dce5df;
+  background: #fff;
+}
+
+.writing-pad-editor {
+  min-height: 560px;
+  box-sizing: border-box;
+  padding: 54px clamp(24px, 9vw, 110px);
+  outline: none;
+  color: #263a31;
+  background: #fff;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.writing-pad-editor:empty::before {
+  color: #a0aaa5;
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.writing-pad-editor h1,
+.writing-pad-editor h2,
+.writing-pad-editor h3 {
+  color: #293831;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.writing-pad-editor h1 {
+  font-size: 30px;
+}
+
+.writing-pad-editor h2 {
+  font-size: 24px;
+}
+
+.writing-pad-editor h3 {
+  font-size: 19px;
+}
+
+.writing-pad-editor blockquote {
+  margin-left: 0;
+  padding-left: 16px;
+  border-left: 3px solid #78a08a;
+  color: #536158;
+}
+
+.writing-pad-editor img {
+  max-width: 100%;
+}
+
+.writing-pad-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid #e7ece8;
+  background: #fafcfb;
+}
+
+.writing-pad-footer p {
+  margin: 0;
+  color: #89948d;
+  font-size: 9px;
+}
+
+.writing-pad-footer > div,
+.writing-signature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.writing-signature-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+  background: rgb(18 32 25 / 48%);
+}
+
+.writing-signature-dialog {
+  display: grid;
+  width: min(100%, 620px);
+  gap: 15px;
+  padding: 23px;
+  border: 1px solid #dfe6e1;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgb(15 31 22 / 20%);
+}
+
+.writing-signature-dialog .dashboard-eyebrow {
+  margin: 0 0 5px;
+}
+
+.writing-signature-dialog h2 {
+  margin: 0;
+  color: #293831;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.writing-signature-canvas {
+  display: block;
+  width: 100%;
+  height: 190px;
+  border: 1px dashed #c7d3cb;
+  border-radius: 4px;
+  background-color: #fff;
+  background-image: linear-gradient(#fff 39px, #edf1ee 40px);
+  background-size: 100% 40px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.writing-signature-actions {
+  justify-content: flex-end;
+}
+
+.writing-pad-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.writing-pad-tool-group button:focus-visible,
+.writing-pad-stickers button:focus-visible,
+.writing-pad-footer button:focus-visible {
+  outline: 2px solid #438574;
+  outline-offset: 2px;
+}
+
 @media (max-width: 800px) {
   .document-editor-main {
     width: min(100% - 40px, 700px);
@@ -2720,6 +2990,30 @@
 
   .converter-results {
     padding: 15px 12px;
+  }
+
+  .writing-pad-toolbar {
+    gap: 5px;
+    padding: 9px;
+  }
+
+  .writing-pad-tool-group {
+    flex-wrap: wrap;
+    padding-right: 5px;
+  }
+
+  .writing-pad-insert-tools {
+    margin-left: 0;
+  }
+
+  .writing-pad-editor {
+    min-height: 440px;
+    padding: 30px 20px;
+  }
+
+  .writing-pad-footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .compressor-file-row {

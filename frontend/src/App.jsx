@@ -10,6 +10,7 @@ const Payment = lazy(() => import('./pages/user/Payment.jsx'))
 const PrimePdfEditor = lazy(() => import('./pages/user/PrimePdfEditor.jsx'))
 const FileCompressor = lazy(() => import('./pages/user/FileCompressor.jsx'))
 const FileConverter = lazy(() => import('./pages/user/FileConverter.jsx'))
+const WritingPad = lazy(() => import('./pages/user/WritingPad.jsx'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'))
 const AdminUsers = lazy(() => import('./pages/admin/Users.jsx'))
 const PricingPlans = lazy(() => import('./pages/admin/PricingPlans.jsx'))
@@ -108,6 +109,10 @@ function App() {
 
   if (window.location.pathname === '/converter') {
     return <LazyRoute requiredRole="user" Page={FileConverter} />
+  }
+
+  if (window.location.pathname === '/writing-pad') {
+    return <LazyRoute requiredRole="user" Page={WritingPad} />
   }
 
   if (window.location.pathname === '/admin') {

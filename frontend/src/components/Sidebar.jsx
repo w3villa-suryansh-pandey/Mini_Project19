@@ -7,6 +7,7 @@ const navigationItems = [
 	{ label: 'PDF editor', href: '/editor', icon: 'editor' },
 	{ label: 'Compress files', href: '/compressor', icon: 'compressor' },
 	{ label: 'Convert files', href: '/converter', icon: 'converter' },
+	{ label: 'Writing pad', href: '/writing-pad', icon: 'writing-pad' },
 	{ label: 'Payments', href: '/payment', icon: 'payments' },
 ]
 
@@ -18,6 +19,7 @@ function NavIcon({ name }) {
 		editor: <><path d="M13 5 19 11M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" /><path d="M12 20h8" /></>,
 		compressor: <><path d="M12 3v12m0-12L8 7m4-4 4 4M5 14v6h14v-6M9 17h6" /></>,
 		converter: <><path d="M4 7h15l-3-3m4 13H5l3 3M4 7l3-3m13 13-3 3" /></>,
+		'writing-pad': <><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /><path d="m17 16 3 3" /></>,
 		payments: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18m-14 5h4" /></>,
 	}
 
