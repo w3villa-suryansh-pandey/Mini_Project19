@@ -3,20 +3,44 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV
 	: 'https://mini-project19.onrender.com')
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
 const ADMIN_SESSION_CACHE_KEY = 'w3villa-admin-session-verified'
+const USER_SUBSCRIPTION_CACHE_KEY = 'w3villa-user-subscription'
 
-function cacheUserSession(user) {
+export function cacheUserSession(user, subscription) {
 	try {
 		if (user?.role === 'user') {
 			window.sessionStorage.setItem(USER_SESSION_CACHE_KEY, 'true')
 			window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
+			if (subscription) {
+				cacheUserSubscription(subscription)
+			} else {
+				window.sessionStorage.removeItem(USER_SUBSCRIPTION_CACHE_KEY)
+			}
 		} else if (user?.role === 'admin') {
 			window.sessionStorage.setItem(ADMIN_SESSION_CACHE_KEY, 'true')
 			window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
+			window.sessionStorage.removeItem(USER_SUBSCRIPTION_CACHE_KEY)
 		} else {
 			clearCachedUserSession()
 		}
 	} catch {
 		// Session storage may be unavailable; protected routes will verify normally.
+	}
+}
+
+function cacheUserSubscription(subscription) {
+	try {
+		window.sessionStorage.setItem(USER_SUBSCRIPTION_CACHE_KEY, JSON.stringify(subscription))
+	} catch {
+		// Session storage may be unavailable; subscription access will be fetched when needed.
+	}
+}
+
+function getCachedUserSubscription() {
+	try {
+		const cachedSubscription = window.sessionStorage.getItem(USER_SUBSCRIPTION_CACHE_KEY)
+		return cachedSubscription ? JSON.parse(cachedSubscription) : null
+	} catch {
+		return null
 	}
 }
 
@@ -56,6 +80,7 @@ export function clearCachedUserSession() {
 	try {
 		window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
 		window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
+		window.sessionStorage.removeItem(USER_SUBSCRIPTION_CACHE_KEY)
 	} catch {
 		// Session storage may be unavailable.
 	}
@@ -98,7 +123,7 @@ export function signIn(credentials) {
 		method: 'POST',
 		body: JSON.stringify(credentials),
 	}).then((result) => {
-		cacheUserSession(result.user)
+		cacheUserSession(result.user, result.subscription)
 		return result
 	})
 }
@@ -206,7 +231,13 @@ export function updateUserProfile(profile) {
 }
 
 export function getUserSubscription() {
-	return request('/api/payments/subscription')
+	const cachedSubscription = getCachedUserSubscription()
+	if (cachedSubscription) return Promise.resolve({ subscription: cachedSubscription })
+
+	return request('/api/payments/subscription').then((result) => {
+		cacheUserSubscription(result.subscription)
+		return result
+	})
 }
 
 export function createRazorpayOrder(planId) {
@@ -220,6 +251,9 @@ export function confirmRazorpayPayment(paymentDetails) {
 	return request('/api/payments/confirm', {
 		method: 'POST',
 		body: JSON.stringify(paymentDetails),
+	}).then((result) => {
+		cacheUserSubscription(result.subscription)
+		return result
 	})
 }
 

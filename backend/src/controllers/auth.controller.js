@@ -9,6 +9,7 @@ const {
 	verifyPassword,
 } = require('../utils/auth.utils')
 const emailService = require('../services/email.service')
+const { findActiveSubscription, subscriptionDetails } = require('../services/subscription.service')
 
 const SESSION_WINDOW = '7d'
 const VERIFICATION_WINDOW = 24 * 60 * 60 * 1000
@@ -187,8 +188,11 @@ async function login(req, res) {
 		algorithm: 'HS256',
 		expiresIn: SESSION_WINDOW,
 	})
+	const subscription = user.role === 'user'
+		? subscriptionDetails(await findActiveSubscription(user._id))
+		: null
 	res.cookie('w3villa_session', sessionToken, sessionCookieOptions())
-	return res.json({ user: publicUser(user) })
+	return res.json({ user: publicUser(user), subscription })
 }
 
 function logout(req, res) {
@@ -198,8 +202,11 @@ function logout(req, res) {
 	return res.json({ message: 'Signed out.' })
 }
 
-function getCurrentUser(req, res) {
-	return res.json({ user: publicUser(req.user) })
+async function getCurrentUser(req, res) {
+	const subscription = req.user.role === 'user'
+		? subscriptionDetails(await findActiveSubscription(req.user._id))
+		: null
+	return res.json({ user: publicUser(req.user), subscription })
 }
 
 module.exports = {

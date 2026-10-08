@@ -3,6 +3,7 @@ process.env.AUTH_TOKEN_SECRET ||= 'test-auth-token-secret-with-more-than-32-char
 const assert = require('node:assert/strict')
 const test = require('node:test')
 const User = require('../models/User')
+const Subscription = require('../models/Subscription')
 const { login, resendVerification, signUp, verifyEmail } = require('../src/controllers/auth.controller')
 const { hashPassword, hashVerificationToken } = require('../src/utils/auth.utils')
 const emailService = require('../src/services/email.service')
@@ -81,6 +82,53 @@ test('login rejects an active password account without an email verification dat
 		assert.equal(response.cookies.length, 0)
 	} finally {
 		User.findOne = originalFindOne
+	}
+})
+
+test('login returns the user subscription for session-scoped feature access', async () => {
+	const originalFindOne = User.findOne
+	const originalSubscriptionFindOne = Subscription.findOne
+	const user = {
+		_id: { toString: () => 'existing-user-id' },
+		name: 'Existing User',
+		email: 'user@example.com',
+		password: await hashPassword('valid-password'),
+		emailVerifiedAt: new Date(),
+		isActive: true,
+		role: 'user',
+	}
+	const expiresAt = new Date(Date.now() + 60_000)
+	User.findOne = () => ({ select: async () => user })
+	Subscription.findOne = (query) => {
+		assert.equal(query.userId, user._id)
+		return {
+			sort(sort) {
+				assert.deepEqual(sort, { expiresAt: -1 })
+				return {
+					lean: async () => ({
+						planId: 'monthly',
+						planName: 'Monthly pass',
+						startsAt: new Date(Date.now() - 60_000),
+						expiresAt,
+					}),
+				}
+			},
+		}
+	}
+
+	try {
+		const response = makeResponse()
+		await login({ body: { email: user.email, password: 'valid-password', role: 'user' } }, response)
+
+		assert.equal(response.statusCode, 200)
+		assert.equal(response.body.user.role, 'user')
+		assert.equal(response.body.subscription.active, true)
+		assert.equal(response.body.subscription.planId, 'monthly')
+		assert.equal(response.body.subscription.expiresAt, expiresAt)
+		assert.equal(response.cookies.length, 1)
+	} finally {
+		User.findOne = originalFindOne
+		Subscription.findOne = originalSubscriptionFindOne
 	}
 })
 

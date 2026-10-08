@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import logo from '../assets/logo.png'
 import {
 	cacheAdminSession,
+	cacheUserSession,
 	clearCachedAdminSession,
 	clearCachedUserSession,
 	hasCachedAdminSession,
@@ -25,7 +26,7 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 			return () => controller.abort()
 		}
 
-		const endpoint = requiredRole === 'admin' ? '/api/admin' : '/api/auth/me'
+		const endpoint = '/api/auth/me'
 
 		fetch(`${API_URL}${endpoint}`, {
 			credentials: 'include',
@@ -38,11 +39,11 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 				} else if (response.status === 403) {
 					clearCachedAdminSession()
 					setAccessState('forbidden')
-				} else if (response.ok && requiredRole === 'admin') {
-					cacheAdminSession()
-					setAccessState('allowed')
 				} else if (response.ok) {
-					setAccessState('allowed')
+					const { user, subscription } = await response.json()
+					if (user?.role === 'admin') cacheAdminSession()
+					else if (user?.role === 'user') cacheUserSession(user, subscription)
+					setAccessState(user?.role === requiredRole ? 'allowed' : 'forbidden')
 				} else {
 					setAccessState('unavailable')
 				}
