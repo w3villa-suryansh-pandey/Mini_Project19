@@ -35,6 +35,14 @@ const destinations = [
 	},
 	{
 		number: '05',
+		title: 'Convert files',
+		description: 'Convert images to PDFs, PDF pages to images, and image formats.',
+		action: 'Convert files',
+		href: '/converter',
+		icon: 'converter',
+	},
+	{
+		number: '06',
 		title: 'Payments',
 		description: 'Continue to payment and review your billing details.',
 		action: 'Go to payments',
@@ -49,6 +57,7 @@ function DestinationIcon({ type }) {
 		plans: <><path d="M4 5h16M4 12h16M4 19h10" /><circle cx="7" cy="5" r="1" /><circle cx="17" cy="12" r="1" /></>,
 		editor: <><path d="M13 5 19 11M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" /><path d="M12 20h8" /></>,
 		compressor: <><path d="M12 3v12m0-12L8 7m4-4 4 4M5 14v6h14v-6M9 17h6" /></>,
+		converter: <><path d="M4 7h15l-3-3m4 13H5l3 3M4 7l3-3m13 13-3 3" /></>,
 		payments: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18m-14 5h4" /></>,
 	}
 

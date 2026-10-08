@@ -2380,6 +2380,118 @@
   outline-offset: 3px;
 }
 
+.converter-mode-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.converter-mode {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid #e2e8e3;
+  border-radius: 5px;
+  color: #647269;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.converter-mode:hover {
+  border-color: #b7cec3;
+}
+
+.converter-mode.is-active {
+  border-color: #6f9c85;
+  background: #f4f8f5;
+  box-shadow: inset 0 2px 0 #50816d;
+}
+
+.converter-mode strong {
+  color: #33423a;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.converter-mode span {
+  color: #849089;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.converter-mode:focus-visible,
+.converter-options select:focus-visible,
+.converter-options input:focus-visible {
+  outline: 2px solid #438574;
+  outline-offset: 3px;
+}
+
+.converter-mode:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.converter-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 18px;
+  margin-top: 15px;
+  padding: 13px 14px;
+  border: 1px solid #e8ede9;
+  border-radius: 4px;
+  background: #fafcfb;
+}
+
+.converter-options > label {
+  display: grid;
+  min-width: 120px;
+  gap: 6px;
+  color: #536158;
+  font-size: 10px;
+}
+
+.converter-options select {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid #dce2de;
+  border-radius: 4px;
+  color: #36413d;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+}
+
+.converter-options .converter-quality {
+  min-width: min(100%, 240px);
+  grid-template-columns: auto auto;
+  align-items: center;
+  flex: 1;
+}
+
+.converter-quality strong {
+  color: #39745b;
+}
+
+.converter-quality input {
+  width: 100%;
+  grid-column: 1 / -1;
+  accent-color: #39745b;
+}
+
+.converter-results {
+  margin-top: 14px;
+  padding: 18px 21px;
+  border: 1px solid #dfe6e1;
+  border-radius: 5px;
+  background: #fff;
+}
+
 @media (max-width: 800px) {
   .document-editor-main {
     width: min(100% - 40px, 700px);
@@ -2454,6 +2566,29 @@
   }
 
   .compressor-file-section {
+    padding: 15px 12px;
+  }
+
+  .converter-mode-list {
+    grid-template-columns: 1fr;
+  }
+
+  .converter-mode {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .converter-options {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .converter-options .converter-quality {
+    min-width: 0;
+  }
+
+  .converter-results {
     padding: 15px 12px;
   }
 
