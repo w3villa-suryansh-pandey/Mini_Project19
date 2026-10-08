@@ -178,7 +178,8 @@ function WritingPad() {
 
 	function downloadWriting() {
 		const content = editorRef.current?.innerHTML
-		if (!content || content === '<p><br></p>') {
+		const hasContent = Boolean(editorRef.current?.innerText.trim() || editorRef.current?.querySelector('img'))
+		if (!content || !hasContent) {
 			setNotice('Add some content before downloading your writing.')
 			return
 		}
@@ -190,6 +191,15 @@ function WritingPad() {
 		link.click()
 		setTimeout(() => URL.revokeObjectURL(url), 0)
 		setNotice('Your writing was downloaded as an HTML document.')
+	}
+
+	function printWriting() {
+		const hasContent = Boolean(editorRef.current?.innerText.trim() || editorRef.current?.querySelector('img'))
+		if (!hasContent) {
+			setNotice('Add some content before printing or saving as PDF.')
+			return
+		}
+		window.print()
 	}
 
 	return (
@@ -282,15 +292,12 @@ function WritingPad() {
 							onMouseUp={captureSelection}
 							onKeyUp={captureSelection}
 							onInput={() => setNotice('')}
-						>
-							<h1>Untitled document</h1>
-							<p><br /></p>
-						</div>
+						/>
 
 						<footer className="writing-pad-footer">
 							<p aria-live="polite">{notice || 'Format your text, add images or stickers, and insert a signature. Your work stays in this browser.'}</p>
 							<div>
-								<button type="button" className="editor-open-button" onClick={() => window.print()}>Print / Save as PDF</button>
+								<button type="button" className="editor-open-button" onClick={printWriting}>Print / Save as PDF</button>
 								<button type="button" className="editor-open-button editor-save-button" onClick={downloadWriting}>Download document</button>
 							</div>
 						</footer>

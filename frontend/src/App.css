@@ -2885,6 +2885,76 @@
   clip-path: inset(50%);
 }
 
+@media print {
+  @page {
+    margin: 18mm;
+  }
+
+  body:has(.writing-pad-editor) .dashboard-layout > :not(.dashboard-content),
+  body:has(.writing-pad-editor) .dashboard-content > :not(.document-editor-main),
+  body:has(.writing-pad-editor) .document-editor-main > :not(.writing-pad-shell),
+  body:has(.writing-pad-editor) .writing-pad-shell > :not(.writing-pad-editor),
+  body:has(.writing-pad-editor) .writing-signature-backdrop {
+    display: none !important;
+  }
+
+  body:has(.writing-pad-editor),
+  body:has(.writing-pad-editor) #root,
+  body:has(.writing-pad-editor) .dashboard-layout,
+  body:has(.writing-pad-editor) .dashboard-content,
+  body:has(.writing-pad-editor) .document-editor-main,
+  body:has(.writing-pad-editor) .writing-pad-shell {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  body:has(.writing-pad-editor) .writing-pad-editor {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    outline: 0 !important;
+    color: #171c19 !important;
+    background: #fff !important;
+    font-size: 12pt !important;
+    line-height: 1.55 !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .writing-pad-editor:empty::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .writing-pad-editor img {
+    max-width: 100% !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .writing-pad-editor h1,
+  .writing-pad-editor h2,
+  .writing-pad-editor h3,
+  .writing-pad-editor blockquote {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+}
+
 .writing-pad-tool-group button:focus-visible,
 .writing-pad-stickers button:focus-visible,
 .writing-pad-footer button:focus-visible {
