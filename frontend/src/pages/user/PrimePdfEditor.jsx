@@ -308,7 +308,7 @@ function PdfPage({
 		}
 		if (!viewport) return null
 		const points = drawing.points.map((point) => viewport.convertToViewportPoint(point.x, point.y).join(',')).join(' ')
-		return <polyline key={drawing.id || 'preview'} points={points} fill="none" stroke="#246e58" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+		return <polyline key={drawing.id || 'preview'} points={points} fill="none" stroke="#24436e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
 	}
 
 	return (

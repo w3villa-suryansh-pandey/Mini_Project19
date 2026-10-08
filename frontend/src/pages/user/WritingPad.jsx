@@ -120,7 +120,7 @@ function WritingPad() {
 		context.lineWidth = 3
 		context.lineCap = 'round'
 		context.lineJoin = 'round'
-		context.strokeStyle = '#263d33'
+		context.strokeStyle = '#26303d'
 		drawingRef.current = true
 	}
 
@@ -183,7 +183,7 @@ function WritingPad() {
 			setNotice('Add some content before downloading your writing.')
 			return
 		}
-		const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Writing Pad document</title><style>body{max-width:800px;margin:48px auto;padding:0 24px;color:#263a31;font:16px/1.7 Arial,sans-serif}img{max-width:100%;height:auto}blockquote{border-left:3px solid #78a08a;margin-left:0;padding-left:16px;color:#536158}@media print{body{margin:0 auto}}</style></head><body>${content}</body></html>`
+		const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Writing Pad document</title><style>body{max-width:800px;margin:48px auto;padding:0 24px;color:#262e3a;font:16px/1.7 Arial,sans-serif}img{max-width:100%;height:auto}blockquote{border-left:3px solid #7889a0;margin-left:0;padding-left:16px;color:#536174}@media print{body{margin:0 auto}}</style></head><body>${content}</body></html>`
 		const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
 		const link = document.createElement('a')
 		link.href = url
@@ -255,7 +255,7 @@ function WritingPad() {
 								<button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand('underline')} aria-label="Underline" title="Underline"><u>U</u></button>
 								<label className="writing-pad-color" title="Text color">
 									<span>A</span>
-									<input type="color" defaultValue="#263a31" aria-label="Text color" onMouseDown={captureSelection} onChange={(event) => runCommand('foreColor', event.target.value)} />
+									<input type="color" defaultValue="#262e3a" aria-label="Text color" onMouseDown={captureSelection} onChange={(event) => runCommand('foreColor', event.target.value)} />
 								</label>
 							</div>
 							<div className="writing-pad-tool-group" aria-label="Text alignment">

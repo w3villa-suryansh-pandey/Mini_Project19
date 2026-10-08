@@ -1,18 +1,18 @@
 :root {
   font-family: 'DM Sans', 'Avenir Next', sans-serif;
-  color: #202a29;
-  background: #f7f8f5;
+  color: #202a3a;
+  background: #f8faff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-optical-sizing: auto;
   font-weight: 400;
-  --ink: #202a29;
-  --muted: #77817d;
-  --line: #e2e7e3;
-  --green: #1c6d5c;
-  --green-dark: #155849;
+  --ink: #202a3a;
+  --muted: #77818f;
+  --line: #e2e7ef;
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
   --paper: #fff;
 }
 
