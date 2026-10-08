@@ -94,7 +94,7 @@ function Payment() {
 				order_id: checkout.order.id,
 				amount: checkout.order.amount,
 				currency: checkout.order.currency,
-				name: 'W3Villa',
+				name: 'S19',
 				description: checkout.description,
 				prefill: { email: checkout.email },
 				handler: async (paymentDetails) => {

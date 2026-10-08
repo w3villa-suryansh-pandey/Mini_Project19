@@ -201,9 +201,9 @@ function App() {
   return (
     <main className="auth-layout auth-simple-layout">
       <header className="w3-brand-header">
-        <a className="w3-brand" href="#top" aria-label="W3 home">
-          <span className="w3-brand-mark" aria-hidden="true">W3</span>
-          <span className="w3-brand-name">W3</span>
+        <a className="w3-brand" href="#top" aria-label="S19 home">
+          <span className="w3-brand-mark" aria-hidden="true">S19</span>
+          <span className="w3-brand-name">S19</span>
           <span className="w3-brand-description">PDF or document editor</span>
         </a>
       </header>
@@ -345,7 +345,7 @@ function App() {
           </form>
 
           <p className="switch-prompt">
-            {isSignup ? 'Already have an account?' : 'New to W3?'}{' '}
+            {isSignup ? 'Already have an account?' : 'New to S19?'}{' '}
             <button type="button" onClick={() => changeMode(isSignup ? 'login' : 'signup')}>
               {isSignup ? 'Sign in' : 'Create an account'}
             </button>
@@ -353,7 +353,7 @@ function App() {
           <p className="security-note"><span aria-hidden="true">◆</span> Your information is always kept private.</p>
         </div>
         <footer className="form-footer">
-          <span>© 2026 W3</span>
+          <span>© 2026 S19</span>
           <a href="mailto:hello@w3villa.example">Need help?</a>
         </footer>
       </section>

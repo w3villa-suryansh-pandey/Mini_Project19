@@ -78,8 +78,8 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 	return (
 		<main className="admin-access-page">
 			<section className="admin-access-message" aria-live="polite">
-				<span className="admin-access-mark" aria-hidden="true">W</span>
-				<p className="admin-eyebrow">W3 {requiredRole.toUpperCase()}</p>
+				<span className="admin-access-mark" aria-hidden="true">S19</span>
+				<p className="admin-eyebrow">S19 {requiredRole.toUpperCase()}</p>
 				<h1>{title}</h1>
 				<p>{message}</p>
 				{accessState !== 'checking' && <a href="/">Return to sign in</a>}

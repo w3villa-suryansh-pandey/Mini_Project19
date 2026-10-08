@@ -38,9 +38,9 @@ function Sidebar({ active = 'overview' }) {
 
 	return (
 		<aside className="dashboard-sidebar">
-			<a className="dashboard-brand" href="/dashboard" aria-label="W3 dashboard">
-				<span className="dashboard-brand-mark" aria-hidden="true">W3</span>
-				<span>W3</span>
+			<a className="dashboard-brand" href="/dashboard" aria-label="S19 dashboard">
+				<span className="dashboard-brand-mark" aria-hidden="true">S19</span>
+				<span>S19</span>
 			</a>
 			<div className="dashboard-nav-label">WORKSPACE</div>
 			<nav className="dashboard-nav" aria-label="Dashboard navigation">

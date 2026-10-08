@@ -269,7 +269,7 @@ function UserProfile() {
 			const downloadUrl = URL.createObjectURL(profileFile)
 			const downloadLink = document.createElement('a')
 			downloadLink.href = downloadUrl
-			downloadLink.download = 'w3villa-profile.pdf'
+			downloadLink.download = 's19-profile.pdf'
 			downloadLink.click()
 			setTimeout(() => URL.revokeObjectURL(downloadUrl), 0)
 		} catch (error) {

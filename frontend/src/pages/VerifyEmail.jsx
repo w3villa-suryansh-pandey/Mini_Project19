@@ -32,8 +32,8 @@ function VerifyEmail() {
   return (
     <main className="verify-page">
       <section className="verify-content" aria-live="polite">
-        <span className="verify-mark" aria-hidden="true">W</span>
-        <p className="eyebrow">W3 ACCOUNT</p>
+        <span className="verify-mark" aria-hidden="true">S19</span>
+        <p className="eyebrow">S19 ACCOUNT</p>
         <h1>{status === 'verified' ? 'Email verified' : status === 'error' ? 'Verification link issue' : 'Verify your email'}</h1>
         <p>{message}</p>
         {status === 'verifying' && <p className="verify-progress">Verifying your email address…</p>}
