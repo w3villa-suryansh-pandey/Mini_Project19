@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
 import { getUserSubscription } from '../../services/api.js'
+import { convertDocxToPdf } from '../../utils/docxToPdf.js'
 
 const PAGE_SCALE = 1.35
 const MAX_FILE_SIZE = 50 * 1024 * 1024
@@ -633,24 +634,44 @@ function PrimePdfEditor() {
 		return () => document.removeEventListener('keydown', handleHistoryShortcut)
 	})
 
-	function openFile(nextFile) {
+	async function openFile(selectedFile) {
+		let nextFile = selectedFile
 		if (!nextFile) return
-		if (nextFile.name.toLowerCase().endsWith('.docx')) {
-			setNotice('DOCX-to-PDF conversion is not available in the license-free editor. Save the document as a PDF in a word processor, then upload that PDF.')
+		if (isLoading || isSaving) return
+		const isDocx = nextFile.name.toLowerCase().endsWith('.docx')
+		if (isDocx && nextFile.size > 25 * 1024 * 1024) {
+			setNotice('Choose a DOCX document smaller than 25 MB for browser conversion.')
 			return
 		}
-		if (nextFile.type !== 'application/pdf' && !nextFile.name.toLowerCase().endsWith('.pdf')) {
-			setNotice('Choose a PDF document. DOCX conversion requires an office document conversion engine.')
+		if (!isDocx && nextFile.type !== 'application/pdf' && !nextFile.name.toLowerCase().endsWith('.pdf')) {
+			setNotice('Choose a PDF or DOCX document.')
 			return
 		}
-		if (nextFile.size > MAX_FILE_SIZE) {
+		if (!isDocx && nextFile.size > MAX_FILE_SIZE) {
 			setNotice('Choose a PDF smaller than 50 MB.')
 			return
 		}
 		if (!isSaved && getEditCount() &&
 			!window.confirm('You have unsaved PDF edits. Discard them and open another file?')) return
 		setIsLoading(true)
-		setNotice('')
+		setNotice(isDocx ? 'Converting DOCX to a visual PDF in your browser…' : '')
+		try {
+			if (isDocx) {
+				const pdfBlob = await convertDocxToPdf(nextFile)
+				if (pdfBlob.size > MAX_FILE_SIZE) {
+					throw new Error('The converted PDF is larger than 50 MB and cannot be opened in this editor.')
+				}
+				nextFile = new File(
+					[pdfBlob],
+					`${nextFile.name.replace(/\.docx$/i, '')}.pdf`,
+					{ type: 'application/pdf', lastModified: Date.now() },
+				)
+			}
+		} catch (error) {
+			setIsLoading(false)
+			setNotice(error.message || 'Could not convert this DOCX document to PDF.')
+			return
+		}
 		editsRef.current = {}
 		addedTextsRef.current = []
 		annotationsRef.current = []
@@ -674,6 +695,10 @@ function PrimePdfEditor() {
 		setPdfBytes(null)
 		setPageCount(0)
 		setMergeFiles([])
+		setIsSaved(true)
+		if (isDocx) {
+			setNotice('DOCX converted to PDF. This visual PDF keeps the page appearance; its original text is not editable as PDF text.')
+		}
 	}
 
 	function handleFileChange(event) {
@@ -818,6 +843,44 @@ function PrimePdfEditor() {
 			setNotice('Edited PDF saved to your device. Your original file was not changed.')
 		} catch (error) {
 			setNotice(error.message || 'Could not export the edited PDF.')
+		} finally {
+			setIsSaving(false)
+		}
+	}
+
+	async function savePdf() {
+		if (!pdfBytes) return
+		if (!subscriptionActive) {
+			setNotice('An active editing pass is required to save the edited PDF.')
+			return
+		}
+
+		setIsSaving(true)
+		setNotice('')
+		try {
+			const bytes = await createEditedPdfBytes()
+			const suggestedName = `${file.name.replace(/\.pdf$/i, '')}-edited.pdf`
+			if (typeof window.showSaveFilePicker === 'function') {
+				try {
+					const handle = await window.showSaveFilePicker({
+						suggestedName,
+						types: [{ description: 'PDF document', accept: { 'application/pdf': ['.pdf'] } }],
+					})
+					const writable = await handle.createWritable()
+					await writable.write(bytes)
+					await writable.close()
+				} catch (error) {
+					if (error.name === 'AbortError') return
+					throw error
+				}
+				setNotice('Edited PDF saved to the location you selected.')
+			} else {
+				downloadBytes(bytes, suggestedName)
+				setNotice('This browser does not support choosing a save location. The edited PDF was downloaded instead.')
+			}
+			setIsSaved(true)
+		} catch (error) {
+			setNotice(error.message || 'Could not save the edited PDF.')
 		} finally {
 			setIsSaving(false)
 		}
@@ -985,6 +1048,7 @@ function PrimePdfEditor() {
 									type="file"
 									accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
 									onChange={handleFileChange}
+									disabled={isLoading || isSaving}
 									aria-label="Choose a PDF or DOCX document"
 								/>
 								<input
@@ -1004,8 +1068,8 @@ function PrimePdfEditor() {
 									onChange={handleImageChange}
 									aria-label="Choose a PNG or JPEG image to add"
 								/>
-								<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()}>
-									Open PDF / DOCX
+								<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isLoading || isSaving}>
+									{isLoading ? 'Opening document…' : 'Open PDF / DOCX'}
 								</button>
 								{pdfDocument && (
 									<>
@@ -1056,13 +1120,16 @@ function PrimePdfEditor() {
 											onClick={() => setNotice('Standard PDF password protection is unavailable in the license-free PDF library. No password has been applied.')}
 											title="Standard PDF encryption requires a PDF library that supports password protection."
 										>
-											Password protection unavailable
+											Password protection
 										</button>
 										<button className="editor-open-button" type="button" onClick={discardEdits} disabled={!editCount}>
 											Discard edits
 										</button>
-										<button className="editor-open-button editor-save-button" type="button" onClick={downloadEditedPdf} disabled={!editCount || !subscriptionChecked || !subscriptionActive || isSaving}>
-											{isSaving ? 'Saving PDF…' : 'Save / Download PDF'}
+										<button className="editor-open-button" type="button" onClick={savePdf} disabled={!editCount || !subscriptionChecked || !subscriptionActive || isSaving}>
+											{isSaving ? 'Saving PDF…' : 'Save PDF'}
+										</button>
+										<button className="editor-open-button editor-save-button" type="button" onClick={downloadEditedPdf} disabled={!subscriptionChecked || !subscriptionActive || isSaving}>
+											{isSaving ? 'Preparing PDF…' : 'Download PDF'}
 										</button>
 									</>
 								)}
@@ -1121,7 +1188,7 @@ function PrimePdfEditor() {
 								<div className="editor-empty-state">
 									<span className="editor-empty-icon" aria-hidden="true">PDF</span>
 									<h2>Open a PDF to get started</h2>
-									<p>Drop a PDF here or choose one from your device. DOCX conversion is not available in this license-free editor.</p>
+									<p>Drop a PDF or DOCX here, or choose one from your device. DOCX files are converted to visual PDFs in your browser.</p>
 									<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()}>Choose PDF</button>
 								</div>
 							)}
@@ -1139,7 +1206,7 @@ function PrimePdfEditor() {
 								: 'An active editing pass is required to download edited PDFs.'}</p>
 						{!subscriptionActive && <a href="/pricing">View PDF plans <span aria-hidden="true">→</span></a>}
 					</div>
-					<p className="prime-pdf-disclaimer">Comments and marks are flattened into the exported page and are not editable PDF annotation objects. Text replacement uses a white cover; it does not securely remove the original PDF text. DOCX conversion and standard PDF password encryption require a document engine not included in this license-free editor.</p>
+					<p className="prime-pdf-disclaimer">DOCX conversion creates a visual, image-based PDF, so its source text is not editable as PDF text. Comments and marks are flattened into the exported page, and text replacement uses a white cover rather than securely removing source text. Standard PDF password encryption is not available in the license-free PDF library.</p>
 				</div>
 			</section>
 		</main>

@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
+import { convertDocxToPdf } from '../../utils/docxToPdf.js'
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024
 const MAX_IMAGE_PIXELS = 25 * 1000 * 1000
 const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp,image/bmp,image/svg+xml,.jpg,.jpeg,.png,.webp,.bmp,.svg'
 const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|bmp|svg)$/i
+const DOCX_EXTENSIONS = /\.docx$/i
 const CONVERSION_MODES = [
 	{ id: 'images-to-pdf', label: 'Images to PDF', description: 'Combine images into a PDF' },
 	{ id: 'pdf-to-images', label: 'PDF to images', description: 'Save each PDF page as an image' },
 	{ id: 'image-format', label: 'Image format', description: 'Convert images to JPG, PNG, or WebP' },
+	{ id: 'docx-to-pdf', label: 'DOCX to PDF', description: 'Convert Word documents to visual PDFs' },
 ]
 const IMAGE_FORMATS = {
 	jpg: { mime: 'image/jpeg', extension: 'jpg' },
@@ -192,7 +195,10 @@ function FileConverter() {
 		const validFiles = selected.filter((file) => {
 			const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
 			const isImage = isSupportedImage(file)
-			return file.size > 0 && file.size <= MAX_FILE_SIZE && (mode === 'pdf-to-images' ? isPdf : isImage)
+			const isDocx = DOCX_EXTENSIONS.test(file.name)
+			if (mode === 'pdf-to-images') return file.size > 0 && file.size <= MAX_FILE_SIZE && isPdf
+			if (mode === 'docx-to-pdf') return file.size > 0 && file.size <= 25 * 1024 * 1024 && isDocx
+			return file.size > 0 && file.size <= MAX_FILE_SIZE && isImage
 		})
 		const unsupportedCount = selected.length - validFiles.length
 		setFiles((current) => [...current, ...validFiles])
@@ -200,7 +206,7 @@ function FileConverter() {
 		outputUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
 		outputUrlsRef.current = []
 		setNotice(unsupportedCount
-			? `${unsupportedCount} file${unsupportedCount === 1 ? ' was' : 's were'} skipped. Choose ${mode === 'pdf-to-images' ? 'PDF files' : 'supported image files'} up to 100 MB.`
+			? `${unsupportedCount} file${unsupportedCount === 1 ? ' was' : 's were'} skipped. Choose ${mode === 'pdf-to-images' ? 'PDF files up to 100 MB' : mode === 'docx-to-pdf' ? 'DOCX files up to 25 MB' : 'supported image files up to 100 MB'}.`
 			: '')
 	}
 
@@ -237,6 +243,14 @@ function FileConverter() {
 				for (const file of files) {
 					converted.push(...await convertPdfToImages(file, format, quality))
 				}
+			} else if (mode === 'docx-to-pdf') {
+				converted = []
+				for (const file of files) {
+					converted.push({
+						name: `${baseName(file.name)}.pdf`,
+						blob: await convertDocxToPdf(file),
+					})
+				}
 			} else {
 				converted = await convertImageFormats(files, format, quality)
 			}
@@ -267,7 +281,10 @@ function FileConverter() {
 
 	const activeMode = CONVERSION_MODES.find((item) => item.id === mode)
 	const acceptsPdf = mode === 'pdf-to-images'
-	const acceptedTypes = acceptsPdf ? 'application/pdf,.pdf' : IMAGE_ACCEPT
+	const acceptsDocx = mode === 'docx-to-pdf'
+	const acceptedTypes = acceptsPdf ? 'application/pdf,.pdf' : acceptsDocx
+		? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx'
+		: IMAGE_ACCEPT
 
 	return (
 		<main className="dashboard-layout">
@@ -330,12 +347,12 @@ function FileConverter() {
 							<span className="compressor-upload-icon" aria-hidden="true">
 								<svg viewBox="0 0 32 32"><path d="M16 21V5m0 0-6 6m6-6 6 6M6 19v7h20v-7" /></svg>
 							</span>
-							<h2>{acceptsPdf ? 'Drop your PDF files here' : 'Drop your images here'}</h2>
+							<h2>{acceptsPdf ? 'Drop your PDF files here' : acceptsDocx ? 'Drop your DOCX files here' : 'Drop your images here'}</h2>
 							<p>{activeMode.description}. Files are processed locally in this browser.</p>
 							<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isConverting}>
 								Choose files
 							</button>
-							<span className="compressor-supported-types">{acceptsPdf ? 'PDF · MAXIMUM 100 MB EACH' : 'JPG · PNG · WEBP · BMP · SVG · MAXIMUM 100 MB EACH'}</span>
+							<span className="compressor-supported-types">{acceptsPdf ? 'PDF · MAXIMUM 100 MB EACH' : acceptsDocx ? 'DOCX · MAXIMUM 25 MB EACH' : 'JPG · PNG · WEBP · BMP · SVG · MAXIMUM 100 MB EACH'}</span>
 						</div>
 
 						{files.length > 0 && (
@@ -360,7 +377,7 @@ function FileConverter() {
 									</button>
 								</div>
 
-								{mode !== 'images-to-pdf' && (
+								{mode !== 'images-to-pdf' && mode !== 'docx-to-pdf' && (
 									<div className="converter-options">
 										<label>
 											Output format
@@ -443,7 +460,7 @@ function FileConverter() {
 					)}
 
 					<p className="compressor-notice" role="status">{notice}</p>
-					<p className="compressor-privacy-note">Your files are not uploaded. Image-to-PDF combines selected images into a single PDF; PDF-to-image creates a separate image download for each page.</p>
+					<p className="compressor-privacy-note">Your files are not uploaded. DOCX conversion preserves page appearance as images, not editable/searchable text. Image-to-PDF combines selected images into one PDF; PDF-to-image creates a separate image download for each page.</p>
 				</div>
 			</section>
 		</main>
