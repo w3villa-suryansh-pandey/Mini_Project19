@@ -32,8 +32,8 @@ function AdminSidebar({ active = 'overview' }) {
   return (
     <aside className="admin-sidebar">
       <a className="admin-brand" href="/admin" aria-label="S19 admin overview">
-        <img className="admin-brand-mark" src={logo} alt="S19 logo" />
-        <span>S19 <small>ADMIN</small></span>
+        <img className="admin-brand-mark" src={logo} alt="" />
+        <span>19 <small>ADMIN</small></span>
       </a>
       <p className="admin-nav-label">MANAGE</p>
       <nav className="admin-nav" aria-label="Admin navigation">

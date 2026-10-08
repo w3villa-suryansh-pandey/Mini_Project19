@@ -203,8 +203,10 @@ function App() {
     <main className="auth-layout auth-simple-layout">
       <header className="w3-brand-header">
         <a className="w3-brand" href="#top" aria-label="S19 home">
-          <img className="w3-brand-mark" src={logo} alt="S19 logo" />
-          <span className="w3-brand-name">S19</span>
+          <span className="w3-brand-wordmark">
+            <img className="w3-brand-mark" src={logo} alt="" />
+            <span className="w3-brand-name">19</span>
+          </span>
           <span className="w3-brand-description">PDF or document editor</span>
         </a>
       </header>

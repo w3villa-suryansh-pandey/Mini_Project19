@@ -40,8 +40,8 @@ function Sidebar({ active = 'overview' }) {
 	return (
 		<aside className="dashboard-sidebar">
 			<a className="dashboard-brand" href="/dashboard" aria-label="S19 dashboard">
-				<img className="dashboard-brand-mark" src={logo} alt="S19 logo" />
-				<span>S19</span>
+				<img className="dashboard-brand-mark" src={logo} alt="" />
+				<span>19</span>
 			</a>
 			<div className="dashboard-nav-label">WORKSPACE</div>
 			<nav className="dashboard-nav" aria-label="Dashboard navigation">

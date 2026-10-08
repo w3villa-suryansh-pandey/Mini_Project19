@@ -79,7 +79,10 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 	return (
 		<main className="admin-access-page">
 			<section className="admin-access-message" aria-live="polite">
-				<img className="admin-access-mark" src={logo} alt="S19 logo" />
+				<div className="access-wordmark">
+					<img className="admin-access-mark" src={logo} alt="" />
+					<span>19</span>
+				</div>
 				<p className="admin-eyebrow">S19 {requiredRole.toUpperCase()}</p>
 				<h1>{title}</h1>
 				<p>{message}</p>

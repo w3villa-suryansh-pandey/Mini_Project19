@@ -74,25 +74,30 @@
 .w3-brand {
   display: grid;
   justify-items: center;
-  gap: 7px;
+  gap: 5px;
   color: var(--ink);
   text-align: center;
   text-decoration: none;
 }
 
+.w3-brand-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .w3-brand-mark {
   display: block;
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
-  border-radius: 10px;
-  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .w3-brand-name {
-  color: #252c35;
+  color: var(--blue);
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 28px;
+  font-size: 30px;
+  font-weight: 700;
   line-height: 1.1;
 }
 
@@ -728,8 +733,6 @@
   width: 30px;
   height: 30px;
   object-fit: contain;
-  border-radius: 50%;
-  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .profile-back-link {
@@ -1098,8 +1101,10 @@
   width: 30px;
   height: 30px;
   object-fit: contain;
-  border-radius: 50%;
-  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
+}
+
+.dashboard-brand > span {
+  color: var(--blue);
 }
 
 .dashboard-nav-label {
@@ -3155,12 +3160,22 @@
 
 .admin-access-mark {
   display: block;
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 21px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
-  border-radius: 50%;
-  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
+}
+
+.access-wordmark,
+.verify-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 auto 21px;
+  color: var(--blue);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .admin-access-message .admin-eyebrow {
@@ -3210,12 +3225,9 @@
 
 .verify-mark {
   display: block;
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 21px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
-  border-radius: 50%;
-  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
 }
 
 .verify-content .eyebrow {
@@ -3426,9 +3438,10 @@
   width: 32px;
   height: 32px;
   object-fit: contain;
-  border: 1px solid rgb(255 255 255 / 48%);
-  border-radius: 50%;
-  filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(4.2) hue-rotate(180deg) brightness(1.15) contrast(1.08);
+}
+
+.admin-brand > span:last-child {
+  color: #60a5fa;
 }
 
 .admin-nav-label {
