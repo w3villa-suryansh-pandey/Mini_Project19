@@ -8,6 +8,7 @@ const UserDashboard = lazy(() => import('./pages/user/UserDashboard.jsx'))
 const Pricing = lazy(() => import('./pages/user/Pricing.jsx'))
 const Payment = lazy(() => import('./pages/user/Payment.jsx'))
 const PrimePdfEditor = lazy(() => import('./pages/user/PrimePdfEditor.jsx'))
+const FileCompressor = lazy(() => import('./pages/user/FileCompressor.jsx'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'))
 const AdminUsers = lazy(() => import('./pages/admin/Users.jsx'))
 const PricingPlans = lazy(() => import('./pages/admin/PricingPlans.jsx'))
@@ -98,6 +99,10 @@ function App() {
 
   if (window.location.pathname === '/editor') {
     return <LazyRoute requiredRole="user" Page={PrimePdfEditor} />
+  }
+
+  if (window.location.pathname === '/compressor') {
+    return <LazyRoute requiredRole="user" Page={FileCompressor} />
   }
 
   if (window.location.pathname === '/admin') {

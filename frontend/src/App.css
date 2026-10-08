@@ -2098,6 +2098,288 @@
   outline-offset: 3px;
 }
 
+.compressor-local-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #dce9e0;
+  border-radius: 4px;
+  color: #39715a;
+  background: #f4f8f5;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.compressor-local-status span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5a9a77;
+}
+
+.compressor-panel {
+  overflow: hidden;
+  border: 1px solid #dfe6e1;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.compressor-dropzone {
+  display: grid;
+  justify-items: center;
+  padding: 47px 20px 39px;
+  border: 2px dashed transparent;
+  text-align: center;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.compressor-dropzone.is-dragging {
+  border-color: #75a38b;
+  background: #f3f8f4;
+}
+
+.compressor-upload-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 13px;
+  place-items: center;
+  border-radius: 50%;
+  color: #4c8069;
+  background: #edf5f1;
+}
+
+.compressor-upload-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.compressor-dropzone h2,
+.compressor-list-heading h2 {
+  margin: 0;
+  color: #33423a;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.compressor-dropzone > p {
+  margin: 8px 0 16px;
+  color: #839087;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.compressor-supported-types {
+  margin-top: 13px;
+  color: #9aa49e;
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.45px;
+}
+
+.compressor-file-section {
+  padding: 21px;
+  border-top: 1px solid #e7ece8;
+}
+
+.compressor-list-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.compressor-list-heading h2 span {
+  color: #849089;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.compressor-list-heading p {
+  margin: 5px 0 0;
+  color: #849089;
+  font-size: 10px;
+}
+
+.compressor-clear-button,
+.compressor-remove-button {
+  border: 0;
+  color: #647269;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.compressor-clear-button {
+  padding: 4px 0;
+  color: #39745b;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.compressor-clear-button:disabled,
+.compressor-remove-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.compressor-quality {
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 13px 14px;
+  border: 1px solid #e8ede9;
+  border-radius: 4px;
+  background: #fafcfb;
+}
+
+.compressor-quality > span:first-child {
+  display: flex;
+  justify-content: space-between;
+  color: #536158;
+  font-size: 10px;
+}
+
+.compressor-quality strong {
+  color: #39745b;
+}
+
+.compressor-quality input {
+  width: 100%;
+  margin: 1px 0;
+  accent-color: #39745b;
+}
+
+.compressor-quality-hint {
+  color: #89948d;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.compressor-file-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compressor-file-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 11px;
+  border: 1px solid #e8ede9;
+  border-radius: 4px;
+}
+
+.compressor-file-type {
+  display: grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 4px;
+  color: #4c8069;
+  background: #edf5f1;
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.compressor-file-type.pdf {
+  color: #9a5444;
+  background: #f7eeeb;
+}
+
+.compressor-file-info {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.compressor-file-info strong {
+  overflow: hidden;
+  color: #4c5a52;
+  font-size: 10px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compressor-file-info > span {
+  color: #89948d;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.compressor-file-info .compressor-savings {
+  color: #39745b;
+}
+
+.compressor-file-info .compressor-no-savings,
+.compressor-file-info .compressor-error {
+  color: #9a6345;
+}
+
+.compressor-item-status {
+  flex: 0 0 auto;
+  color: #849089;
+  font-size: 9px;
+}
+
+.compressor-download {
+  flex: 0 0 auto;
+}
+
+.compressor-remove-button {
+  flex: 0 0 auto;
+  padding: 4px 3px;
+  color: #89948d;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.compressor-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.compressor-notice {
+  margin: 11px 0 0;
+  color: #9a6345;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.compressor-notice:empty {
+  display: none;
+}
+
+.compressor-privacy-note {
+  margin: 12px 0 0;
+  color: #89948d;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.compressor-dropzone .editor-open-button:focus-visible,
+.compressor-clear-button:focus-visible,
+.compressor-remove-button:focus-visible {
+  outline: 2px solid #438574;
+  outline-offset: 3px;
+}
+
 @media (max-width: 800px) {
   .document-editor-main {
     width: min(100% - 40px, 700px);
@@ -2161,6 +2443,36 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .compressor-local-status {
+    margin-top: 1px;
+  }
+
+  .compressor-dropzone {
+    padding: 36px 16px 30px;
+  }
+
+  .compressor-file-section {
+    padding: 15px 12px;
+  }
+
+  .compressor-file-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .compressor-file-info {
+    flex-basis: calc(100% - 56px);
+  }
+
+  .compressor-item-status,
+  .compressor-download {
+    margin-left: 44px;
+  }
+
+  .compressor-remove-button {
+    margin-left: auto;
   }
 }
 
