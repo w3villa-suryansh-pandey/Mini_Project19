@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { resendVerification, signIn, signUp, startFacebookLogin, startGoogleLogin } from './services/api.js'
 import logo from './assets/logo.png'
+import LandingPage from './pages/LandingPage.jsx'
 import './App.css'
 
 const UserProfile = lazy(() => import('./pages/user/UserProfile.jsx'))
@@ -57,7 +58,7 @@ function LazyRoute({ Page, requiredRole }) {
 }
 
 function App() {
-  const [mode, setMode] = useState('signup')
+  const [mode, setMode] = useState(() => window.location.pathname === '/login' ? 'login' : 'signup')
   const [selectedRole, setSelectedRole] = useState('user')
   const [showPassword, setShowPassword] = useState(false)
   const [notice, setNotice] = useState(() => {
@@ -132,8 +133,13 @@ function App() {
     return <LazyRoute Page={Cronjobs} />
   }
 
+  if (window.location.pathname === '/') {
+    return <LandingPage notice={notice} />
+  }
+
   function changeMode(nextMode) {
     setMode(nextMode)
+    window.history.replaceState({}, '', nextMode === 'signup' ? '/signup' : '/login')
     if (nextMode === 'signup') setSelectedRole('user')
     setNotice('')
     setCanResendVerification(false)
@@ -202,7 +208,7 @@ function App() {
   return (
     <main className="auth-layout auth-simple-layout">
       <header className="w3-brand-header">
-        <a className="w3-brand" href="#top" aria-label="S19 home">
+        <a className="w3-brand" href="/" aria-label="S19 home">
           <span className="w3-brand-wordmark">
             <img className="w3-brand-mark" src={logo} alt="" />
             <span className="w3-brand-name">19</span>
