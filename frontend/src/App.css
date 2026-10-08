@@ -5,6 +5,55 @@
   background: var(--paper);
 }
 
+.theme-toggle {
+  position: fixed;
+  z-index: 1000;
+  top: 13px;
+  right: 16px;
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid #dce3ee;
+  border-radius: 999px;
+  color: #34445e;
+  background: #fff;
+  box-shadow: 0 2px 10px rgb(32 42 55 / 10%);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: #9caec8;
+  background: #f4f7fb;
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.theme-toggle svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.dashboard-header,
+.profile-topbar,
+.admin-topbar {
+  padding-right: 145px;
+}
+
 .route-loading {
   display: grid;
   min-height: 100vh;
@@ -4633,15 +4682,360 @@
 }
 
 @media (max-width: 640px) {
+  .theme-toggle {
+    right: 10px;
+    min-height: 34px;
+    padding-inline: 10px;
+  }
+
+  .dashboard-header,
+  .profile-topbar,
+  .admin-topbar {
+    padding-right: 132px;
+  }
+
   .profile-topbar {
     min-height: 62px;
     padding-inline: 20px;
+    padding-right: 132px;
   }
 
   .form-footer {
     flex-wrap: wrap;
   }
+}
 
+  :root[data-theme='dark'] .theme-toggle {
+    border-color: #3b4960;
+    color: #e5eaf2;
+    background: #202a39;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 24%);
+  }
+
+  :root[data-theme='dark'] .theme-toggle:hover {
+    border-color: #60799e;
+    background: #29364a;
+  }
+
+  :root[data-theme='dark'] .auth-simple-layout,
+  :root[data-theme='dark'] .profile-page,
+  :root[data-theme='dark'] .dashboard-layout,
+  :root[data-theme='dark'] .admin-layout,
+  :root[data-theme='dark'] .admin-access-page,
+  :root[data-theme='dark'] .verify-page {
+    color: #e5eaf2;
+    background: #111722;
+  }
+
+  :root[data-theme='dark'] .auth-simple-layout .form-panel,
+  :root[data-theme='dark'] .profile-topbar,
+  :root[data-theme='dark'] .profile-section,
+  :root[data-theme='dark'] .dashboard-sidebar,
+  :root[data-theme='dark'] .dashboard-header,
+  :root[data-theme='dark'] .dashboard-destination,
+  :root[data-theme='dark'] .dashboard-help,
+  :root[data-theme='dark'] .workspace-notice,
+  :root[data-theme='dark'] .pdf-pricing-card,
+  :root[data-theme='dark'] .document-editor-shell,
+  :root[data-theme='dark'] .document-editor-toolbar,
+  :root[data-theme='dark'] .prime-pdf-page-controls,
+  :root[data-theme='dark'] .editor-empty-state,
+  :root[data-theme='dark'] .compressor-panel,
+  :root[data-theme='dark'] .compressor-file-row,
+  :root[data-theme='dark'] .converter-mode,
+  :root[data-theme='dark'] .converter-results,
+  :root[data-theme='dark'] .writing-pad-shell,
+  :root[data-theme='dark'] .writing-pad-toolbar,
+  :root[data-theme='dark'] .writing-signature-dialog,
+  :root[data-theme='dark'] .admin-topbar,
+  :root[data-theme='dark'] .admin-stat,
+  :root[data-theme='dark'] .admin-panel {
+    border-color: #303b4c;
+    background-color: #1a2230;
+  }
+
+  :root[data-theme='dark'] .auth-simple-layout .form-panel,
+  :root[data-theme='dark'] .profile-section,
+  :root[data-theme='dark'] .dashboard-destination,
+  :root[data-theme='dark'] .dashboard-help,
+  :root[data-theme='dark'] .workspace-notice,
+  :root[data-theme='dark'] .pdf-pricing-card,
+  :root[data-theme='dark'] .document-editor-shell,
+  :root[data-theme='dark'] .compressor-panel,
+  :root[data-theme='dark'] .compressor-file-row,
+  :root[data-theme='dark'] .converter-results,
+  :root[data-theme='dark'] .writing-pad-shell,
+  :root[data-theme='dark'] .writing-signature-dialog,
+  :root[data-theme='dark'] .admin-stat,
+  :root[data-theme='dark'] .admin-panel {
+    background-color: #171f2c;
+  }
+
+  :root[data-theme='dark'] .story-panel {
+    background-color: #111722;
+  }
+
+  :root[data-theme='dark'] .mode-switch,
+  :root[data-theme='dark'] .social-auth-button,
+  :root[data-theme='dark'] .profile-download,
+  :root[data-theme='dark'] .upload-photo-button,
+  :root[data-theme='dark'] .profile-field input,
+  :root[data-theme='dark'] .profile-field textarea,
+  :root[data-theme='dark'] .field-label input,
+  :root[data-theme='dark'] .field-label select,
+  :root[data-theme='dark'] .converter-options select,
+  :root[data-theme='dark'] .admin-search-wrap input,
+  :root[data-theme='dark'] .admin-filter-wrap select,
+  :root[data-theme='dark'] .plan-form-grid input,
+  :root[data-theme='dark'] .plan-form-grid select,
+  :root[data-theme='dark'] .plan-form-grid textarea,
+  :root[data-theme='dark'] .cron-form-grid input,
+  :root[data-theme='dark'] .cron-interval-field input,
+  :root[data-theme='dark'] .cron-interval-field select,
+  :root[data-theme='dark'] .admin-secondary-button,
+  :root[data-theme='dark'] .edit-plan-button,
+  :root[data-theme='dark'] .delete-plan-button,
+  :root[data-theme='dark'] .cron-actions button {
+    border-color: #3a4659;
+    color: #e5eaf2;
+    background-color: #111722;
+  }
+
+  :root[data-theme='dark'] .mode-tab.active,
+  :root[data-theme='dark'] .social-auth-button:hover,
+  :root[data-theme='dark'] .profile-download:hover,
+  :root[data-theme='dark'] .upload-photo-button:hover,
+  :root[data-theme='dark'] .dashboard-nav-link:hover,
+  :root[data-theme='dark'] .dashboard-destination:hover,
+  :root[data-theme='dark'] .mode-tab.active,
+  :root[data-theme='dark'] .writing-pad-tool-group button:hover,
+  :root[data-theme='dark'] .writing-pad-select-label select:hover,
+  :root[data-theme='dark'] .writing-pad-stickers button:hover,
+  :root[data-theme='dark'] .row-action:hover,
+  :root[data-theme='dark'] .cron-actions button:hover:not(:disabled) {
+    background-color: #263247;
+  }
+
+  :root[data-theme='dark'] .mode-tab,
+  :root[data-theme='dark'] .mode-tab.active,
+  :root[data-theme='dark'] .field-label,
+  :root[data-theme='dark'] .profile-field,
+  :root[data-theme='dark'] .profile-back-link,
+  :root[data-theme='dark'] .dashboard-nav-link,
+  :root[data-theme='dark'] .dashboard-account-link,
+  :root[data-theme='dark'] .dashboard-help h2,
+  :root[data-theme='dark'] .workspace-notice h2,
+  :root[data-theme='dark'] .pdf-pricing-card h2,
+  :root[data-theme='dark'] .pdf-plan-price strong,
+  :root[data-theme='dark'] .w3-brand-name,
+  :root[data-theme='dark'] .w3-brand-description,
+  :root[data-theme='dark'] .auth-divider,
+  :root[data-theme='dark'] .form-footer,
+  :root[data-theme='dark'] .security-note,
+  :root[data-theme='dark'] .pdf-plan-features li,
+  :root[data-theme='dark'] .payment-selected-plan,
+  :root[data-theme='dark'] .payment-selected-plan strong,
+  :root[data-theme='dark'] .editor-file-name,
+  :root[data-theme='dark'] .prime-pdf-page-controls > strong,
+  :root[data-theme='dark'] .compressor-dropzone h2,
+  :root[data-theme='dark'] .compressor-list-heading h2,
+  :root[data-theme='dark'] .compressor-file-info strong,
+  :root[data-theme='dark'] .converter-mode strong,
+  :root[data-theme='dark'] .converter-options > label,
+  :root[data-theme='dark'] .writing-pad-tool-group button,
+  :root[data-theme='dark'] .writing-pad-select-label select,
+  :root[data-theme='dark'] .writing-pad-footer,
+  :root[data-theme='dark'] .admin-page-heading h1,
+  :root[data-theme='dark'] .admin-panel-heading h2,
+  :root[data-theme='dark'] .users-panel-heading h2,
+  :root[data-theme='dark'] .admin-stat-value-row strong,
+  :root[data-theme='dark'] .admin-action-link strong,
+  :root[data-theme='dark'] .admin-activity-copy strong,
+  :root[data-theme='dark'] .admin-table td,
+  :root[data-theme='dark'] .table-user strong,
+  :root[data-theme='dark'] .plans-table td > strong,
+  :root[data-theme='dark'] .cron-job-info h3 {
+    color: #e5eaf2;
+  }
+
+  :root[data-theme='dark'] .dashboard-breadcrumb,
+  :root[data-theme='dark'] .dashboard-breadcrumb span,
+  :root[data-theme='dark'] .dashboard-welcome > p:last-child,
+  :root[data-theme='dark'] .dashboard-destination > p,
+  :root[data-theme='dark'] .dashboard-help p,
+  :root[data-theme='dark'] .workspace-notice p,
+  :root[data-theme='dark'] .profile-breadcrumb,
+  :root[data-theme='dark'] .profile-breadcrumb span,
+  :root[data-theme='dark'] .profile-section-heading p,
+  :root[data-theme='dark'] .profile-page-heading p:last-child,
+  :root[data-theme='dark'] .profile-storage-note,
+  :root[data-theme='dark'] .pdf-plan-description,
+  :root[data-theme='dark'] .pdf-plan-price span,
+  :root[data-theme='dark'] .pdf-plan-billing,
+  :root[data-theme='dark'] .payment-subtitle,
+  :root[data-theme='dark'] .editor-engine-status,
+  :root[data-theme='dark'] .editor-file-details,
+  :root[data-theme='dark'] .prime-pdf-file-meta,
+  :root[data-theme='dark'] .prime-pdf-loading,
+  :root[data-theme='dark'] .prime-pdf-disclaimer,
+  :root[data-theme='dark'] .compressor-dropzone > p,
+  :root[data-theme='dark'] .compressor-supported-types,
+  :root[data-theme='dark'] .compressor-list-heading p,
+  :root[data-theme='dark'] .compressor-file-info > span,
+  :root[data-theme='dark'] .compressor-item-status,
+  :root[data-theme='dark'] .compressor-privacy-note,
+  :root[data-theme='dark'] .converter-mode span,
+  :root[data-theme='dark'] .converter-quality,
+  :root[data-theme='dark'] .writing-pad-footer p,
+  :root[data-theme='dark'] .admin-breadcrumb,
+  :root[data-theme='dark'] .admin-topbar-user,
+  :root[data-theme='dark'] .admin-page-heading p:last-child,
+  :root[data-theme='dark'] .admin-stat > p,
+  :root[data-theme='dark'] .admin-stat-value-row span,
+  :root[data-theme='dark'] .admin-panel-heading p,
+  :root[data-theme='dark'] .users-panel-heading p,
+  :root[data-theme='dark'] .admin-activity-copy span,
+  :root[data-theme='dark'] .admin-empty-state,
+  :root[data-theme='dark'] .admin-action-link small,
+  :root[data-theme='dark'] .admin-data-note,
+  :root[data-theme='dark'] .plan-data-note,
+  :root[data-theme='dark'] .cron-job-info p {
+    color: #9aa7ba;
+  }
+
+  :root[data-theme='dark'] .dashboard-nav-link.active,
+  :root[data-theme='dark'] .dashboard-destination .destination-action,
+  :root[data-theme='dark'] .dashboard-help > a,
+  :root[data-theme='dark'] .workspace-notice a,
+  :root[data-theme='dark'] .pdf-plan-action,
+  :root[data-theme='dark'] .profile-back-link span,
+  :root[data-theme='dark'] .profile-save-button,
+  :root[data-theme='dark'] .admin-primary-link,
+  :root[data-theme='dark'] .admin-primary-button {
+    color: #dce8ff;
+  }
+
+  :root[data-theme='dark'] .dashboard-nav-link.active,
+  :root[data-theme='dark'] .destination-icon,
+  :root[data-theme='dark'] .pdf-plan-action,
+  :root[data-theme='dark'] .pdf-plan-action:hover,
+  :root[data-theme='dark'] .payment-checkout-button,
+  :root[data-theme='dark'] .editor-open-button.is-active,
+  :root[data-theme='dark'] .editor-save-button,
+  :root[data-theme='dark'] .admin-primary-link,
+  :root[data-theme='dark'] .admin-primary-button {
+    background-color: #244780;
+  }
+
+  :root[data-theme='dark'] .dashboard-nav-link.active,
+  :root[data-theme='dark'] .pdf-plan-action,
+  :root[data-theme='dark'] .payment-checkout-button,
+  :root[data-theme='dark'] .editor-open-button.is-active,
+  :root[data-theme='dark'] .editor-save-button,
+  :root[data-theme='dark'] .admin-primary-link,
+  :root[data-theme='dark'] .admin-primary-button {
+    color: #fff;
+  }
+
+  :root[data-theme='dark'] .dashboard-nav-link.active,
+  :root[data-theme='dark'] .pdf-plan-action,
+  :root[data-theme='dark'] .payment-checkout-button,
+  :root[data-theme='dark'] .editor-open-button.is-active,
+  :root[data-theme='dark'] .editor-save-button,
+  :root[data-theme='dark'] .admin-primary-link,
+  :root[data-theme='dark'] .admin-primary-button {
+    border-color: #355a91;
+  }
+
+  :root[data-theme='dark'] .pdf-plan-divider,
+  :root[data-theme='dark'] .users-toolbar,
+  :root[data-theme='dark'] .admin-table thead,
+  :root[data-theme='dark'] .compressor-quality,
+  :root[data-theme='dark'] .converter-options,
+  :root[data-theme='dark'] .writing-pad-stickers,
+  :root[data-theme='dark'] .writing-pad-footer,
+  :root[data-theme='dark'] .admin-close-button,
+  :root[data-theme='dark'] .cron-job-symbol,
+  :root[data-theme='dark'] .admin-demo-tag {
+    background-color: #202a39;
+  }
+
+  :root[data-theme='dark'] .admin-table thead,
+  :root[data-theme='dark'] .dashboard-nav-label,
+  :root[data-theme='dark'] .admin-table td,
+  :root[data-theme='dark'] .cron-job-info p,
+  :root[data-theme='dark'] .plan-form-grid label,
+  :root[data-theme='dark'] .cron-form-grid > label,
+  :root[data-theme='dark'] .cron-interval-field legend {
+    color: #b1bdce;
+  }
+
+  :root[data-theme='dark'] .admin-sidebar {
+    background-color: #151d2a;
+  }
+
+  :root[data-theme='dark'] .dashboard-sidebar,
+  :root[data-theme='dark'] .dashboard-header,
+  :root[data-theme='dark'] .admin-topbar {
+    border-color: #303b4c;
+  }
+
+  :root[data-theme='dark'] .document-editor-body,
+  :root[data-theme='dark'] .prime-pdf-workspace {
+    background: #121a27;
+  }
+
+  :root[data-theme='dark'] .prime-pdf-page,
+  :root[data-theme='dark'] .prime-pdf-text-layer span.prime-pdf-text-editing,
+  :root[data-theme='dark'] .prime-pdf-text-layer span.prime-pdf-text-edited,
+  :root[data-theme='dark'] .writing-pad-editor,
+  :root[data-theme='dark'] .writing-signature-canvas {
+    color: #202a3a;
+    background: #fff;
+  }
+
+  :root[data-theme='dark'] .prime-pdf-page-controls,
+  :root[data-theme='dark'] .prime-pdf-merge-list,
+  :root[data-theme='dark'] .prime-pdf-merge-list > span,
+  :root[data-theme='dark'] .prime-pdf-notice,
+  :root[data-theme='dark'] .compressor-quality,
+  :root[data-theme='dark'] .converter-options,
+  :root[data-theme='dark'] .writing-pad-stickers,
+  :root[data-theme='dark'] .writing-pad-footer {
+    border-color: #303b4c;
+  }
+
+  :root[data-theme='dark'] .prime-pdf-merge-list,
+  :root[data-theme='dark'] .prime-pdf-notice,
+  :root[data-theme='dark'] .compressor-quality,
+  :root[data-theme='dark'] .converter-options,
+  :root[data-theme='dark'] .writing-pad-stickers,
+  :root[data-theme='dark'] .writing-pad-footer {
+    color: #c3cede;
+  }
+
+  :root[data-theme='dark'] .writing-pad-editor h1,
+  :root[data-theme='dark'] .writing-pad-editor h2,
+  :root[data-theme='dark'] .writing-pad-editor h3,
+  :root[data-theme='dark'] .writing-pad-editor blockquote {
+    color: #202a3a;
+  }
+
+  :root[data-theme='dark'] .story-copy h1,
+  :root[data-theme='dark'] .story-description,
+  :root[data-theme='dark'] .story-footer,
+  :root[data-theme='dark'] .story-index,
+  :root[data-theme='dark'] .story-panel .eyebrow {
+    color: #fff;
+  }
+
+  @media print {
+    .theme-toggle {
+      display: none;
+    }
+  }
+
+@media (max-width: 640px) {
   .profile-main {
     width: min(100% - 32px, 520px);
     padding-top: 32px;

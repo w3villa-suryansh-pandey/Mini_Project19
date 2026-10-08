@@ -16,10 +16,25 @@
   --paper: #fff;
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  background: #111722;
+  --ink: #e5eaf2;
+  --muted: #9aa7ba;
+  --line: #303b4c;
+  --paper: #151b26;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: #f8faff;
+}
+
+:root[data-theme='dark'] body {
+  color: #e5eaf2;
+  background: #111722;
 }
 
 #root {
