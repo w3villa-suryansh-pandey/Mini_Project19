@@ -18,8 +18,8 @@
   padding: 0;
   border: 1px solid #dce3ee;
   border-radius: 50%;
-  color: #34445e;
-  background: #fff;
+  color: #4e3fd3;
+  background: #773232;
   box-shadow: 0 2px 10px rgb(32 42 55 / 10%);
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
