@@ -30,7 +30,7 @@ module.exports = Object.freeze({
 	authTokenSecret: process.env.AUTH_TOKEN_SECRET || '',
 	smtpHost: process.env.SMTP_HOST || '',
 	smtpPort: Number.parseInt(process.env.SMTP_PORT, 10) || 587,
-	smtpSecure: process.env.SMTP_SECURE || '' ,
+	smtpSecure,
 	smtpUser: process.env.SMTP_USER || '',
 	smtpPass: process.env.SMTP_PASS || '',
 	smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || '',
