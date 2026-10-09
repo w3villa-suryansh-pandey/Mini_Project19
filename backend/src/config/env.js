@@ -12,7 +12,16 @@ const allowedClientOrigins = [...new Set([
 	googleFrontendUrl,
 ].filter(Boolean).map((origin) => new URL(origin).origin))]
 const frontendUrl = process.env.FRONTEND_URL || (nodeEnv === 'production' ? googleFrontendUrl : clientOrigins[0] || 'http://localhost:5173')
-const smtpSecure = (process.env.SMTP_SECURE || '').toLowerCase() === 'true'
+const smtpSecureValue = (process.env.SMTP_SECURE || '').trim().toLowerCase()
+if (smtpSecureValue && smtpSecureValue !== 'true' && smtpSecureValue !== 'false') {
+	throw new Error('SMTP_SECURE must be either "true" or "false".')
+}
+const smtpSecure = smtpSecureValue === 'true'
+const smtpPortValue = (process.env.SMTP_PORT || '').trim()
+const smtpPort = smtpPortValue ? Number(smtpPortValue) : 587
+if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+	throw new Error('SMTP_PORT must be an integer between 1 and 65535.')
+}
 
 module.exports = Object.freeze({
 	port: Number.parseInt(process.env.PORT, 10) || 5000,
@@ -29,7 +38,7 @@ module.exports = Object.freeze({
 	facebookFrontendUrl: process.env.FACEBOOK_FRONTEND_URL || process.env.FRONTEND_URL || 'https://mini-project19.vercel.app/',
 	authTokenSecret: process.env.AUTH_TOKEN_SECRET || '',
 	smtpHost: process.env.SMTP_HOST || '',
-	smtpPort: Number.parseInt(process.env.SMTP_PORT, 10) || 587,
+	smtpPort,
 	smtpSecure,
 	smtpUser: process.env.SMTP_USER || '',
 	smtpPass: process.env.SMTP_PASS || '',

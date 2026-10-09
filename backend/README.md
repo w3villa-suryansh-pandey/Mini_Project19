@@ -16,7 +16,7 @@ Facebook sign-in requires a Facebook app with Facebook Login enabled. Set `FACEB
 
 Create an admin from the backend directory with `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` set in the environment, then run `npm run create-admin`. If the email already belongs to a user, the script promotes that account without changing its password. For a new account, the password must be 8 to 72 characters and is stored as a bcrypt hash.
 
-Email/password signup requires email verification before sign-in. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in `.env` for delivery; `SMTP_FROM` defaults to `SMTP_USER`. Verification links expire after 24 hours. Users can request another link from the sign-in page.
+Email/password signup requires email verification before sign-in. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in `.env` or the deployment environment for delivery; `SMTP_FROM` defaults to `SMTP_USER`. `SMTP_SECURE` must be `true` or `false`; use `false` with port `587` (STARTTLS) or `true` with port `465` (implicit TLS). Verification links expire after 24 hours. Users can request another link from the sign-in page.
 
 ### Razorpay PDF passes
 
