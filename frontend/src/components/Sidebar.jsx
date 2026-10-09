@@ -1,15 +1,15 @@
+import { useState } from 'react'
 import { signOut } from '../services/api.js'
 import logo from '../assets/logo.png'
 
 const navigationItems = [
 	{ label: 'Overview', href: '/dashboard', icon: 'overview' },
-	{ label: 'My profile', href: '/profile', icon: 'profile' },
-	{ label: 'Pricing plans', href: '/pricing', icon: 'plans' },
-	{ label: 'PDF editor', href: '/editor', icon: 'editor' },
-	{ label: 'Compress files', href: '/compressor', icon: 'compressor' },
-	{ label: 'Convert files', href: '/converter', icon: 'converter' },
-	{ label: 'Writing pad', href: '/writing-pad', icon: 'writing-pad' },
-	{ label: 'Payments', href: '/payment', icon: 'payments' },
+	{ label: 'PDF Editor', href: '/editor', icon: 'editor' },
+	{ label: 'Writing Pad', href: '/writing-pad', icon: 'writing-pad' },
+	{ label: 'Converter', href: '/converter', icon: 'converter' },
+	{ label: 'Compressor', href: '/compressor', icon: 'compressor' },
+	{ label: 'Pricing', href: '/pricing', icon: 'plans' },
+	{ label: 'Account', href: '/profile', icon: 'profile' },
 ]
 
 function NavIcon({ name }) {
@@ -31,26 +31,35 @@ function NavIcon({ name }) {
 	)
 }
 
-function Sidebar({ active = 'overview' }) {
+function Sidebar({ active = '/dashboard' }) {
+	const [isCollapsed, setIsCollapsed] = useState(false)
+	const path = typeof window !== 'undefined' ? window.location.pathname : active
+	const activePath = navigationItems.some((item) => item.href === path) ? path : active
+
 	async function handleSignOut() {
 		await signOut().catch(() => undefined)
 		window.location.assign('/')
 	}
 
 	return (
-		<aside className="dashboard-sidebar">
-			<a className="dashboard-brand" href="/dashboard" aria-label="S19 dashboard">
-				<img className="dashboard-brand-mark" src={logo} alt="" />
-				<span>19</span>
-			</a>
+		<aside className={isCollapsed ? 'dashboard-sidebar is-collapsed' : 'dashboard-sidebar'}>
+			<div className="dashboard-sidebar-header">
+				<a className="dashboard-brand" href="/dashboard" aria-label="S19 dashboard">
+					<img className="dashboard-brand-mark" src={logo} alt="" />
+					<span>S19</span>
+				</a>
+				<button type="button" className="dashboard-sidebar-toggle" onClick={() => setIsCollapsed((value) => !value)} aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+					{isCollapsed ? '→' : '←'}
+				</button>
+			</div>
 			<div className="dashboard-nav-label">WORKSPACE</div>
 			<nav className="dashboard-nav" aria-label="Dashboard navigation">
 				{navigationItems.map((item) => (
 					<a
-						className={active === item.icon ? 'dashboard-nav-link active' : 'dashboard-nav-link'}
+						className={activePath === item.href ? 'dashboard-nav-link active' : 'dashboard-nav-link'}
 						href={item.href}
-						key={item.icon}
-						aria-current={active === item.icon ? 'page' : undefined}
+						key={item.label}
+						aria-current={activePath === item.href ? 'page' : undefined}
 					>
 						<NavIcon name={item.icon} />
 						<span>{item.label}</span>
