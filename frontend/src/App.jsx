@@ -211,7 +211,7 @@ function App() {
         <a className="w3-brand" href="/" aria-label="S19 home">
           <span className="w3-brand-wordmark">
             <img className="w3-brand-mark" src={logo} alt="" />
-            <span className="w3-brand-name">19</span>
+            <span className="w3-brand-name">S19</span>
           </span>
           <span className="w3-brand-description">PDF or document editor</span>
         </a>
@@ -363,7 +363,7 @@ function App() {
         </div>
         <footer className="form-footer">
           <span>© 2026 S19</span>
-          <a href="mailto:hello@w3villa.example">Need help?</a>
+          <a href="mailto:hello@s19.example">Need help?</a>
         </footer>
       </section>
     </main>

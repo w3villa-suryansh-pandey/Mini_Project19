@@ -108,10 +108,10 @@ async function downloadProfile(req, res) {
 	const pdf = new PDFDocument({ size: 'A4', margin: 56 })
 	res.set({
 		'Content-Type': 'application/pdf',
-		'Content-Disposition': 'attachment; filename="w3villa-profile.pdf"',
+		'Content-Disposition': 'attachment; filename="s19-profile.pdf"',
 	})
 	pdf.pipe(res)
-	pdf.fontSize(24).fillColor('#173c32').text('W3Villa Profile')
+	pdf.fontSize(24).fillColor('#173c32').text('S19 Profile')
 	pdf.moveDown(0.4)
 	pdf.fontSize(10).fillColor('#68756f').text('Personal account details')
 	pdf.moveDown(1.5)

@@ -8,12 +8,23 @@ const {
 	smtpPass,
 	smtpFrom,
 } = require('../config/env')
-const EMAIL_CONFIGURATION_MESSAGE = 'Outgoing email is not configured. Add SMTP_HOST, SMTP_FROM, and your provider credentials if required to backend/.env, then restart the backend.'
+const EMAIL_CONFIGURATION_MESSAGE = 'Outgoing email is not configured. Set SMTP_HOST and SMTP_FROM in backend/.env, use valid SMTP_USER and SMTP_PASS credentials (a Gmail app password if using Gmail), then restart the backend.'
+
+function isPlaceholder(value) {
+	return /your[-_ ]|placeholder|example\.com|change.?me/i.test(value)
+}
 
 function getEmailConfig() {
 	const from = smtpFrom || smtpUser
 
-	if (!smtpHost || !from || Boolean(smtpUser) !== Boolean(smtpPass)) {
+	if (
+		!smtpHost
+		|| !from
+		|| Boolean(smtpUser) !== Boolean(smtpPass)
+		|| isPlaceholder(smtpUser)
+		|| isPlaceholder(smtpPass)
+		|| isPlaceholder(from)
+	) {
 		return null
 	}
 
@@ -63,9 +74,9 @@ async function sendVerificationEmail({ email, name, token }) {
 		await transporter.sendMail({
 			from: config.from,
 			to: email,
-			subject: 'Verify your W3Villa email address',
+			subject: 'Verify your S19 email address',
 			text: `Hi ${name}, verify your email address by visiting: ${verificationUrl.href}`,
-			html: `<p>Hi ${safeName},</p><p>Confirm your email address to finish creating your W3Villa account.</p><p><a href="${verificationUrl.href}">Verify email address</a></p><p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>`,
+			html: `<p>Hi ${safeName},</p><p>Confirm your email address to finish creating your S19 account.</p><p><a href="${verificationUrl.href}">Verify email address</a></p><p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>`,
 		})
 	} catch (error) {
 		console.error('Verification email delivery failed', {
