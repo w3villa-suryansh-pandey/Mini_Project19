@@ -8809,3 +8809,143 @@ body {
 :root[data-theme='dark'] .profile-field textarea {
   background: #111722;
 }
+
+:root[data-theme='dark'] .landing-page {
+  color: var(--ink);
+  background: var(--background);
+}
+
+:root[data-theme='dark'] .landing-header,
+:root[data-theme='dark'] .landing-tools-strip {
+  border-color: var(--line);
+  background: #111722;
+}
+
+:root[data-theme='dark'] .landing-secondary-button,
+:root[data-theme='dark'] .landing-step-badge,
+:root[data-theme='dark'] .landing-about-mark {
+  border-color: #3a4659;
+  color: #c7d2fe;
+  background: #263247;
+}
+
+:root[data-theme='dark'] .landing-workflow-step,
+:root[data-theme='dark'] .landing-benefit-card,
+:root[data-theme='dark'] .landing-price-card {
+  border-color: #303b4c;
+  color: var(--ink);
+  background: #1a2230;
+}
+
+:root[data-theme='dark'] .landing-price-card.featured {
+  border-color: #355a91;
+  background: #1d2b41;
+}
+
+:root[data-theme='dark'] .landing-feature-card,
+:root[data-theme='dark'] .landing-about,
+:root[data-theme='dark'] .landing-float-note {
+  border-color: var(--line);
+  color: var(--ink);
+  background: #1a2230;
+}
+
+:root[data-theme='dark'] .landing-section-heading h2,
+:root[data-theme='dark'] .landing-about h2,
+:root[data-theme='dark'] .landing-cta h2,
+:root[data-theme='dark'] .landing-feature-card h3,
+:root[data-theme='dark'] .landing-hero h1,
+:root[data-theme='dark'] .landing-nav a,
+:root[data-theme='dark'] .landing-login-link,
+:root[data-theme='dark'] .landing-float-note {
+  color: var(--ink);
+}
+
+:root[data-theme='dark'] .landing-section-heading > p,
+:root[data-theme='dark'] .landing-feature-card p,
+:root[data-theme='dark'] .landing-workflow-step p,
+:root[data-theme='dark'] .landing-benefit-card p,
+:root[data-theme='dark'] .landing-price-card .landing-price-detail,
+:root[data-theme='dark'] .landing-price-card .landing-price-name,
+:root[data-theme='dark'] .landing-hero-description,
+:root[data-theme='dark'] .landing-secondary-button,
+:root[data-theme='dark'] .landing-tools-strip strong,
+:root[data-theme='dark'] .landing-tools-strip > span,
+:root[data-theme='dark'] .landing-float-note span {
+  color: var(--muted);
+}
+
+:root[data-theme='dark'] .landing-feature-icon,
+:root[data-theme='dark'] .landing-trust-note span {
+  background: #263247;
+}
+
+:root[data-theme='dark'] .landing-visual::before,
+:root[data-theme='dark'] .landing-visual::after {
+  border-color: #29364a;
+}
+
+:root[data-theme='dark'] .landing-visual-glow {
+  background: #1d2c45;
+}
+
+:root[data-theme='dark'] .landing-auth-notice {
+  border-color: #704440;
+  color: #ffd2cb;
+  background: #382523;
+}
+
+:root[data-theme='dark'] .dashboard-action-card,
+:root[data-theme='dark'] .dashboard-action-card.accent-indigo,
+:root[data-theme='dark'] .dashboard-action-card.accent-violet,
+:root[data-theme='dark'] .dashboard-action-card.accent-blue,
+:root[data-theme='dark'] .dashboard-action-card.accent-pink,
+:root[data-theme='dark'] .dashboard-action-card.accent-cyan,
+:root[data-theme='dark'] .dashboard-action-card.accent-orange,
+:root[data-theme='dark'] .dashboard-action-card.accent-emerald {
+  border-color: #303b4c;
+  color: var(--ink);
+  background: #202a39;
+}
+
+:root[data-theme='dark'] .image-tool-card,
+:root[data-theme='dark'] .image-tool-workspace,
+:root[data-theme='dark'] .image-preview-panel {
+  border-color: #303b4c;
+  color: var(--ink);
+  background: #171f2c;
+}
+
+:root[data-theme='dark'] .image-tool-card h2,
+:root[data-theme='dark'] .image-tool-card ul,
+:root[data-theme='dark'] .image-preview-panel h3,
+:root[data-theme='dark'] .image-tool-language {
+  color: var(--ink);
+}
+
+:root[data-theme='dark'] .image-tool-card p,
+:root[data-theme='dark'] .image-preview-empty {
+  color: var(--muted);
+}
+
+:root[data-theme='dark'] .image-tool-language select,
+:root[data-theme='dark'] .image-tool-secondary,
+:root[data-theme='dark'] .image-tool-text-result textarea {
+  border-color: #3a4659;
+  color: var(--ink);
+  background: #111722;
+}
+
+:root[data-theme='dark'] .image-tool-text-result textarea::placeholder {
+  color: var(--muted);
+}
+
+:root[data-theme='dark'] .image-preview-transparent {
+  background-color: #171f2c;
+  background-image: conic-gradient(#29364a 25%, transparent 0 50%, #29364a 0 75%, transparent 0);
+}
+
+:root[data-theme='dark'] .image-preview-transparent h3 {
+  color: var(--ink);
+  background: #171f2c;
+}
