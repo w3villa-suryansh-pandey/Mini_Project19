@@ -218,6 +218,9 @@ function PdfPage({
 					left,
 					top,
 					text: text.trim(),
+					selectOnFocus: activeToolRef.current === 'text',
+					width: 180 / PAGE_SCALE,
+					height: 36 / PAGE_SCALE,
 					fontSize: activeToolRef.current === 'signature' ? 18 : 12,
 					color: '#171c19',
 					fontFamily: activeToolRef.current === 'signature' ? 'Times Italic' : 'Arial',
@@ -332,7 +335,19 @@ function PdfPage({
 					value={item.text}
 					placeholder="Type text"
 					onChange={(event) => onTextEdit({ ...item, text: event.target.value })}
-					style={{ left: item.left, top: item.top, fontSize: `${item.fontSize * PAGE_SCALE}px` }}
+					onFocus={(event) => {
+						if (!item.selectOnFocus) return
+						event.currentTarget.select()
+						onTextEdit({ ...item, selectOnFocus: false })
+					}}
+					autoFocus
+					style={{
+						left: item.left,
+						top: item.top,
+						width: `${item.width * PAGE_SCALE}px`,
+						minHeight: `${item.height * PAGE_SCALE}px`,
+						fontSize: `${item.fontSize * PAGE_SCALE}px`,
+					}}
 				/>
 			))}
 			{pageError && <p className="prime-pdf-page-error" role="alert">{pageError}</p>}
@@ -509,7 +524,15 @@ function PrimePdfEditor() {
 		}
 		if (edit.id) {
 			const nextAddedTexts = addedTextsRef.current.map((item) => item.id === edit.id ? edit : item)
-			recordChange(editsRef.current, nextAddedTexts)
+			addedTextsRef.current = nextAddedTexts
+			setAddedTexts(nextAddedTexts)
+			const history = [...historyRef.current]
+			history[historyIndexRef.current] = {
+				...history[historyIndexRef.current],
+				addedTexts: nextAddedTexts,
+			}
+			historyRef.current = history
+			setIsSaved(false)
 			return
 		}
 
@@ -644,6 +667,7 @@ function PrimePdfEditor() {
 		function handleHistoryShortcut(event) {
 			if (!(event.ctrlKey || event.metaKey)) return
 			if (!event.target.closest?.('.prime-pdf-workspace')) return
+			if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return
 			const key = event.key.toLowerCase()
 			if (key !== 'z' && !(key === 'y' && !event.metaKey)) return
 			event.preventDefault()
@@ -775,7 +799,7 @@ function PrimePdfEditor() {
 					: fontSize
 				page.drawText(edit.replacementText, {
 					x: edit.x,
-					y: edit.y - font.descentAtSize(fittedSize),
+					y: edit.y + edit.height - font.heightAtSize(fittedSize, { descender: false }),
 					size: fittedSize,
 					font,
 					color: parseColor(edit.color, rgb),
@@ -793,11 +817,11 @@ function PrimePdfEditor() {
 			const font = fonts.get(fontName)
 			page.drawText(textItem.text, {
 				x: textItem.x,
-				y: textItem.y - font.descentAtSize(textItem.fontSize),
+				y: textItem.y - font.heightAtSize(textItem.fontSize, { descender: false }),
 				size: textItem.fontSize,
 				font,
 				color: parseColor(textItem.color, rgb),
-				maxWidth: Math.max(page.getWidth() - textItem.x, 1),
+				maxWidth: Math.max(Math.min(textItem.width, page.getWidth() - textItem.x), 1),
 			})
 		}
 
