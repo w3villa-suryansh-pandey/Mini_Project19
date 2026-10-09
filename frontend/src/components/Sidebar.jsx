@@ -6,6 +6,7 @@ const navigationItems = [
 	{ label: 'Overview', href: '/dashboard', icon: 'overview' },
 	{ label: 'PDF Editor', href: '/editor', icon: 'editor' },
 	{ label: 'Writing Pad', href: '/writing-pad', icon: 'writing-pad' },
+	{ label: 'Image Tools', href: '/image-tools', icon: 'image' },
 	{ label: 'Converter', href: '/converter', icon: 'converter' },
 	{ label: 'Compressor', href: '/compressor', icon: 'compressor' },
 	{ label: 'Pricing', href: '/pricing', icon: 'plans' },
@@ -21,6 +22,7 @@ function NavIcon({ name }) {
 		compressor: <><path d="M12 3v12m0-12L8 7m4-4 4 4M5 14v6h14v-6M9 17h6" /></>,
 		converter: <><path d="M4 7h15l-3-3m4 13H5l3 3M4 7l3-3m13 13-3 3" /></>,
 		'writing-pad': <><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /><path d="m17 16 3 3" /></>,
+		image: <><rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="2.2" /><path d="M20 15l-4.2-4.2a1.6 1.6 0 0 0-2.2 0L9 16l-1.8-1.8a1.6 1.6 0 0 0-2.2 0L4 16" /></>,
 		payments: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18m-14 5h4" /></>,
 	}
 

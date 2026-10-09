@@ -35,6 +35,14 @@ const actions = [
 		icon: 'compress',
 		keywords: 'compress reduce image pdf size',
 	},
+	{
+		label: 'Image tools',
+		description: 'Create a passport photo or remove a background in seconds.',
+		href: '/image-tools',
+		accent: 'blue',
+		icon: 'image',
+		keywords: 'image passport photo background remover editor',
+	},
 ]
 
 function ActionIcon({ type }) {
@@ -43,6 +51,7 @@ function ActionIcon({ type }) {
 		write: <><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /><path d="m17 16 3 3" /></>,
 		convert: <><path d="M4 7h15l-3-3m4 13H5l3 3M4 7l3-3m13 13-3 3" /></>,
 		compress: <><path d="M12 3v12m0-12L8 7m4-4 4 4M5 14v6h14v-6M9 17h6" /></>,
+		image: <><rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="2.2" /><path d="M20 15l-4.2-4.2a1.6 1.6 0 0 0-2.2 0L9 16l-1.8-1.8a1.6 1.6 0 0 0-2.2 0L4 16" /></>,
 	}
 
 	return (
