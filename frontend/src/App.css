@@ -1824,6 +1824,66 @@
   gap: 8px;
 }
 
+.prime-pdf-toolbar {
+  flex: 1 1 100%;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.prime-pdf-tool-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid #e4e8e5;
+  border-radius: 5px;
+  background: #fafbfa;
+}
+
+.prime-pdf-tool-group-label {
+  flex: 1 0 100%;
+  color: #849089;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.45px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.prime-pdf-export-tools {
+  margin-left: auto;
+}
+
+.prime-pdf-access-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e8dfcb;
+  color: #745b35;
+  background: #fbf8f0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.prime-pdf-access-notice.is-error {
+  border-color: #f0d4ce;
+  color: #8a3d31;
+  background: #fff8f6;
+}
+
+.prime-pdf-access-notice a {
+  color: #324d72;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
 .editor-file-input {
   position: absolute;
   width: 1px;
@@ -3032,6 +3092,14 @@
   .editor-toolbar-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .prime-pdf-tool-group {
+    flex: 1 1 auto;
+  }
+
+  .prime-pdf-export-tools {
+    margin-left: 0;
   }
 
   .document-editor-body {
@@ -4729,7 +4797,9 @@
   :root[data-theme='dark'] .pdf-pricing-card,
   :root[data-theme='dark'] .document-editor-shell,
   :root[data-theme='dark'] .document-editor-toolbar,
+  :root[data-theme='dark'] .prime-pdf-tool-group,
   :root[data-theme='dark'] .prime-pdf-page-controls,
+  :root[data-theme='dark'] .prime-pdf-access-notice,
   :root[data-theme='dark'] .editor-empty-state,
   :root[data-theme='dark'] .compressor-panel,
   :root[data-theme='dark'] .compressor-file-row,
@@ -4985,6 +5055,7 @@
     background: #fff;
   }
 
+  :root[data-theme='dark'] .prime-pdf-tool-group,
   :root[data-theme='dark'] .prime-pdf-page-controls,
   :root[data-theme='dark'] .prime-pdf-merge-list,
   :root[data-theme='dark'] .prime-pdf-merge-list > span,
@@ -4994,6 +5065,22 @@
   :root[data-theme='dark'] .writing-pad-stickers,
   :root[data-theme='dark'] .writing-pad-footer {
     border-color: #303b4c;
+  }
+
+  :root[data-theme='dark'] .prime-pdf-access-notice {
+    border-color: #544a34;
+    color: #e2c88f;
+    background: #2d2a21;
+  }
+
+  :root[data-theme='dark'] .prime-pdf-access-notice.is-error {
+    border-color: #63433f;
+    color: #ffc6bb;
+    background: #302322;
+  }
+
+  :root[data-theme='dark'] .prime-pdf-tool-group-label {
+    color: #9aa7ba;
   }
 
   :root[data-theme='dark'] .prime-pdf-merge-list,

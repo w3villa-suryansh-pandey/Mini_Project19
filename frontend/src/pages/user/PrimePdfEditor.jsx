@@ -364,6 +364,7 @@ function PrimePdfEditor() {
 	const [isSaving, setIsSaving] = useState(false)
 	const [subscriptionActive, setSubscriptionActive] = useState(false)
 	const [subscriptionChecked, setSubscriptionChecked] = useState(false)
+	const [subscriptionError, setSubscriptionError] = useState(false)
 	const [canUndo, setCanUndo] = useState(false)
 	const [canRedo, setCanRedo] = useState(false)
 	const [isSaved, setIsSaved] = useState(true)
@@ -379,18 +380,37 @@ function PrimePdfEditor() {
 
 	useEffect(() => {
 		let isCurrent = true
-		getUserSubscription()
+		getUserSubscription({ refresh: true })
 			.then(({ subscription }) => {
-				if (isCurrent) setSubscriptionActive(subscription.active)
+				if (!isCurrent) return
+				setSubscriptionActive(subscription.active)
+				setSubscriptionError(false)
 			})
 			.catch((error) => {
-				if (isCurrent) setNotice(error.message)
+				if (!isCurrent) return
+				setSubscriptionError(true)
+				setNotice(error.message || 'Could not check your PDF editing pass.')
 			})
 			.finally(() => {
 				if (isCurrent) setSubscriptionChecked(true)
 			})
 		return () => { isCurrent = false }
 	}, [])
+
+	async function refreshSubscription() {
+		setSubscriptionChecked(false)
+		setSubscriptionError(false)
+		try {
+			const { subscription } = await getUserSubscription({ refresh: true })
+			setSubscriptionActive(subscription.active)
+			setNotice('')
+		} catch (error) {
+			setSubscriptionError(true)
+			setNotice(error.message || 'Could not check your PDF editing pass.')
+		} finally {
+			setSubscriptionChecked(true)
+		}
+	}
 
 	useEffect(() => {
 		if (!file) return undefined
@@ -1041,7 +1061,7 @@ function PrimePdfEditor() {
 									{pdfDocument && <span className="prime-pdf-file-meta">{pageCount} pages · {isSaved ? 'Saved' : 'Unsaved changes'}</span>}
 								</div>
 							</div>
-							<div className="editor-toolbar-actions">
+							<div className="editor-toolbar-actions prime-pdf-toolbar">
 								<input
 									ref={fileInputRef}
 									className="editor-file-input"
@@ -1068,13 +1088,21 @@ function PrimePdfEditor() {
 									onChange={handleImageChange}
 									aria-label="Choose a PNG or JPEG image to add"
 								/>
-								<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isLoading || isSaving}>
-									{isLoading ? 'Opening document…' : 'Open PDF / DOCX'}
-								</button>
+								<div className="prime-pdf-tool-group" role="group" aria-label="File">
+									<span className="prime-pdf-tool-group-label">File</span>
+									<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isLoading || isSaving}>
+										{isLoading ? 'Opening document…' : 'Open PDF / DOCX'}
+									</button>
+								</div>
 								{pdfDocument && (
 									<>
-										<button className="editor-open-button" type="button" onClick={undoEdit} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">Undo</button>
-										<button className="editor-open-button" type="button" onClick={redoEdit} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)">Redo</button>
+										<div className="prime-pdf-tool-group" role="group" aria-label="History">
+											<span className="prime-pdf-tool-group-label">History</span>
+											<button className="editor-open-button" type="button" onClick={undoEdit} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">Undo</button>
+											<button className="editor-open-button" type="button" onClick={redoEdit} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)">Redo</button>
+										</div>
+										<div className="prime-pdf-tool-group prime-pdf-annotation-tools" role="group" aria-label="Add and annotate">
+											<span className="prime-pdf-tool-group-label">Add & annotate</span>
 										{[
 											['text', 'Add text', 'Click a page to add text.'],
 											['highlight', 'Highlight', 'Drag over a page to highlight an area.'],
@@ -1098,43 +1126,54 @@ function PrimePdfEditor() {
 										<button className="editor-open-button" type="button" onClick={() => imageInputRef.current?.click()}>
 											Add image
 										</button>
-										<button className="editor-open-button" type="button" onClick={() => mergeInputRef.current?.click()}>
-											Merge PDFs
-										</button>
-										<label className="prime-pdf-split-control">
-											Split pages
-											<input
-												type="text"
-												value={splitRange}
-												onChange={(event) => setSplitRange(event.target.value)}
-												placeholder="1-3,5"
-												aria-label="Page range to split"
-											/>
-											<button className="editor-open-button" type="button" onClick={splitPdf} disabled={isSaving}>
-												Split
+										</div>
+										<div className="prime-pdf-tool-group" role="group" aria-label="Organize pages and files">
+											<span className="prime-pdf-tool-group-label">Organize</span>
+											<button className="editor-open-button" type="button" onClick={() => mergeInputRef.current?.click()}>
+												Merge PDFs
 											</button>
-										</label>
-										<button
-											className="editor-open-button"
-											type="button"
-											onClick={() => setNotice('Standard PDF password protection is unavailable in the license-free PDF library. No password has been applied.')}
-											title="Standard PDF encryption requires a PDF library that supports password protection."
-										>
-											Password protection
-										</button>
+											<div className="prime-pdf-split-control">
+												<label htmlFor="prime-pdf-split-range">Split pages</label>
+												<input
+													id="prime-pdf-split-range"
+													type="text"
+													value={splitRange}
+													onChange={(event) => setSplitRange(event.target.value)}
+													placeholder="1-3,5"
+													aria-label="Page range to split"
+												/>
+												<button className="editor-open-button" type="button" onClick={splitPdf} disabled={!subscriptionChecked || !subscriptionActive || isSaving}>
+													Split
+												</button>
+											</div>
 										<button className="editor-open-button" type="button" onClick={discardEdits} disabled={!editCount}>
 											Discard edits
 										</button>
+										</div>
+										<div className="prime-pdf-tool-group prime-pdf-export-tools" role="group" aria-label="Save and export">
+										<span className="prime-pdf-tool-group-label">Save & export</span>
 										<button className="editor-open-button" type="button" onClick={savePdf} disabled={!editCount || !subscriptionChecked || !subscriptionActive || isSaving}>
 											{isSaving ? 'Saving PDF…' : 'Save PDF'}
 										</button>
 										<button className="editor-open-button editor-save-button" type="button" onClick={downloadEditedPdf} disabled={!subscriptionChecked || !subscriptionActive || isSaving}>
 											{isSaving ? 'Preparing PDF…' : 'Download PDF'}
 										</button>
+										</div>
 									</>
 								)}
 							</div>
 						</div>
+
+						{subscriptionChecked && !subscriptionActive && (
+							<div className={`prime-pdf-access-notice${subscriptionError ? ' is-error' : ''}`} role={subscriptionError ? 'alert' : 'status'}>
+								<span>{subscriptionError
+									? 'Could not verify your PDF editing pass. Saving, merging, and splitting are unavailable until access is checked.'
+									: 'An active PDF editing pass is required to save, merge, or split PDFs.'}</span>
+								{subscriptionError
+									? <button className="editor-open-button" type="button" onClick={refreshSubscription}>Retry check</button>
+									: <a href="/pricing">View PDF plans</a>}
+							</div>
+						)}
 
 						{mergeFiles.length > 0 && (
 							<div className="prime-pdf-merge-list">
@@ -1145,7 +1184,7 @@ function PrimePdfEditor() {
 										<button type="button" onClick={() => setMergeFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))} aria-label={`Remove ${mergeFile.name}`}>×</button>
 									</span>
 								))}
-								<button className="editor-open-button editor-save-button" type="button" onClick={mergePdfs} disabled={isSaving}>
+								<button className="editor-open-button editor-save-button" type="button" onClick={mergePdfs} disabled={!subscriptionChecked || !subscriptionActive || isSaving}>
 									{isSaving ? 'Merging…' : 'Merge and download'}
 								</button>
 							</div>
@@ -1201,10 +1240,13 @@ function PrimePdfEditor() {
 								: editCount
 									? `${editCount} unsaved change${editCount === 1 ? '' : 's'} · use the page controls, annotation tools, Undo / Redo, and Save / Download.`
 									: 'Select PDF text to replace it. Use the toolbar to annotate, insert an image/signature/comment, or manage pages.'
-							: subscriptionActive
-								? 'Edits are processed in your browser; PDFs are not uploaded to the server.'
-								: 'An active editing pass is required to download edited PDFs.'}</p>
-						{!subscriptionActive && <a href="/pricing">View PDF plans <span aria-hidden="true">→</span></a>}
+							: subscriptionError
+								? 'Could not verify your PDF editing pass. Retry the check above.'
+								: subscriptionActive
+									? 'Edits are processed in your browser; PDFs are not uploaded to the server.'
+									: subscriptionChecked
+										? 'An active editing pass is required to download edited PDFs.'
+										: 'Checking PDF editing access…'}</p>
 					</div>
 					<p className="prime-pdf-disclaimer">DOCX conversion creates a visual, image-based PDF, so its source text is not editable as PDF text. Comments and marks are flattened into the exported page, and text replacement uses a white cover rather than securely removing source text. Standard PDF password encryption is not available in the license-free PDF library.</p>
 				</div>

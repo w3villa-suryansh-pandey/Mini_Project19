@@ -22,7 +22,7 @@ function DocumentEditor() {
 
 	useEffect(() => {
 		let isCurrent = true
-		getUserSubscription()
+		getUserSubscription({ refresh: true })
 			.then(({ subscription }) => {
 				if (!isCurrent) return
 				setSubscriptionStatus(subscription.active ? 'active' : 'inactive')

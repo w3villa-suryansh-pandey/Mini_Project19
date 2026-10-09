@@ -230,9 +230,9 @@ export function updateUserProfile(profile) {
 	})
 }
 
-export function getUserSubscription() {
+export function getUserSubscription({ refresh = false } = {}) {
 	const cachedSubscription = getCachedUserSubscription()
-	if (cachedSubscription) return Promise.resolve({ subscription: cachedSubscription })
+	if (!refresh && cachedSubscription) return Promise.resolve({ subscription: cachedSubscription })
 
 	return request('/api/payments/subscription').then((result) => {
 		cacheUserSubscription(result.subscription)
