@@ -8949,3 +8949,35 @@ body {
   color: var(--ink);
   background: #171f2c;
 }
+
+:root[data-theme='dark'] .dashboard-header-actions .dashboard-search,
+:root[data-theme='dark'] .dashboard-header-actions .dashboard-account-link {
+  border-color: #3a4659;
+  color: #e5eaf2;
+  background: #202a39;
+}
+
+:root[data-theme='dark'] .dashboard-header-actions .dashboard-search:focus-within,
+:root[data-theme='dark'] .dashboard-header-actions .dashboard-account-link:hover {
+  border-color: #60799e;
+  background: #263247;
+}
+
+:root[data-theme='dark'] .dashboard-header-actions .dashboard-search input {
+  color: #e5eaf2;
+  background: transparent;
+}
+
+:root[data-theme='dark'] .dashboard-header-actions .dashboard-search input::placeholder,
+:root[data-theme='dark'] .dashboard-header-actions .dashboard-account-link small {
+  color: #aab6c8;
+}
+
+:root[data-theme='dark'] .admin-topbar-avatar {
+  color: #dce8ff;
+  background: #263247;
+}
+
+:root[data-theme='dark'] .admin-status-dot {
+  box-shadow: 0 0 0 3px #263247;
+}
