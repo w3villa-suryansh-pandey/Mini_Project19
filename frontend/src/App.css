@@ -2126,12 +2126,78 @@
   pointer-events: none;
 }
 
-.prime-pdf-added-text.is-comment {
+.prime-pdf-image-object {
+  position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
+  border: 1px dashed #556f93;
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+}
+
+.prime-pdf-image-object img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  object-fit: fill;
+}
+
+.prime-pdf-image-delete,
+.prime-pdf-image-resize {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  background: #384f6f;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.prime-pdf-image-delete {
+  top: -11px;
+  right: -11px;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.prime-pdf-image-resize {
+  right: -7px;
+  bottom: -7px;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  cursor: nwse-resize;
+}
+
+.prime-pdf-image-resize::after {
+  width: 7px;
+  height: 7px;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  content: '';
+}
+
+.prime-pdf-added-text-wrap {
+  position: absolute;
+  z-index: 5;
+}
+
+.prime-pdf-added-text.is-comment,
+.prime-pdf-added-text-display.is-comment {
   border-color: #b99442;
   background: rgb(255 247 215 / 92%);
 }
 
-.prime-pdf-added-text.is-signature {
+.prime-pdf-added-text.is-signature,
+.prime-pdf-added-text-display.is-signature {
   border-color: #7c988a;
   color: #26303d;
   background: rgb(255 255 255 / 75%);
@@ -2195,9 +2261,7 @@
 }
 
 .prime-pdf-added-text {
-  position: absolute;
-  z-index: 4;
-  width: 180px;
+  display: block;
   min-height: 32px;
   box-sizing: border-box;
   padding: 2px 4px;
@@ -2208,11 +2272,62 @@
   font-family: Arial, sans-serif;
   line-height: 1.2;
   resize: both;
+  white-space: pre-wrap;
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
+.prime-pdf-added-text-display {
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  border: 1px dashed #556f93;
+  color: #171c19;
+  background: rgb(255 255 255 / 90%);
+  font-family: Arial, sans-serif;
+  line-height: 1.2;
+  white-space: pre-wrap;
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
 }
 
 .prime-pdf-added-text:focus {
   border-style: solid;
   box-shadow: 0 0 0 2px rgb(56 79 111 / 18%);
+}
+
+.prime-pdf-text-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.prime-pdf-text-actions button {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #ccd3dc;
+  border-radius: 4px;
+  color: #354b6b;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.prime-pdf-text-actions button:hover {
+  background: #f2f4f7;
+}
+
+:root[data-theme='dark'] .prime-pdf-text-actions button,
+:root[data-theme='dark'] .prime-pdf-image-delete,
+:root[data-theme='dark'] .prime-pdf-image-resize {
+  border-color: #53627a;
+  color: #e5eaf2;
+  background: #29364a;
 }
 
 .prime-pdf-loading,

@@ -80,7 +80,11 @@ function PdfPage({
 	addedTexts,
 	annotations,
 	onTextEdit,
+	onTextCommit,
+	onTextDelete,
 	onAnnotation,
+	onAnnotationEdit,
+	onAnnotationDelete,
 	onImagePlace,
 }) {
 	const pageRef = useRef(null)
@@ -90,8 +94,10 @@ function PdfPage({
 	const activeToolRef = useRef(activeTool)
 	const drawingRef = useRef(null)
 	const [drawingPreview, setDrawingPreview] = useState(null)
+	const [imagePreview, setImagePreview] = useState(null)
 	const [pageViewport, setPageViewport] = useState(null)
 	const [pageError, setPageError] = useState('')
+	const imageInteractionRef = useRef(null)
 
 	useEffect(() => {
 		activeToolRef.current = activeTool
@@ -219,6 +225,7 @@ function PdfPage({
 					top,
 					text: text.trim(),
 					selectOnFocus: activeToolRef.current === 'text',
+					isEditing: true,
 					width: 180 / PAGE_SCALE,
 					height: 36 / PAGE_SCALE,
 					fontSize: activeToolRef.current === 'signature' ? 18 : 12,
@@ -313,6 +320,90 @@ function PdfPage({
 		const points = drawing.points.map((point) => viewport.convertToViewportPoint(point.x, point.y).join(',')).join(' ')
 		return <polyline key={drawing.id || 'preview'} points={points} fill="none" stroke="#24436e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
 	}
+	const imageRect = (annotation) => {
+		if (!viewport) return { left: 0, top: 0, width: 0, height: 0 }
+		const [left, top] = viewport.convertToViewportPoint(annotation.x, annotation.y + annotation.height)
+		const [right, bottom] = viewport.convertToViewportPoint(annotation.x + annotation.width, annotation.y)
+		return { left: Math.min(left, right), top: Math.min(top, bottom), width: Math.abs(right - left), height: Math.abs(bottom - top) }
+	}
+	const getImagePoint = (event) => {
+		const bounds = pageRef.current.getBoundingClientRect()
+		const [x, y] = viewport.convertToPdfPoint(event.clientX - bounds.left, event.clientY - bounds.top)
+		return { x, y }
+	}
+	const startImageInteraction = (event, annotation) => {
+		if (!viewport) return
+		event.preventDefault()
+		event.stopPropagation()
+		event.currentTarget.setPointerCapture(event.pointerId)
+		imageInteractionRef.current = {
+			id: annotation.id,
+			mode: event.target.closest('[data-image-resize]') ? 'resize' : 'move',
+			start: getImagePoint(event),
+			original: annotation,
+		}
+		setImagePreview(annotation)
+	}
+	const moveImageInteraction = (event) => {
+		const interaction = imageInteractionRef.current
+		if (!interaction) return
+		const point = getImagePoint(event)
+		const deltaX = point.x - interaction.start.x
+		const deltaY = point.y - interaction.start.y
+		const pageWidth = viewport.viewBox[2]
+		const pageHeight = viewport.viewBox[3]
+		let next
+
+		if (interaction.mode === 'move') {
+			next = {
+				...interaction.original,
+				x: Math.min(Math.max(interaction.original.x + deltaX, 0), pageWidth - interaction.original.width),
+				y: Math.min(Math.max(interaction.original.y + deltaY, 0), pageHeight - interaction.original.height),
+			}
+		} else {
+			const scale = Math.max(0.1, 1 + Math.max(
+				deltaX / interaction.original.width,
+				-deltaY / interaction.original.height,
+			))
+			const width = Math.min(interaction.original.width * scale, pageWidth - interaction.original.x)
+			const height = Math.min(interaction.original.height * (width / interaction.original.width), pageHeight - interaction.original.y)
+			next = { ...interaction.original, width, height }
+		}
+		setImagePreview(next)
+	}
+	const finishImageInteraction = (event) => {
+		const interaction = imageInteractionRef.current
+		if (!interaction) return
+		const point = getImagePoint(event)
+		const deltaX = point.x - interaction.start.x
+		const deltaY = point.y - interaction.start.y
+		const pageWidth = viewport.viewBox[2]
+		const pageHeight = viewport.viewBox[3]
+		if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) {
+			imageInteractionRef.current = null
+			setImagePreview(null)
+			return
+		}
+		let next
+		if (interaction.mode === 'move') {
+			next = {
+				...interaction.original,
+				x: Math.min(Math.max(interaction.original.x + deltaX, 0), pageWidth - interaction.original.width),
+				y: Math.min(Math.max(interaction.original.y + deltaY, 0), pageHeight - interaction.original.height),
+			}
+		} else {
+			const scale = Math.max(0.1, 1 + Math.max(
+				deltaX / interaction.original.width,
+				-deltaY / interaction.original.height,
+			))
+			const width = Math.min(interaction.original.width * scale, pageWidth - interaction.original.x)
+			const height = Math.min(interaction.original.height * (width / interaction.original.width), pageHeight - interaction.original.y)
+			next = { ...interaction.original, width, height }
+		}
+		imageInteractionRef.current = null
+		setImagePreview(null)
+		onAnnotationEdit(next)
+	}
 
 	return (
 		<article className={`prime-pdf-page${activeTool === 'draw' || activeTool === 'highlight' ? ' is-marking' : ''}`} ref={pageRef} aria-label={`PDF page ${pageNumber}`}>
@@ -321,34 +412,90 @@ function PdfPage({
 			<svg ref={svgRef} className={`prime-pdf-annotation-layer${['draw', 'highlight'].includes(activeTool) ? ' is-active' : ''}`} viewBox={viewport ? `0 0 ${viewport.width} ${viewport.height}` : undefined} aria-label={`Annotations on page ${pageNumber}`}>
 				{viewport && annotations.filter((item) => item.pageNumber === pageNumber && ['highlight', 'draw'].includes(item.type)).map((item) => renderDrawing(item))}
 				{viewport && annotations.filter((item) => item.pageNumber === pageNumber && item.type === 'image').map((item) => {
-					const rect = annotationRect(item)
-					return <image key={item.id} {...rect} href={item.dataUrl} preserveAspectRatio="xMidYMid meet" />
+					const image = imagePreview?.id === item.id ? imagePreview : item
+					const rect = imageRect(image)
+					return (
+						<div
+							key={item.id}
+							className="prime-pdf-image-object"
+							role="group"
+							aria-label="PDF image. Drag to move; drag the corner handle to resize."
+							style={rect}
+							onPointerDown={(event) => startImageInteraction(event, image)}
+							onPointerMove={moveImageInteraction}
+							onPointerUp={finishImageInteraction}
+							onPointerCancel={finishImageInteraction}
+						>
+							<img src={item.dataUrl} alt="Added to PDF" draggable="false" />
+							<button
+								className="prime-pdf-image-delete"
+								type="button"
+								onPointerDown={(event) => event.stopPropagation()}
+								onClick={() => onAnnotationDelete(item.id)}
+								aria-label="Delete image"
+							>×</button>
+							<button
+								className="prime-pdf-image-resize"
+								type="button"
+								data-image-resize
+								onPointerDown={(event) => startImageInteraction(event, image)}
+								onPointerMove={moveImageInteraction}
+								onPointerUp={finishImageInteraction}
+								onPointerCancel={finishImageInteraction}
+								aria-label="Resize image"
+							/>
+						</div>
+					)
 				})}
 				{drawingPreview && renderDrawing(drawingPreview, true)}
 			</svg>
 			{addedTexts.filter((item) => item.pageNumber === pageNumber).map((item) => (
-				<textarea
-					key={item.id}
-					data-added-text={item.id}
-					className={`prime-pdf-added-text${item.annotationType === 'comment' ? ' is-comment' : ''}${item.annotationType === 'signature' ? ' is-signature' : ''}`}
-					aria-label={item.annotationType === 'comment' ? 'PDF comment' : item.annotationType === 'signature' ? 'PDF signature' : 'Added PDF text'}
-					value={item.text}
-					placeholder="Type text"
-					onChange={(event) => onTextEdit({ ...item, text: event.target.value })}
-					onFocus={(event) => {
-						if (!item.selectOnFocus) return
-						event.currentTarget.select()
-						onTextEdit({ ...item, selectOnFocus: false })
-					}}
-					autoFocus
-					style={{
-						left: item.left,
-						top: item.top,
-						width: `${item.width * PAGE_SCALE}px`,
-						minHeight: `${item.height * PAGE_SCALE}px`,
-						fontSize: `${item.fontSize * PAGE_SCALE}px`,
-					}}
-				/>
+				<div key={item.id} className="prime-pdf-added-text-wrap" style={{ left: item.left, top: item.top }}>
+					{item.isEditing ? (
+						<textarea
+							data-added-text={item.id}
+							className={`prime-pdf-added-text${item.annotationType === 'comment' ? ' is-comment' : ''}${item.annotationType === 'signature' ? ' is-signature' : ''}`}
+							aria-label={item.annotationType === 'comment' ? 'PDF comment' : item.annotationType === 'signature' ? 'PDF signature' : 'Added PDF text'}
+							dir="ltr"
+							value={item.text}
+							placeholder="Type text"
+							onChange={(event) => onTextEdit({ ...item, text: event.target.value })}
+							onKeyDown={(event) => {
+								if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+									event.preventDefault()
+									onTextCommit(item.id)
+								}
+							}}
+							onFocus={(event) => {
+								if (!item.selectOnFocus) return
+								event.currentTarget.select()
+								onTextEdit({ ...item, selectOnFocus: false })
+							}}
+							autoFocus
+							style={{
+								width: `${item.width * PAGE_SCALE}px`,
+								minHeight: `${item.height * PAGE_SCALE}px`,
+								fontSize: `${item.fontSize * PAGE_SCALE}px`,
+							}}
+						/>
+					) : (
+						<div
+							className={`prime-pdf-added-text-display${item.annotationType === 'comment' ? ' is-comment' : ''}${item.annotationType === 'signature' ? ' is-signature' : ''}`}
+							dir="ltr"
+							style={{
+								width: `${item.width * PAGE_SCALE}px`,
+								minHeight: `${item.height * PAGE_SCALE}px`,
+								fontSize: `${item.fontSize * PAGE_SCALE}px`,
+							}}
+						>{item.text}</div>
+					)}
+					<div className="prime-pdf-text-actions">
+						{item.isEditing
+							? <button type="button" onClick={() => onTextCommit(item.id)}>Done</button>
+							: <button type="button" onClick={() => onTextEdit({ ...item, isEditing: true })}>Edit</button>}
+						<button type="button" onClick={() => onTextDelete(item.id)}>Delete</button>
+					</div>
+				</div>
 			))}
 			{pageError && <p className="prime-pdf-page-error" role="alert">{pageError}</p>}
 		</article>
@@ -550,6 +697,39 @@ function PrimePdfEditor() {
 		setNotice(`${annotation.type === 'highlight' ? 'Highlight' : 'Drawing'} added. Save / download to apply it to the PDF.`)
 	}, [recordChange])
 
+	const commitAddedText = useCallback((id) => {
+		const nextAddedTexts = addedTextsRef.current.map((item) => (
+			item.id === id ? { ...item, isEditing: false, selectOnFocus: false } : item
+		))
+		recordChange(editsRef.current, nextAddedTexts)
+		setNotice('Text added. Save or download the PDF to apply it.')
+	}, [recordChange])
+
+	const deleteAddedText = useCallback((id) => {
+		recordChange(
+			editsRef.current,
+			addedTextsRef.current.filter((item) => item.id !== id),
+		)
+		setNotice('Text box deleted.')
+	}, [recordChange])
+
+	const updateAnnotation = useCallback((annotation) => {
+		recordChange(
+			editsRef.current,
+			addedTextsRef.current,
+			annotationsRef.current.map((item) => item.id === annotation.id ? annotation : item),
+		)
+	}, [recordChange])
+
+	const deleteAnnotation = useCallback((id) => {
+		recordChange(
+			editsRef.current,
+			addedTextsRef.current,
+			annotationsRef.current.filter((item) => item.id !== id),
+		)
+		setNotice('Image deleted.')
+	}, [recordChange])
+
 	const placeImage = useCallback(async (position) => {
 		if (!pendingImage || !pdfDocument) {
 			setNotice('Choose a PNG or JPEG image before placing it.')
@@ -558,9 +738,16 @@ function PrimePdfEditor() {
 		}
 		try {
 			const page = await pdfDocument.getPage(position.pageNumber)
-			const pageWidth = page.getViewport({ scale: 1 }).width
-			const width = Math.min(180 / PAGE_SCALE, Math.max(pageWidth - position.x, 1))
-			const height = width / (pendingImage.width / pendingImage.height)
+			const pageViewport = page.getViewport({ scale: 1 })
+			const pageWidth = pageViewport.width
+			const pageHeight = pageViewport.height
+			const aspectRatio = pendingImage.width / pendingImage.height
+			const width = Math.min(
+				180 / PAGE_SCALE,
+				Math.max(pageWidth - position.x, 1),
+				Math.max((pageHeight - position.y) * aspectRatio, 1),
+			)
+			const height = width / aspectRatio
 			recordChange(editsRef.current, addedTextsRef.current, [
 				...annotationsRef.current,
 				{
@@ -1242,7 +1429,11 @@ function PrimePdfEditor() {
 											addedTexts={addedTexts}
 											annotations={annotations}
 											onTextEdit={recordEdit}
+											onTextCommit={commitAddedText}
+											onTextDelete={deleteAddedText}
 											onAnnotation={recordAnnotation}
+											onAnnotationEdit={updateAnnotation}
+											onAnnotationDelete={deleteAnnotation}
 											onImagePlace={placeImage}
 										/>
 									</div>
