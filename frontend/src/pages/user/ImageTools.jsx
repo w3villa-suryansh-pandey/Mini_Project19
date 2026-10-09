@@ -12,9 +12,9 @@ const toolOptions = [
   {
     id: 'background-remover',
     title: 'Background remover',
-    description: 'Remove or soften the background from a portrait image so your subject stands out clearly and cleanly.',
+    description: 'Remove a plain or near-solid background from a portrait while preserving the subject.',
     badge: 'Photo editing',
-    points: ['Instant background cleanup', 'Keep focus on the subject', 'Ready for profile, social, or product use'],
+    points: ['Detect background color from image edges', 'Preserve disconnected foreground details', 'Best results with plain backgrounds'],
   },
 ]
 
@@ -69,28 +69,105 @@ function createBackgroundRemovedImage(sourceImage) {
   const maxDimension = 1400
   const scale = Math.min(1, maxDimension / Math.max(sourceImage.width, sourceImage.height))
   const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
   const width = Math.round(sourceImage.width * scale)
   const height = Math.round(sourceImage.height * scale)
 
   canvas.width = width
   canvas.height = height
+  const context = canvas.getContext('2d')
+  if (!context) throw new Error('Your browser could not start image processing.')
+
   context.drawImage(sourceImage, 0, 0, width, height)
 
   const imageData = context.getImageData(0, 0, width, height)
   const pixels = imageData.data
+  const pixelCount = width * height
+  const bins = new Map()
+  const sampleStep = Math.max(1, Math.floor(Math.max(width, height) / 500))
 
-  for (let index = 0; index < pixels.length; index += 4) {
-    const red = pixels[index]
-    const green = pixels[index + 1]
-    const blue = pixels[index + 2]
-    const maxChannel = Math.max(red, green, blue)
-    const minChannel = Math.min(red, green, blue)
-    const saturation = maxChannel - minChannel
+  function recordEdgePixel(x, y) {
+    const offset = (y * width + x) * 4
+    if (pixels[offset + 3] < 128) return
+    const red = pixels[offset]
+    const green = pixels[offset + 1]
+    const blue = pixels[offset + 2]
+    const key = `${red >> 4},${green >> 4},${blue >> 4}`
+    const bin = bins.get(key) || { count: 0, red: 0, green: 0, blue: 0 }
+    bin.count += 1
+    bin.red += red
+    bin.green += green
+    bin.blue += blue
+    bins.set(key, bin)
+  }
 
-    if (maxChannel > 235 && saturation < 28) {
-      pixels[index + 3] = 0
+  for (let x = 0; x < width; x += sampleStep) {
+    recordEdgePixel(x, 0)
+    if (height > 1) recordEdgePixel(x, height - 1)
+  }
+  for (let y = sampleStep; y < height - 1; y += sampleStep) {
+    recordEdgePixel(0, y)
+    if (width > 1) recordEdgePixel(width - 1, y)
+  }
+
+  const dominantBin = [...bins.values()].reduce(
+    (dominant, bin) => bin.count > (dominant?.count || 0) ? bin : dominant,
+    null,
+  )
+  if (!dominantBin) throw new Error('The image has no usable edge pixels for background detection.')
+
+  const background = [
+    dominantBin.red / dominantBin.count,
+    dominantBin.green / dominantBin.count,
+    dominantBin.blue / dominantBin.count,
+  ]
+  const visited = new Uint8Array(pixelCount)
+  const queue = new Int32Array(pixelCount)
+  const matchDistance = 72
+  const fullyTransparentDistance = 24
+  let queueStart = 0
+  let queueEnd = 0
+
+  function addIfBackground(pixelIndex) {
+    if (visited[pixelIndex]) return
+    const offset = pixelIndex * 4
+    if (pixels[offset + 3] === 0) {
+      visited[pixelIndex] = 1
+      return
     }
+    const redDistance = pixels[offset] - background[0]
+    const greenDistance = pixels[offset + 1] - background[1]
+    const blueDistance = pixels[offset + 2] - background[2]
+    const colorDistance = Math.sqrt(
+      redDistance * redDistance + greenDistance * greenDistance + blueDistance * blueDistance,
+    )
+    if (colorDistance > matchDistance) return
+
+    visited[pixelIndex] = 1
+    const opacity = Math.max(
+      0,
+      Math.min(255, ((colorDistance - fullyTransparentDistance) / (matchDistance - fullyTransparentDistance)) * 255),
+    )
+    pixels[offset + 3] = Math.round(pixels[offset + 3] * opacity / 255)
+    queue[queueEnd++] = pixelIndex
+  }
+
+  for (let x = 0; x < width; x += 1) {
+    addIfBackground(x)
+    if (height > 1) addIfBackground((height - 1) * width + x)
+  }
+  for (let y = 1; y < height - 1; y += 1) {
+    addIfBackground(y * width)
+    if (width > 1) addIfBackground(y * width + width - 1)
+  }
+
+  while (queueStart < queueEnd) {
+    const pixelIndex = queue[queueStart++]
+    const x = pixelIndex % width
+    const y = Math.floor(pixelIndex / width)
+    if (x > 0) addIfBackground(pixelIndex - 1)
+    if (x < width - 1) addIfBackground(pixelIndex + 1)
+    if (y > 0) addIfBackground(pixelIndex - width)
+    if (y < height - 1) addIfBackground(pixelIndex + width)
   }
 
   context.putImageData(imageData, 0, 0)
@@ -227,7 +304,7 @@ function ImageTools() {
                 {sourcePreview ? <img src={sourcePreview} alt="Original upload preview" /> : <div className="image-preview-empty">Upload an image to begin</div>}
               </div>
 
-              <div className="image-preview-panel">
+              <div className="image-preview-panel image-preview-transparent">
                 <h3>Result</h3>
                 {resultPreview ? <img src={resultPreview} alt="Processed output" /> : <div className="image-preview-empty">Your processed file will appear here</div>}
               </div>
