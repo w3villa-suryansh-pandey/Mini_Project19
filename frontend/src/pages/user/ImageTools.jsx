@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { createWorker } from 'tesseract.js'
 import Sidebar from '../../components/Sidebar.jsx'
 
 const toolOptions = [
@@ -16,6 +17,22 @@ const toolOptions = [
     badge: 'Photo editing',
     points: ['Detect background color from image edges', 'Preserve disconnected foreground details', 'Best results with plain backgrounds'],
   },
+  {
+    id: 'text-extractor',
+    title: 'Extract text from image',
+    description: 'Recognize printed text in an image and copy or download the extracted result.',
+    badge: 'OCR',
+    points: ['Recognize text in common image formats', 'Choose the text language', 'Copy or save the result as a text file'],
+  },
+]
+
+const ocrLanguages = [
+  { code: 'eng', label: 'English' },
+  { code: 'spa', label: 'Spanish' },
+  { code: 'fra', label: 'French' },
+  { code: 'deu', label: 'German' },
+  { code: 'hin', label: 'Hindi' },
+  { code: 'ara', label: 'Arabic' },
 ]
 
 function loadImageFromFile(file) {
@@ -179,7 +196,10 @@ function ImageTools() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [sourcePreview, setSourcePreview] = useState('')
   const [resultPreview, setResultPreview] = useState('')
+  const [extractedText, setExtractedText] = useState('')
+  const [ocrLanguage, setOcrLanguage] = useState('eng')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [notice, setNotice] = useState('')
 
   const activeTool = useMemo(
@@ -193,11 +213,13 @@ function ImageTools() {
 
     setSelectedFile(file)
     setNotice('')
+    setResultPreview('')
+    setExtractedText('')
+    setProgress(0)
 
     try {
       const image = await loadImageFromFile(file)
       setSourcePreview(image.src || URL.createObjectURL(file))
-      setResultPreview('')
     } catch (error) {
       setNotice(error.message)
     }
@@ -211,8 +233,30 @@ function ImageTools() {
 
     setIsProcessing(true)
     setNotice('')
+    setProgress(0)
 
     try {
+      if (selectedTool === 'text-extractor') {
+        const worker = await createWorker(ocrLanguage, undefined, {
+          logger: ({ status, progress: taskProgress }) => {
+            if (typeof taskProgress === 'number') {
+              setProgress(Math.round(taskProgress * 100))
+              setNotice(status === 'recognizing text' ? 'Reading text from image…' : 'Preparing text recognition…')
+            }
+          },
+        })
+
+        try {
+          const { data } = await worker.recognize(selectedFile)
+          const text = data.text.trim()
+          setExtractedText(text)
+          setNotice(text ? 'Text extraction is complete.' : 'No text was detected. Try a clearer image.')
+        } finally {
+          await worker.terminate()
+        }
+        return
+      }
+
       const image = await loadImageFromFile(selectedFile)
       const processedDataUrl = selectedTool === 'passport'
         ? createPassportImage(image)
@@ -221,19 +265,40 @@ function ImageTools() {
       setResultPreview(processedDataUrl)
       setNotice(`${activeTool.title} is ready.`)
     } catch (error) {
-      setNotice(error.message)
+      setNotice(error instanceof Error ? `Could not process the image: ${error.message}` : 'Could not process the image.')
     } finally {
       setIsProcessing(false)
     }
   }
 
+  async function handleCopyText() {
+    if (!extractedText) return
+    try {
+      await navigator.clipboard.writeText(extractedText)
+      setNotice('Extracted text copied to clipboard.')
+    } catch (error) {
+      setNotice(error instanceof Error ? `Could not copy text: ${error.message}` : 'Could not copy text.')
+    }
+  }
+
   function handleDownload() {
+    if (selectedTool === 'text-extractor' && extractedText) {
+      const fileUrl = URL.createObjectURL(new Blob([extractedText], { type: 'text/plain;charset=utf-8' }))
+      const link = document.createElement('a')
+      link.href = fileUrl
+      link.download = `extracted-text-${Date.now()}.txt`
+      link.click()
+      URL.revokeObjectURL(fileUrl)
+      return
+    }
     if (!resultPreview) return
     const link = document.createElement('a')
     link.href = resultPreview
     link.download = `${selectedTool === 'passport' ? 'passport-photo' : 'background-removed'}-${Date.now()}.png`
     link.click()
   }
+
+  const hasDownloadableResult = selectedTool === 'text-extractor' ? Boolean(extractedText) : Boolean(resultPreview)
 
   return (
     <main className="dashboard-layout image-tools-layout">
@@ -259,10 +324,13 @@ function ImageTools() {
               <article
                 className={selectedTool === tool.id ? 'image-tool-card active' : 'image-tool-card'}
                 key={tool.id}
-                onClick={() => setSelectedTool(tool.id)}
+                onClick={() => {
+                  setSelectedTool(tool.id)
+                  setNotice('')
+                }}
               >
                 <div className="image-tool-icon" aria-hidden="true">
-                  {tool.id === 'passport' ? '📸' : '✨'}
+                  {tool.id === 'passport' ? '📸' : tool.id === 'background-remover' ? '✨' : '🔤'}
                 </div>
                 <span className="image-tool-badge">{tool.badge}</span>
                 <h2>{tool.title}</h2>
@@ -282,32 +350,60 @@ function ImageTools() {
           <section className="image-tool-workspace">
             <div className="image-tool-upload">
               <label htmlFor="image-tools-upload" className="image-tool-upload-label">
-                Upload a photo
+                Upload an image
               </label>
               <input id="image-tools-upload" type="file" accept="image/*" onChange={handleFileChange} />
+              {selectedTool === 'text-extractor' && (
+                <label className="image-tool-language">
+                  OCR language
+                  <select value={ocrLanguage} onChange={(event) => setOcrLanguage(event.target.value)} disabled={isProcessing}>
+                    {ocrLanguages.map((language) => (
+                      <option key={language.code} value={language.code}>{language.label}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
 
             <div className="image-tool-actions">
               <button type="button" className="image-tool-primary" onClick={handleProcessImage} disabled={!selectedFile || isProcessing}>
-                {isProcessing ? 'Processing…' : `Create ${activeTool.title.toLowerCase()}`}
+                {isProcessing ? (selectedTool === 'text-extractor' ? `Extracting… ${progress}%` : 'Processing…') : selectedTool === 'text-extractor' ? 'Extract text' : `Create ${activeTool.title.toLowerCase()}`}
               </button>
-              <button type="button" className="image-tool-secondary" onClick={handleDownload} disabled={!resultPreview}>
-                Download result
+              {selectedTool === 'text-extractor' && (
+                <button type="button" className="image-tool-secondary" onClick={handleCopyText} disabled={!extractedText || isProcessing}>
+                  Copy text
+                </button>
+              )}
+              <button type="button" className="image-tool-secondary" onClick={handleDownload} disabled={!hasDownloadableResult || isProcessing}>
+                {selectedTool === 'text-extractor' ? 'Download .txt' : 'Download result'}
               </button>
             </div>
 
             {notice && <p className="image-tool-notice">{notice}</p>}
 
-            <div className="image-tool-preview-grid">
+            <div className={selectedTool === 'text-extractor' ? 'image-tool-preview-grid image-tool-ocr-grid' : 'image-tool-preview-grid'}>
               <div className="image-preview-panel">
                 <h3>Original</h3>
                 {sourcePreview ? <img src={sourcePreview} alt="Original upload preview" /> : <div className="image-preview-empty">Upload an image to begin</div>}
               </div>
 
-              <div className="image-preview-panel image-preview-transparent">
-                <h3>Result</h3>
-                {resultPreview ? <img src={resultPreview} alt="Processed output" /> : <div className="image-preview-empty">Your processed file will appear here</div>}
-              </div>
+              {selectedTool === 'text-extractor' ? (
+                <div className="image-preview-panel image-tool-text-result">
+                  <h3>Extracted text</h3>
+                  <textarea
+                    aria-label="Extracted text"
+                    placeholder="Extracted text will appear here"
+                    value={extractedText}
+                    onChange={(event) => setExtractedText(event.target.value)}
+                    spellCheck="false"
+                  />
+                </div>
+              ) : (
+                <div className="image-preview-panel image-preview-transparent">
+                  <h3>Result</h3>
+                  {resultPreview ? <img src={resultPreview} alt="Processed output" /> : <div className="image-preview-empty">Your processed file will appear here</div>}
+                </div>
+              )}
             </div>
           </section>
         </div>
