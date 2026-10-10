@@ -79,10 +79,14 @@ async function sendVerificationEmail({ email, name, token }) {
 			html: `<p>Hi ${safeName},</p><p>Confirm your email address to finish creating your S19 account.</p><p><a href="${verificationUrl.href}">Verify email address</a></p><p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>`,
 		})
 	} catch (error) {
-		console.error('Verification email delivery failed', {
-			code: error.code || 'UNKNOWN',
-			command: error.command || 'UNKNOWN',
-			responseCode: Number.isInteger(error.responseCode) ? error.responseCode : undefined,
+		  console.error('Verification email delivery failed', {
+          code: error.code || 'UNKNOWN',
+          command: error.command || 'UNKNOWN',
+          responseCode: Number.isInteger(error.responseCode)
+            ? error.responseCode
+            : undefined,
+          message: error.message,
+          stack: error.stack,
 		})
 		throw error
 	}
