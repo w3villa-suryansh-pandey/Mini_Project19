@@ -68,6 +68,7 @@ async function sendVerificationEmail({ email, name, token }) {
 		port: config.port,
 		secure: config.secure,
 		auth: config.auth,
+		family:4,
 	})
 
 	try {
