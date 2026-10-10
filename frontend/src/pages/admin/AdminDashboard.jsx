@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AccountBadge from '../../components/AccountBadge.jsx'
 import AdminSidebar from '../../components/AdminSidebar.jsx'
 import { getAdminActiveSubscriberCount, getAdminPlans, getAdminUsers, getSubscriptionExpiryJob } from '../../services/api.js'
 
@@ -35,7 +36,7 @@ function AdminDashboard() {
 					<div className="admin-breadcrumb">Administration <span>/</span> Overview</div>
 					<div className="admin-topbar-user">
 						<span className="admin-status-dot" /> System operational
-						<span className="admin-topbar-avatar">AD</span>
+						<AccountBadge variant="admin" />
 					</div>
 				</header>
 				<div className="admin-content">

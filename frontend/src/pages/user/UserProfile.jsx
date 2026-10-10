@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import AccountBadge from '../../components/AccountBadge.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
 import {
 	downloadUserProfile,
@@ -296,7 +297,10 @@ function UserProfile() {
 			<main className="profile-page">
 			<header className="profile-topbar">
 				<div className="profile-breadcrumb">Workspace <span>/</span> My profile</div>
-				<a className="profile-back-link" href="/dashboard">Back to overview <span aria-hidden="true">↗</span></a>
+				<div className="profile-topbar-actions">
+					<AccountBadge user={{ name: profile.fullName, email: profile.email }} />
+					<a className="profile-back-link" href="/dashboard">Back to overview <span aria-hidden="true">↗</span></a>
+				</div>
 			</header>
 
 			<div className="profile-main">

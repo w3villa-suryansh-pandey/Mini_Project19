@@ -223,6 +223,10 @@ export function getUserProfile() {
 	return request('/api/users/profile')
 }
 
+export function getCurrentUser() {
+	return request('/api/auth/me')
+}
+
 export function updateUserProfile(profile) {
 	return request('/api/users/profile', {
 		method: 'PATCH',

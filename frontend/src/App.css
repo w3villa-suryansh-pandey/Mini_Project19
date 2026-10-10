@@ -9183,3 +9183,102 @@ body {
 :root[data-theme='dark'] .admin-status-dot {
   box-shadow: 0 0 0 3px #263247;
 }
+
+.profile-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-badge-details {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-account-link .account-badge-details strong,
+.admin-account-badge .account-badge-details strong {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-account-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: 8px;
+}
+
+.admin-account-badge .admin-topbar-avatar {
+  flex: 0 0 auto;
+  margin-left: 0;
+}
+
+.admin-account-badge .account-badge-details {
+  display: grid;
+  max-width: min(260px, 25vw);
+  line-height: 1.35;
+}
+
+.admin-account-badge .account-badge-details strong {
+  font-size: 11px;
+}
+
+.admin-account-badge .account-badge-details small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root[data-theme='dark'] .dashboard-header {
+  border-color: #374151;
+  color: var(--ink);
+  background: #1f2937;
+}
+
+:root[data-theme='dark'] .dashboard-account-link {
+  border-color: #374151;
+  color: #e5e7eb;
+  background: #202a39;
+}
+
+:root[data-theme='dark'] .dashboard-account-link:hover {
+  border-color: #60799e;
+  background: #263247;
+}
+
+:root[data-theme='dark'] .dashboard-account-link small,
+:root[data-theme='dark'] .admin-account-badge .account-badge-details small {
+  color: #aab6c8;
+}
+
+:root[data-theme='dark'] .profile-topbar-actions .dashboard-account-link {
+  color: #e5e7eb;
+  background: #202a39;
+}
+
+:root[data-theme='dark'] .profile-topbar-actions .dashboard-account-link:hover {
+  background: #263247;
+}
+
+:root[data-theme='dark'] .admin-account-badge .account-badge-details strong {
+  color: #e5e7eb;
+}
+
+@media (max-width: 720px) {
+  .profile-topbar-actions {
+    gap: 8px;
+  }
+
+  .profile-topbar-actions .profile-back-link {
+    display: none;
+  }
+
+  .admin-account-badge .account-badge-details {
+    max-width: min(190px, 38vw);
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AccountBadge from '../../components/AccountBadge.jsx'
 import AdminSidebar from '../../components/AdminSidebar.jsx'
 import {
 	createSubscriptionExpiryJob,
@@ -95,7 +96,7 @@ function Cronjobs() {
 		<main className="admin-layout">
 			<AdminSidebar active="jobs" />
 			<section className="admin-main-panel">
-				<header className="admin-topbar"><div className="admin-breadcrumb">Administration <span>/</span> Cron jobs</div><div className="admin-topbar-user"><span className="admin-status-dot" /> System operational<span className="admin-topbar-avatar">AD</span></div></header>
+				<header className="admin-topbar"><div className="admin-breadcrumb">Administration <span>/</span> Cron jobs</div><div className="admin-topbar-user"><span className="admin-status-dot" /> System operational<AccountBadge variant="admin" /></div></header>
 				<div className="admin-content">
 					<div className="admin-page-heading compact">
 						<div><p className="admin-eyebrow">AUTOMATION</p><h1>Cron jobs</h1><p>Manage subscription expiry and its server-side schedule.</p></div>

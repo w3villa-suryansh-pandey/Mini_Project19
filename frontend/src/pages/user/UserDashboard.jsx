@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import AccountBadge from '../../components/AccountBadge.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
 import { getUserProfile } from '../../services/api.js'
 
@@ -100,8 +101,6 @@ function UserDashboard() {
 		))
 	}, [searchTerm])
 
-	const initials = (profile.name || 'S').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'S'
-
 	return (
 		<main className="dashboard-layout">
 			<Sidebar active="/dashboard" />
@@ -121,13 +120,7 @@ function UserDashboard() {
 								onChange={(event) => setSearchTerm(event.target.value)}
 							/>
 						</label>
-						<a className="dashboard-account-link" href="/profile">
-							<span className="dashboard-account-avatar" aria-hidden="true">{initials}</span>
-							<span>
-								<strong>{profile.name || 'My account'}</strong>
-								<small>{profile.email || 'Workspace'}</small>
-							</span>
-						</a>
+						<AccountBadge user={profile} />
 					</div>
 				</header>
 
