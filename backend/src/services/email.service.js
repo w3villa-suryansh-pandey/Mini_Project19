@@ -1,96 +1,101 @@
-const nodemailer = require('nodemailer')
+
 const {
-	frontendUrl,
-	smtpHost,
-	smtpPort,
-	smtpSecure,
-	smtpUser,
-	smtpPass,
-	smtpFrom,
+    frontendUrl,
+    brevoApiKey,
+    brevoSenderEmail,
+    brevoSenderName,
 } = require('../config/env')
-const EMAIL_CONFIGURATION_MESSAGE = 'Outgoing email is not configured. Set SMTP_HOST and SMTP_FROM in backend/.env, use valid SMTP_USER and SMTP_PASS credentials (a Gmail app password if using Gmail), then restart the backend.'
+
+const EMAIL_CONFIGURATION_MESSAGE =
+    'Outgoing email is not configured. Set BREVO_API_KEY and BREVO_SENDER_EMAIL in your backend environment variables, then restart the backend.'
 
 function isPlaceholder(value) {
-	return /your[-_ ]|placeholder|example\.com|change.?me/i.test(value)
-}
-
-function getEmailConfig() {
-	const from = smtpFrom || smtpUser
-
-	if (
-		!smtpHost
-		|| !from
-		|| Boolean(smtpUser) !== Boolean(smtpPass)
-		|| isPlaceholder(smtpUser)
-		|| isPlaceholder(smtpPass)
-		|| isPlaceholder(from)
-	) {
-		return null
-	}
-
-	return {
-		host: smtpHost,
-		port: smtpPort,
-		secure: smtpSecure,
-		from,
-		auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
-	}
-}
-
-function escapeHtml(value) {
-	return value.replace(/[&<>"']/g, (character) => ({
-		'&': '&amp;',
-		'<': '&lt;',
-		'>': '&gt;',
-		'"': '&quot;',
-		"'": '&#39;',
-	}[character]))
+    return !value || /your[-_ ]|placeholder|example\.com|change.?me/i.test(value)
 }
 
 function isEmailConfigured() {
-	return Boolean(getEmailConfig())
+    return Boolean(
+        !isPlaceholder(brevoApiKey) &&
+        !isPlaceholder(brevoSenderEmail) &&
+        frontendUrl
+    )
+}
+
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    }[character]))
 }
 
 async function sendVerificationEmail({ email, name, token }) {
-	const config = getEmailConfig()
-	if (!config) {
-		const error = new Error(EMAIL_CONFIGURATION_MESSAGE)
-		error.status = 503
-		error.code = 'EMAIL_NOT_CONFIGURED'
-		throw error
-	}
+    if (!isEmailConfigured()) {
+        const error = new Error(EMAIL_CONFIGURATION_MESSAGE)
+        error.status = 503
+        error.code = 'EMAIL_NOT_CONFIGURED'
+        throw error
+    }
 
-	const verificationUrl = new URL('/verify-email', frontendUrl)
-	verificationUrl.searchParams.set('token', token)
-	const safeName = escapeHtml(name)
-	const transporter = nodemailer.createTransport({
-		host: config.host,
-		port: config.port,
-		secure: config.secure,
-		auth: config.auth,
-		family:4,
-	})
+    const verificationUrl = new URL('/verify-email', frontendUrl)
+    verificationUrl.searchParams.set('token', token)
 
-	try {
-		await transporter.sendMail({
-			from: config.from,
-			to: email,
-			subject: 'Verify your S19 email address',
-			text: `Hi ${name}, verify your email address by visiting: ${verificationUrl.href}`,
-			html: `<p>Hi ${safeName},</p><p>Confirm your email address to finish creating your S19 account.</p><p><a href="${verificationUrl.href}">Verify email address</a></p><p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>`,
-		})
-	} catch (error) {
-		  console.error('Verification email delivery failed', {
-          code: error.code || 'UNKNOWN',
-          command: error.command || 'UNKNOWN',
-          responseCode: Number.isInteger(error.responseCode)
-            ? error.responseCode
-            : undefined,
-          message: error.message,
-          stack: error.stack,
-		})
-		throw error
-	}
+    const safeName = escapeHtml(name)
+
+    try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                accept: 'application/json',
+                'api-key': brevoApiKey,
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                sender: {
+                    name: brevoSenderName || 'W3Villa',
+                    email: brevoSenderEmail,
+                },
+                to: [{ email, name }],
+                subject: 'Verify your W3Villa email address',
+                textContent:
+                    `Hi ${name}, verify your email address by visiting: ${verificationUrl.href}`,
+                htmlContent: `
+                    <p>Hi ${safeName},</p>
+                    <p>Confirm your email address to finish creating your W3Villa account.</p>
+                    <p><a href="${verificationUrl.href}">Verify email address</a></p>
+                    <p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>
+                `,
+            }),
+        })
+
+        if (!response.ok) {
+            const details = await response.text()
+            const error = new Error(
+                `Brevo API request failed (${response.status}): ${details}`
+            )
+            error.code = 'BREVO_API_ERROR'
+            error.responseCode = response.status
+            throw error
+        }
+
+        const result = await response.json()
+        console.log('Verification email accepted by Brevo', {
+            messageId: result.messageId,
+        })
+    } catch (error) {
+        console.error('Verification email delivery failed', {
+            code: error.code || 'UNKNOWN',
+            responseCode: error.responseCode,
+            message: error.message,
+        })
+        throw error
+    }
 }
 
-module.exports = { isEmailConfigured, sendVerificationEmail, EMAIL_CONFIGURATION_MESSAGE }
+module.exports = {
+    isEmailConfigured,
+    sendVerificationEmail,
+    EMAIL_CONFIGURATION_MESSAGE,
+}
