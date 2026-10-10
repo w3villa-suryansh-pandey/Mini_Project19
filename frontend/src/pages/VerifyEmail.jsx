@@ -35,7 +35,7 @@ function VerifyEmail() {
       <section className="verify-content" aria-live="polite">
         <div className="verify-wordmark">
           <img className="verify-mark" src={logo} alt="" />
-          <span>19</span>
+          <span>S19</span>
         </div>
         <p className="eyebrow">S19 ACCOUNT</p>
         <h1>{status === 'verified' ? 'Email verified' : status === 'error' ? 'Verification link issue' : 'Verify your email'}</h1>
