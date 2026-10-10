@@ -1,3 +1,5 @@
+import { clearPdfEditorSessionId } from './pdfEditorSession.js'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV
 	? 'http://localhost:5000'
 	: 'https://mini-project19.onrender.com')
@@ -19,6 +21,7 @@ export function cacheUserSession(user, subscription) {
 			window.sessionStorage.setItem(ADMIN_SESSION_CACHE_KEY, 'true')
 			window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
 			window.sessionStorage.removeItem(USER_SUBSCRIPTION_CACHE_KEY)
+			clearPdfEditorSessionId()
 		} else {
 			clearCachedUserSession()
 		}
@@ -81,6 +84,7 @@ export function clearCachedUserSession() {
 		window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
 		window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
 		window.sessionStorage.removeItem(USER_SUBSCRIPTION_CACHE_KEY)
+		clearPdfEditorSessionId()
 	} catch {
 		// Session storage may be unavailable.
 	}

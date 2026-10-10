@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
-import { getUserSubscription } from '../../services/api.js'
+import { getUserProfile, getUserSubscription } from '../../services/api.js'
+import {
+	getPdfEditorSessionId,
+	loadPdfEditorSession,
+	savePdfEditorDocument,
+	savePdfEditorState,
+} from '../../services/pdfEditorSession.js'
 import { convertDocxToPdf } from '../../utils/docxToPdf.js'
 
 const PAGE_SCALE = 1.35
@@ -87,6 +93,8 @@ function PdfPage({
 	onAnnotationEdit,
 	onAnnotationDelete,
 	onImagePlace,
+	onPageRendered,
+	renderKey,
 }) {
 	const pageRef = useRef(null)
 	const canvasRef = useRef(null)
@@ -292,6 +300,7 @@ function PdfPage({
 				svg.removeEventListener('pointerup', handlePointerUp)
 			}
 		}
+		onPageRendered(renderKey)
 
 		renderPage().catch((error) => {
 			if (isCurrent) setPageError(error.message || `Could not render PDF page ${pageNumber}.`)
@@ -303,7 +312,7 @@ function PdfPage({
 			textLayer?.cancel()
 			cleanupTextEvents?.()
 		}
-	}, [document, editsEnabled, onAnnotation, onImagePlace, onTextEdit, pageNumber, pdfjsLibrary, rotation])
+	}, [document, editsEnabled, onAnnotation, onImagePlace, onPageRendered, onTextEdit, pageNumber, pdfjsLibrary, renderKey, rotation])
 
 	const viewport = pageViewport
 	const annotationRect = (annotation) => {
@@ -508,6 +517,10 @@ function PrimePdfEditor() {
 	const mergeInputRef = useRef(null)
 	const imageInputRef = useRef(null)
 	const [file, setFile] = useState(null)
+	const [ownerEmail, setOwnerEmail] = useState('')
+	const [editorSessionId, setEditorSessionId] = useState('')
+	const [isRestoring, setIsRestoring] = useState(true)
+	const [hasPersistedDocument, setHasPersistedDocument] = useState(false)
 	const [pdfjsLibrary, setPdfjsLibrary] = useState(null)
 	const [pdfDocument, setPdfDocument] = useState(null)
 	const [pdfBytes, setPdfBytes] = useState(null)
@@ -532,6 +545,9 @@ function PrimePdfEditor() {
 	const [canRedo, setCanRedo] = useState(false)
 	const [isSaved, setIsSaved] = useState(true)
 	const [historyRestoreVersion, setHistoryRestoreVersion] = useState(0)
+	const [restoredScrollTop, setRestoredScrollTop] = useState(null)
+	const [pdfRenderGeneration, setPdfRenderGeneration] = useState(0)
+	const [renderedPageKeys, setRenderedPageKeys] = useState([])
 	const editsRef = useRef({})
 	const addedTextsRef = useRef([])
 	const annotationsRef = useRef([])
@@ -540,6 +556,86 @@ function PrimePdfEditor() {
 	const pageRotationsRef = useRef({})
 	const historyRef = useRef([{ edits: {}, addedTexts: [], annotations: [], pageOrder: [], deletedPages: [], pageRotations: {} }])
 	const historyIndexRef = useRef(0)
+	const pendingRestoredStateRef = useRef(null)
+	const workspaceScrollTopRef = useRef(0)
+	const scrollPersistTimerRef = useRef(null)
+	const persistStateRef = useRef(null)
+	const onPageRendered = useCallback((renderKey) => {
+		setRenderedPageKeys((current) => current.includes(renderKey) ? current : [...current, renderKey])
+	}, [])
+
+	useEffect(() => {
+		let isCurrent = true
+
+		async function restoreEditorSession() {
+			try {
+				const sessionId = getPdfEditorSessionId()
+				if (isCurrent) setEditorSessionId(sessionId)
+				const { profile } = await getUserProfile()
+				if (!isCurrent) return
+				const email = profile.email?.trim().toLowerCase()
+				if (!email) throw new Error('Your account email could not be verified for PDF session restore.')
+				setOwnerEmail(email)
+				const savedSession = await loadPdfEditorSession(sessionId, email)
+				if (!isCurrent) return
+				if (savedSession) {
+					pendingRestoredStateRef.current = savedSession.state
+					const restoredFile = new File(
+						[savedSession.document.bytes],
+						savedSession.document.name,
+						{ type: 'application/pdf', lastModified: savedSession.document.lastModified },
+					)
+					setHasPersistedDocument(true)
+					setIsLoading(true)
+					setFile(restoredFile)
+				}
+			} catch (error) {
+				if (isCurrent) setNotice(error.message || 'Could not restore your previous PDF editing session.')
+			} finally {
+				if (isCurrent) setIsRestoring(false)
+			}
+		}
+
+		restoreEditorSession()
+		return () => { isCurrent = false }
+	}, [])
+
+	useEffect(() => {
+		if (restoredScrollTop === null || !pdfDocument) return undefined
+		const visiblePageKeys = pageOrder
+			.filter((pageIndex) => !deletedPages.includes(pageIndex))
+			.map((pageIndex) => `${pdfRenderGeneration}:${pageIndex + 1}:${pageRotations[pageIndex] || 0}`)
+		if (!visiblePageKeys.length || !visiblePageKeys.every((key) => renderedPageKeys.includes(key))) return undefined
+		const frame = window.requestAnimationFrame(() => {
+			const workspace = document.querySelector('.prime-pdf-workspace')
+			if (workspace) workspace.scrollTop = restoredScrollTop
+			setRestoredScrollTop(null)
+		})
+		return () => window.cancelAnimationFrame(frame)
+	}, [deletedPages, pageOrder, pageRotations, pdfDocument, pdfRenderGeneration, renderedPageKeys, restoredScrollTop])
+
+	useEffect(() => {
+		function persistScrollPosition() {
+			const workspace = document.querySelector('.prime-pdf-workspace')
+			if (workspace) workspaceScrollTopRef.current = workspace.scrollTop
+			if (scrollPersistTimerRef.current) window.clearTimeout(scrollPersistTimerRef.current)
+			scrollPersistTimerRef.current = window.setTimeout(() => {
+				persistStateRef.current?.()
+			}, 300)
+		}
+		function persistBeforePageHide() {
+			const workspace = document.querySelector('.prime-pdf-workspace')
+			if (workspace) workspaceScrollTopRef.current = workspace.scrollTop
+			persistStateRef.current?.()
+		}
+		document.addEventListener('scroll', persistScrollPosition, true)
+		window.addEventListener('pagehide', persistBeforePageHide)
+		return () => {
+			document.removeEventListener('scroll', persistScrollPosition, true)
+			window.removeEventListener('pagehide', persistBeforePageHide)
+			if (scrollPersistTimerRef.current) window.clearTimeout(scrollPersistTimerRef.current)
+		}
+	}, [])
 
 	useEffect(() => {
 		let isCurrent = true
@@ -593,20 +689,59 @@ function PrimePdfEditor() {
 					return
 				}
 				setPdfDocument(loadedDocument)
+				setRenderedPageKeys([])
+				setPdfRenderGeneration((generation) => generation + 1)
 				setPdfBytes(bytes)
 				setPageCount(loadedDocument.numPages)
 				const initialOrder = Array.from({ length: loadedDocument.numPages }, (_, index) => index)
-				pageOrderRef.current = initialOrder
-				setPageOrder(initialOrder)
-				historyRef.current = [{
-					edits: {},
-					addedTexts: [],
-					annotations: [],
-					pageOrder: initialOrder,
-					deletedPages: [],
-					pageRotations: {},
-				}]
-				historyIndexRef.current = 0
+				const savedState = pendingRestoredStateRef.current
+				pendingRestoredStateRef.current = null
+				const restoredOrder = savedState?.pageOrder?.length === loadedDocument.numPages
+					? savedState.pageOrder
+					: initialOrder
+				const initialSnapshot = {
+					edits: savedState?.edits || {},
+					addedTexts: savedState?.addedTexts || [],
+					annotations: savedState?.annotations || [],
+					pageOrder: restoredOrder,
+					deletedPages: savedState?.deletedPages || [],
+					pageRotations: savedState?.pageRotations || {},
+				}
+				const restoredHistory = Array.isArray(savedState?.history) && savedState.history.length
+					? savedState.history
+					: [initialSnapshot]
+				const restoredHistoryIndex = Math.min(
+					Math.max(Number(savedState?.historyIndex) || 0, 0),
+					restoredHistory.length - 1,
+				)
+				const restoredSnapshot = restoredHistory[restoredHistoryIndex] || initialSnapshot
+				editsRef.current = restoredSnapshot.edits
+				addedTextsRef.current = restoredSnapshot.addedTexts
+				annotationsRef.current = restoredSnapshot.annotations
+				pageOrderRef.current = restoredSnapshot.pageOrder
+				deletedPagesRef.current = restoredSnapshot.deletedPages
+				pageRotationsRef.current = restoredSnapshot.pageRotations
+				setEdits(restoredSnapshot.edits)
+				setAddedTexts(restoredSnapshot.addedTexts)
+				setAnnotations(restoredSnapshot.annotations)
+				setPageOrder(restoredSnapshot.pageOrder)
+				setDeletedPages(restoredSnapshot.deletedPages)
+				setPageRotations(restoredSnapshot.pageRotations)
+				historyRef.current = restoredHistory
+				historyIndexRef.current = restoredHistoryIndex
+				setCanUndo(restoredHistoryIndex > 0)
+				setCanRedo(restoredHistoryIndex < restoredHistory.length - 1)
+				setIsSaved(savedState?.isSaved ?? true)
+				setActiveTool(savedState?.activeTool || '')
+				setPendingImage(savedState?.pendingImage || null)
+				setMergeFiles(savedState?.mergeFiles || [])
+				setSplitRange(savedState?.splitRange || '')
+				if (Number.isFinite(savedState?.scrollTop)) {
+					workspaceScrollTopRef.current = savedState.scrollTop
+					setRestoredScrollTop(savedState.scrollTop)
+				}
+				setHasPersistedDocument(Boolean(savedState))
+				if (savedState) setHistoryRestoreVersion((version) => version + 1)
 			} catch (error) {
 				if (isCurrent) {
 					setNotice(error.message || 'This PDF could not be opened. It may be damaged or password-protected.')
@@ -625,6 +760,72 @@ function PrimePdfEditor() {
 			loadingTask?.destroy()
 		}
 	}, [file])
+
+	useEffect(() => {
+		if (!file || !pdfBytes || isLoading || isRestoring || !editorSessionId || !ownerEmail || hasPersistedDocument) return undefined
+		let isCurrent = true
+		savePdfEditorDocument(editorSessionId, ownerEmail, file, pdfBytes)
+			.then(() => {
+				if (isCurrent) setHasPersistedDocument(true)
+			})
+			.catch((error) => {
+				if (isCurrent) setNotice(`Could not preserve this PDF for this session: ${error.message}`)
+			})
+		return () => { isCurrent = false }
+	}, [editorSessionId, file, hasPersistedDocument, isLoading, isRestoring, ownerEmail, pdfBytes])
+
+	useEffect(() => {
+		persistStateRef.current = async () => {
+			if (!file || !pdfBytes || !hasPersistedDocument || !editorSessionId || !ownerEmail) return
+			try {
+				await savePdfEditorState(editorSessionId, ownerEmail, {
+					name: file.name,
+					edits: editsRef.current,
+					addedTexts: addedTextsRef.current,
+					annotations: annotationsRef.current,
+					pageOrder: pageOrderRef.current,
+					deletedPages: deletedPagesRef.current,
+					pageRotations: pageRotationsRef.current,
+					history: historyRef.current,
+					historyIndex: historyIndexRef.current,
+					isSaved,
+					activeTool,
+					pendingImage,
+					mergeFiles,
+					splitRange,
+					scrollTop: workspaceScrollTopRef.current,
+				})
+			} catch (error) {
+				setNotice(`Could not preserve your PDF editing session: ${error.message}`)
+			}
+		}
+	}, [activeTool, editorSessionId, file, hasPersistedDocument, isSaved, mergeFiles, ownerEmail, pendingImage, pdfBytes, splitRange])
+
+	useEffect(() => {
+		if (!file || !pdfBytes || !hasPersistedDocument || isLoading || isRestoring || !editorSessionId || !ownerEmail) return undefined
+		const timer = window.setTimeout(() => persistStateRef.current?.(), 300)
+		return () => window.clearTimeout(timer)
+	}, [
+		activeTool,
+		addedTexts,
+		annotations,
+		deletedPages,
+		edits,
+		editorSessionId,
+		file,
+		hasPersistedDocument,
+		historyRestoreVersion,
+		isLoading,
+		isRestoring,
+		isSaved,
+		mergeFiles,
+		ownerEmail,
+		pageOrder,
+		pageRotations,
+		pendingImage,
+		pdfBytes,
+		splitRange,
+	])
 
 	const recordChange = useCallback((
 		nextEdits,
@@ -869,7 +1070,7 @@ function PrimePdfEditor() {
 	async function openFile(selectedFile) {
 		let nextFile = selectedFile
 		if (!nextFile) return
-		if (isLoading || isSaving) return
+		if (isLoading || isSaving || isRestoring) return
 		const isDocx = nextFile.name.toLowerCase().endsWith('.docx')
 		if (isDocx && nextFile.size > 25 * 1024 * 1024) {
 			setNotice('Choose a DOCX document smaller than 25 MB for browser conversion.')
@@ -922,6 +1123,9 @@ function PrimePdfEditor() {
 		setCanRedo(false)
 		setIsSaved(true)
 		setActiveTool('')
+		setHasPersistedDocument(false)
+		setRestoredScrollTop(null)
+		workspaceScrollTopRef.current = 0
 		setFile(nextFile)
 		setPdfDocument(null)
 		setPdfBytes(null)
@@ -1277,7 +1481,7 @@ function PrimePdfEditor() {
 									type="file"
 									accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
 									onChange={handleFileChange}
-									disabled={isLoading || isSaving}
+									disabled={isLoading || isSaving || isRestoring}
 									aria-label="Choose a PDF or DOCX document"
 								/>
 								<input
@@ -1299,8 +1503,8 @@ function PrimePdfEditor() {
 								/>
 								<div className="prime-pdf-tool-group" role="group" aria-label="File">
 									<span className="prime-pdf-tool-group-label">File</span>
-									<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isLoading || isSaving}>
-										{isLoading ? 'Opening document…' : 'Open PDF / DOCX'}
+									<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isLoading || isSaving || isRestoring}>
+										{isRestoring ? 'Restoring session…' : isLoading ? 'Opening document…' : 'Open PDF / DOCX'}
 									</button>
 								</div>
 								{pdfDocument && (
@@ -1405,6 +1609,7 @@ function PrimePdfEditor() {
 							onDragOver={(event) => event.preventDefault()}
 							onDrop={handleDrop}
 						>
+							{isRestoring && <p className="prime-pdf-loading">Checking for your previous PDF session…</p>}
 							{isLoading && <p className="prime-pdf-loading">Opening PDF…</p>}
 							{pdfDocument && pageOrder
 								.filter((pageIndex) => !deletedPages.includes(pageIndex))
@@ -1433,15 +1638,17 @@ function PrimePdfEditor() {
 											onAnnotationEdit={updateAnnotation}
 											onAnnotationDelete={deleteAnnotation}
 											onImagePlace={placeImage}
+											onPageRendered={onPageRendered}
+											renderKey={`${pdfRenderGeneration}:${pageIndex + 1}:${pageRotations[pageIndex] || 0}`}
 										/>
 									</div>
 								))}
-							{!file && !isLoading && (
+							{!file && !isLoading && !isRestoring && (
 								<div className="editor-empty-state">
 									<span className="editor-empty-icon" aria-hidden="true">PDF</span>
-									<h2>Open a PDF to get started</h2>
+									<h2>{hasPersistedDocument ? 'Restoring your PDF…' : 'Open a PDF to get started'}</h2>
 									<p>Drop a PDF or DOCX here, or choose one from your device. DOCX files are converted to visual PDFs in your browser.</p>
-									<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()}>Choose PDF</button>
+									<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isRestoring}>Choose PDF</button>
 								</div>
 							)}
 						</div>
