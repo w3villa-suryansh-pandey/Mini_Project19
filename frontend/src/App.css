@@ -9328,3 +9328,45 @@ body {
   background: #244780;
   border-color: #355a91;
 }
+
+
+/* Writing Pad: dark-mode paragraph and font-size dropdowns */
+
+:root[data-theme='dark'] .writing-pad-select-label select {
+  color: #f1f5f9;
+  background: #1e293b;
+  border: 1px solid #475569;
+  color-scheme: dark;
+}
+
+:root[data-theme='dark'] .writing-pad-select-label select:hover {
+  color: #ffffff;
+  background: #334155;
+  border-color: #64748b;
+}
+
+:root[data-theme='dark'] .writing-pad-select-label select:focus {
+  color: #ffffff;
+  background: #1e293b;
+  border-color: #818cf8;
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
+
+/* Dropdown options */
+:root[data-theme='dark'] .writing-pad-select-label select option {
+  color: #f1f5f9;
+  background: #1e293b;
+}
+
+/* Other writing toolbar buttons */
+:root[data-theme='dark'] .writing-pad-tool-group button {
+  color: #e2e8f0;
+  background: transparent;
+}
+
+:root[data-theme='dark'] .writing-pad-tool-group button:hover {
+  color: #ffffff;
+  background: #334155;
+  border-color: #475569;
+}
