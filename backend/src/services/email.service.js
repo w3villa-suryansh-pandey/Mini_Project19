@@ -48,6 +48,14 @@ function escapeHtml(value) {
 }
 
 async function sendVerificationEmail({ email, name, token }) {
+    console.log('BREVO DEBUG:', {
+    rawApiKey: Boolean(process.env.BREVO_API_KEY),
+    rawSender: Boolean(process.env.BREVO_SENDER_EMAIL),
+    exportedApiKey: Boolean(brevoApiKey),
+    exportedSender: Boolean(brevoSenderEmail),
+    frontendUrl: Boolean(frontendUrl),
+    configurationValid: isEmailConfigured(),
+})
     if (!isEmailConfigured()) {
         const error = new Error(EMAIL_CONFIGURATION_MESSAGE)
         error.status = 503
