@@ -27,7 +27,7 @@
 
 .theme-toggle:hover {
   border-color: #9caec8;
-  background: #f4f7fb;
+  background: #ebeef1;
 }
 
 .theme-toggle:focus-visible {
@@ -9281,4 +9281,50 @@ body {
   .admin-account-badge .account-badge-details {
     max-width: min(190px, 38vw);
   }
+}
+
+
+/* Fix button contrast in dark mode */
+
+:root[data-theme='dark'] .submit-button,
+:root[data-theme='dark'] .profile-save-button {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+:root[data-theme='dark'] .submit-button:hover,
+:root[data-theme='dark'] .profile-save-button:hover {
+  color: #ffffff;
+  background: #1d4ed8;
+}
+
+:root[data-theme='dark'] .editor-open-button,
+:root[data-theme='dark'] .editor-download-link {
+  color: #e5eaf2;
+  background: #202a39;
+  border-color: #3a4659;
+}
+
+:root[data-theme='dark'] .editor-open-button:hover,
+:root[data-theme='dark'] .editor-download-link:hover {
+  color: #ffffff;
+  background: #29364a;
+}
+
+:root[data-theme='dark'] .editor-open-button.is-active,
+:root[data-theme='dark'] .editor-save-button {
+  color: #ffffff;
+  background: #244780;
+  border-color: #355a91;
+}
+
+:root[data-theme='dark'] .mode-tab.active {
+  color: #ffffff;
+  background: #263247;
+}
+
+:root[data-theme='dark'] .pdf-plan-action {
+  color: #ffffff;
+  background: #244780;
+  border-color: #355a91;
 }
