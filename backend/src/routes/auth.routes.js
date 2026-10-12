@@ -6,6 +6,8 @@ const {
 	login,
 	logout,
 	resendVerification,
+	forgotPassword,
+	resetPassword,
 	signUp,
 	verifyEmail,
 } = require('../controllers/auth.controller')
@@ -62,6 +64,8 @@ router.get('/facebook/callback', validateFacebookState, (req, res, next) => {
 router.post('/signup', signUp)
 router.post('/verify-email', verifyEmail)
 router.post('/resend-verification', resendVerification)
+router.post('/forgot-password', forgotPassword)
+router.post('/reset-password', resetPassword)
 router.post('/login', login)
 router.post('/logout', logout)
 router.get('/me', authenticate, getCurrentUser)

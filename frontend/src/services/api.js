@@ -145,6 +145,21 @@ export function resendVerification(email) {
 		body: JSON.stringify({ email }),
 	})
 }
+// Send password reset email
+export function forgotPassword(email) {
+  return request('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+// Reset password using email token
+export function resetPassword(token, password) {
+  return request('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  })
+}
 
 export function signOut() {
 	return request('/api/auth/logout', { method: 'POST' }).finally(clearCachedUserSession)

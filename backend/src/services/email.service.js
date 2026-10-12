@@ -129,8 +129,74 @@ async function sendVerificationEmail({ email, name, token }) {
     }
 }
 
+async function sendPasswordResetEmail(email, resetLink) {
+  const response = await fetch(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: {
+          name: 'W3Villa',
+          email: process.env.BREVO_SENDER_EMAIL,
+        },
+        to: [
+          {
+            email,
+          },
+        ],
+        subject: 'Reset your W3Villa password',
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; padding: 24px;">
+            <h2>Reset your password</h2>
+
+            <p>
+              We received a request to reset your W3Villa password.
+            </p>
+
+            <p>
+              <a
+                href="${resetLink}"
+                style="
+                  display: inline-block;
+                  padding: 12px 20px;
+                  background: #6366f1;
+                  color: #ffffff;
+                  text-decoration: none;
+                  border-radius: 8px;
+                "
+              >
+                Reset Password
+              </a>
+            </p>
+
+            <p>This link will expire in 15 minutes.</p>
+
+            <p>
+              If you didn't request this password reset,
+              you can safely ignore this email.
+            </p>
+          </div>
+        `,
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      `Brevo password reset email failed: ${response.status}`
+    )
+  }
+
+  return response.json()
+}
+
 module.exports = {
     isEmailConfigured,
     sendVerificationEmail,
     EMAIL_CONFIGURATION_MESSAGE,
+    sendPasswordResetEmail
 }

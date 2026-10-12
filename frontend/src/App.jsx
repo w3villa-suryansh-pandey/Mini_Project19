@@ -5,6 +5,14 @@ import logo from './assets/logo.png'
 import LandingPage from './pages/LandingPage.jsx'
 import './App.css'
 
+const ForgotPassword = lazy(() =>
+  import('./pages/auth/ForgotPassword.jsx')
+)
+
+const ResetPassword = lazy(() =>
+  import('./pages/auth/ResetPassword.jsx')
+)
+
 const UserProfile = lazy(() => import('./pages/user/UserProfile.jsx'))
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard.jsx'))
 const Pricing = lazy(() => import('./pages/user/Pricing.jsx'))
@@ -85,6 +93,35 @@ function App() {
       </Suspense>
     )
   }
+  // Forgot Password Page
+if (window.location.pathname === '/forgot-password') {
+  return (
+    <Suspense
+      fallback={
+        <main className="route-loading" role="status">
+          Loading forgot password…
+        </main>
+      }
+    >
+      <ForgotPassword />
+    </Suspense>
+  )
+}
+
+// Reset Password Page
+if (window.location.pathname === '/reset-password') {
+  return (
+    <Suspense
+      fallback={
+        <main className="route-loading" role="status">
+          Loading reset password…
+        </main>
+      }
+    >
+      <ResetPassword />
+    </Suspense>
+  )
+}
 
   if (window.location.pathname === '/profile') {
     return <LazyRoute requiredRole="user" Page={UserProfile} />
@@ -308,10 +345,11 @@ function App() {
             <label className="field-label" htmlFor="password">
               <span className="label-row">
                 Password
-                {!isSignup && <a href="#reset" onClick={(event) => {
-                  event.preventDefault()
-                  setNotice('Password reset is not connected yet.')
-                }}>Forgot password?</a>}
+                {!isSignup && (
+                  <a href="/forgot-password">
+                  Forgot password?
+                  </a>              
+                )}
               </span>
               <span className="password-wrap">
                 <input

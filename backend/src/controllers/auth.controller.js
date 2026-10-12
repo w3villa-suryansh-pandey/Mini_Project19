@@ -14,6 +14,8 @@ const { findActiveSubscription, subscriptionDetails } = require('../services/sub
 const SESSION_WINDOW = '7d'
 const VERIFICATION_WINDOW = 24 * 60 * 60 * 1000
 
+const PASSWORD_RESET_WINDOW = 15 * 60 * 1000
+
 function respondWithError(res, status, code, message) {
 	return res.status(status).json({ error: { code, message } })
 }
@@ -159,6 +161,135 @@ async function resendVerification(req, res) {
 	return res.json({ message: 'If an unverified account exists for that email, a verification link will be sent shortly.' })
 }
 
+async function forgotPassword(req, res) {
+  const email =
+    typeof req.body?.email === 'string'
+      ? req.body.email.trim().toLowerCase()
+      : ''
+
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    return respondWithError(
+      res,
+      400,
+      'INVALID_EMAIL',
+      'Enter a valid email address.'
+    )
+  }
+
+  const genericMessage =
+    'If an account exists for this email, a password reset link will be sent shortly.'
+
+  const user = await User.findOne({ email })
+    .select('+password name email authProviders isActive')
+
+  if (!user || !user.isActive || !user.password) {
+    return res.json({ message: genericMessage })
+  }
+
+  const reset = createVerificationToken()
+
+  user.passwordResetToken = reset.tokenHash
+  user.passwordResetExpiresAt =
+    new Date(Date.now() + PASSWORD_RESET_WINDOW)
+
+  await user.save()
+
+  const frontendUrl = process.env.FRONTEND_URL
+
+  if (!frontendUrl) {
+    return respondWithError(
+      res,
+      503,
+      'RESET_NOT_CONFIGURED',
+      'Password reset is not configured.'
+    )
+  }
+
+  const resetLink =
+    `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(reset.token)}`
+
+  try {
+    await emailService.sendPasswordResetEmail(
+      user.email,
+      resetLink
+    )
+  } catch (error) {
+    console.error('Password reset email failed:', error)
+
+    return respondWithError(
+      res,
+      503,
+      'EMAIL_SEND_FAILED',
+      'Unable to send the password reset email. Please try again.'
+    )
+  }
+
+  return res.json({ message: genericMessage })
+}
+
+async function resetPassword(req, res) {
+  const { token, password } = req.body || {}
+
+  if (
+    typeof token !== 'string' ||
+    token.length < 20 ||
+    token.length > 200
+  ) {
+    return respondWithError(
+      res,
+      400,
+      'INVALID_TOKEN',
+      'This password reset link is invalid or expired.'
+    )
+  }
+
+  if (
+    typeof password !== 'string' ||
+    password.length < 8 ||
+    password.length > 72
+  ) {
+    return respondWithError(
+      res,
+      400,
+      'INVALID_PASSWORD',
+      'Password must be between 8 and 72 characters.'
+    )
+  }
+
+  const passwordHash = await hashPassword(password)
+
+  const user = await User.findOneAndUpdate(
+    {
+      passwordResetToken: hashVerificationToken(token),
+      passwordResetExpiresAt: { $gt: new Date() },
+      isActive: true,
+    },
+    {
+      $set: {
+        password: passwordHash,
+      },
+      $unset: {
+        passwordResetToken: 1,
+        passwordResetExpiresAt: 1,
+      },
+    },
+    { new: true }
+  )
+
+  if (!user) {
+    return respondWithError(
+      res,
+      400,
+      'INVALID_TOKEN',
+      'This password reset link is invalid or expired.'
+    )
+  }
+
+  return res.json({
+    message: 'Password reset successfully. You can now sign in.',
+  })
+}
+
 async function login(req, res) {
 	const { email, password, role = 'user' } = req.body || {}
 	if (typeof email !== 'string' || typeof password !== 'string') {
@@ -213,6 +344,8 @@ module.exports = {
 	signUp,
 	verifyEmail,
 	resendVerification,
+	forgotPassword,
+	resetPassword,
 	login,
 	logout,
 	getCurrentUser,
