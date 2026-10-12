@@ -9,23 +9,33 @@ const {
 const EMAIL_CONFIGURATION_MESSAGE =
     'Outgoing email is not configured. Set BREVO_API_KEY and BREVO_SENDER_EMAIL in your backend environment variables, then restart the backend.'
 
+
 function isPlaceholder(value) {
-    return (
-        typeof value !== 'string' ||
-        !value.trim() ||
-        /your[-_ ]|placeholder|example\.com|change.?me/i.test(value)
-    )
+    if (typeof value !== 'string') return true
+
+    const trimmed = value.trim()
+
+    if (!trimmed) return true
+
+    return /^(your[-_ ]|placeholder|change.?me)/i.test(trimmed)
 }
 
 function isEmailConfigured() {
+    const apiKey = brevoApiKey?.trim()
+    const senderEmail = brevoSenderEmail?.trim()
+    const url = frontendUrl?.trim()
+
     return Boolean(
-        !isPlaceholder(brevoApiKey) &&
-        !isPlaceholder(brevoSenderEmail) &&
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(brevoSenderEmail) &&
-        typeof frontendUrl === 'string' &&
-        /^https?:\/\//i.test(frontendUrl)
+        apiKey &&
+        !isPlaceholder(apiKey) &&
+        senderEmail &&
+        !isPlaceholder(senderEmail) &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail) &&
+        url &&
+        /^https?:\/\//i.test(url)
     )
 }
+
 
 function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, (character) => ({
