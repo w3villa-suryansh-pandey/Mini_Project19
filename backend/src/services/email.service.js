@@ -1,10 +1,11 @@
 
-const {
-    frontendUrl,
-    brevoApiKey,
-    brevoSenderEmail,
-    brevoSenderName,
-} = require('../config/env')
+const { frontendUrl } = require('../config/env')
+
+const brevoApiKey = (process.env.BREVO_API_KEY || '').trim()
+const brevoSenderEmail = (process.env.BREVO_SENDER_EMAIL || '').trim()
+const brevoSenderName =
+    (process.env.BREVO_SENDER_NAME || 'W3Villa').trim()
+
 
 const EMAIL_CONFIGURATION_MESSAGE =
     'Outgoing email is not configured. Set BREVO_API_KEY and BREVO_SENDER_EMAIL in your backend environment variables, then restart the backend.'
