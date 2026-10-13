@@ -375,7 +375,7 @@ async function fillAddressFromCurrentLocation() {
 					</div>
 				</section>
 
-					<form className="profile-section profile-form" onSubmit={saveProfile}>
+				<form className="profile-section profile-form" onSubmit={saveProfile}>
 					<div className="profile-section-heading">
 						<h2>Personal information</h2>
 						<p>Your name and contact details.</p>
@@ -420,44 +420,44 @@ async function fillAddressFromCurrentLocation() {
 							/>
 						</label>
 						
-<div className="profile-field profile-address-field">
-  <label htmlFor="profile-address">Address</label>
+                    <div className="profile-field profile-address-field">
+                        <label htmlFor="profile-address">Address</label>
 
-  <input
-    id="profile-address"
-    name="address"
-    type="text"
-    autoComplete="street-address"
-    maxLength="240"
-    placeholder="Enter your address or use current location"
-    value={profile.address}
-    onChange={updateField}
-  />
+                            <input
+                               id="profile-address"
+                               name="address"
+                               type="text"
+                               autoComplete="street-address"
+                               maxLength="240"
+                               placeholder="Enter your address or use current location"
+                               value={profile.address}
+                               onChange={updateField}
+                             />
 
-  <div className="address-location-actions">
-    <button
-      className="profile-download"
-      type="button"
-      onClick={fillAddressFromCurrentLocation}
-      disabled={isLocating || isLoading}
-    >
-      {isLocating
-        ? 'Finding location…'
-        : '📍 Use current location'}
-    </button>
+                        <div className="address-location-actions">
+                           <button
+                               className="profile-download"
+                               type="button"
+                               onClick={fillAddressFromCurrentLocation}
+                               disabled={isLocating || isLoading}
+                              >
+                               {isLocating
+                                ? 'Finding location…'
+                                       : '📍 Use current location'}
+                            </button>
 
-    <span
-      className="address-hint"
-      aria-live="polite"
-      role={isLocationError ? 'alert' : 'status'}
-    >
-      {locationNotice ||
-        'Use your current location to autofill your address.'}
-    </span>
-  </div>
-</div>
+                            <span
+                               className="address-hint"
+                               aria-live="polite"
+                               role={isLocationError ? 'alert' : 'status'}
+                             >
+                               {locationNotice ||
+                               'Use your current location to autofill your address.'}
+                            </span>
+                        </div>
+                    </div>
 
-						</div>
+						
 						<label className="profile-field" htmlFor="profile-company">
 							Company
 							<input
