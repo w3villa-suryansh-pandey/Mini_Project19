@@ -5340,26 +5340,6 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
 }
 
 
-.landing-page {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  overflow-x: clip;
-  color: #18253b;
-  background: #fff;
-}
-
-
-.landing-hero,
-.landing-tools-strip,
-.landing-features,
-.landing-about,
-.landing-cta,
-.landing-footer {
-  width: min(100% - 56px, 1160px);
-  margin-right: auto;
-  margin-left: auto;
-}
 
 
 /* Full-width header */
@@ -6021,14 +6001,14 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
 
 .landing-tools-strip > span {
   color: #8b97a8;
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
 }
 
 .landing-tools-strip strong {
   color: #5a6779;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 650;
 }
 

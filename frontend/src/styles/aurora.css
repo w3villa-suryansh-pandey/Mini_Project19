@@ -1,7 +1,7 @@
 .aurora-background {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: clip;
   background: #090e1c;
 }
 
@@ -171,4 +171,26 @@ html {
 
 .landing-nav a {
   cursor: pointer;
+}
+
+.landing-page {
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+}
+
+.landing-page {
+  overflow: visible;
+}
+
+#home,
+#tools,
+#features,
+#pricing,
+#about {
+  scroll-margin-top: 90px;
 }

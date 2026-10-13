@@ -1,25 +1,6 @@
 import logo from '../assets/logo.png'
 import '../styles/aurora.css'
-const scrollToSection = (event, sectionId) => {
-  event.preventDefault()
 
-  if (sectionId === 'home') {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
-    return
-  }
-
-  const section = document.getElementById(sectionId)
-
-  if (section) {
-    section.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
-  }
-}
 const featureCards = [
 	{
 		number: '01',
@@ -112,26 +93,12 @@ function LandingPage({ notice = '' }) {
                        </a>
 
                         <nav className="landing-nav" aria-label="Main navigation">
-                           <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>
-                              Home
-                            </a>
-
-                           <a href="#tools" onClick={(e) => scrollToSection(e, 'tools')}>
-                              Tools
-                           </a>
-
-                           <a href="#features" onClick={(e) => scrollToSection(e, 'features')}>
-                              Features
-                           </a>
-
-                           <a href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')}>
-                              Pricing
-                           </a>
-
-                           <a href="#about" onClick={(e) => scrollToSection(e, 'about')}>
-                                About
-                           </a>
-                        </nav>
+  <a href="#home">Home</a>
+  <a href="#tools">Tools</a>
+  <a href="#features">Features</a>
+  <a href="#pricing">Pricing</a>
+  <a href="#about">About</a>
+</nav>
 
                    <div className="landing-header-actions">
                       <a className="landing-login-link" href="/login">
@@ -154,24 +121,20 @@ function LandingPage({ notice = '' }) {
 					<div className="landing-hero-brand" aria-label="S19 workspace">
 						<img src={logo} alt="" />
 						<span>S19</span>
-						<small>WORKSPACE</small>
+						<small><h2>WORKSPACE</h2></small>
 					</div>
-					<p className="landing-eyebrow"><span /> SMART TOOLS FOR MODERN WORK</p>
+					
 					<h1 id="landing-hero-title">Your Documents. Your Creativity. <span>One Workspace.</span></h1>
 					<p className="landing-hero-description">
 						Edit, convert, compress, and organize your documents with powerful tools designed to make everyday work effortless.
 					</p>
 					<div className="landing-hero-actions">
 						<a className="landing-primary-button" href="/signup">Start Creating <span aria-hidden="true">→</span></a>
-						<a
-                          className="landing-secondary-button"
-                          href="#tools"
-                          onClick={(e) => scrollToSection(e, 'tools')}
-                         >
-                         Explore Tools
+						<a className="landing-secondary-button" href="#tools">
+                           Explore Tools
                         </a>
 					</div>
-					<div className="landing-trust-note"><span aria-hidden="true">✓</span> A faster way to manage PDF and document tasks.</div>
+					<div className="landing-trust-note"><span aria-hidden="true">✓</span> <h2>A faster way to manage PDF and document tasks.</h2></div>
 				</div>
 
 				<div className="landing-visual" aria-label="Preview of the S19 document workspace">
