@@ -43,6 +43,7 @@ function UserProfile() {
 	const [isLocating, setIsLocating] = useState(false)
 	const [locationNotice, setLocationNotice] = useState('')
 	const [isLocationError, setIsLocationError] = useState(false)
+	const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false)
 
 	useEffect(() => {
 		const params = new URLSearchParams(window.location.search)
@@ -346,11 +347,23 @@ async function fillAddressFromCurrentLocation() {
 						<h2 id="photo-heading">Profile photo</h2>
 						<p>Choose a clear photo so people can recognize you.</p>
 					</div>
-					<div className="photo-controls">
-						<div className="profile-avatar" aria-label={profile.photo ? 'Current profile photo' : 'No profile photo selected'}>
-							{profile.photo
-								? <img src={profile.photo} alt="Profile" />
-								: <span>{initials || 'W'}</span>}
+					<div className="photo-controls">							
+                            {profile.photo ? (
+                               <button
+                                  type="button"
+                                  className="profile-avatar profile-avatar-clickable"
+                                  onClick={() => setIsPhotoPreviewOpen(true)}
+                                  title="Click to view profile photo"
+                                  aria-label="View profile photo"
+                                   >
+                                  <img src={profile.photo} alt="Profile" />
+                               </button>
+                            ) : (
+                            <div className="profile-avatar" aria-label="No profile photo selected">
+                                  <span>{initials || 'W'}</span>
+                            </div>
+                        )}
+
 						</div>
 						<div className="photo-actions">
 							<label className="upload-photo-button" htmlFor="profile-photo">
@@ -503,6 +516,37 @@ async function fillAddressFromCurrentLocation() {
 				</form>
 
 				<p className="profile-storage-note">Profile changes are saved to your account.</p>
+
+{isPhotoPreviewOpen && profile.photo && (
+  <div
+    className="profile-photo-modal"
+    onClick={() => setIsPhotoPreviewOpen(false)}
+  >
+    <div
+      className="profile-photo-modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Profile photo preview"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="profile-photo-modal-close"
+        onClick={() => setIsPhotoPreviewOpen(false)}
+        aria-label="Close photo preview"
+      >
+        &times;
+      </button>
+
+      <img
+        src={profile.photo}
+        alt="Full-size profile"
+        className="profile-photo-full"
+      />
+    </div>
+  </div>
+)}
+
 			</div>
 			</main>
 		</div>
