@@ -1,5 +1,6 @@
 import logo from '../assets/logo.png'
 import '../styles/aurora.css'
+import ThemeToggle from '../components/ThemeToggle.jsx'
 
 const featureCards = [
 	{
@@ -101,6 +102,8 @@ function LandingPage({ notice = '' }) {
 </nav>
 
                    <div className="landing-header-actions">
+					 
+
                       <a className="landing-login-link" href="/login">
                                  Log in
                         </a>
@@ -108,6 +111,8 @@ function LandingPage({ notice = '' }) {
                        <a className="landing-signup-link" href="/signup">
                          Sign up
                         </a>
+
+						 <ThemeToggle />
                    </div>
 
                   </div>

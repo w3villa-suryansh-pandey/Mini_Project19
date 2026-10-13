@@ -194,3 +194,20 @@ html {
 #about {
   scroll-margin-top: 90px;
 }
+
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.landing-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.landing-header-actions .theme-toggle {
+  position: static;
+  flex-shrink: 0;
+}
