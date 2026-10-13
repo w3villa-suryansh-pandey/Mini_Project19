@@ -1175,6 +1175,45 @@
   cursor: pointer;
 }
 
+/* Dark theme - Sidebar Sign out */
+html[data-theme="dark"] .dashboard-signout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 16px;
+
+  color: #e2e8f0;
+  background: #27364c;
+  border: 1px solid #40516a;
+  border-radius: 12px;
+
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+html[data-theme="dark"] .dashboard-signout:hover {
+  color: #fecaca;
+  background: #422b35;
+  border-color: #8b424d;
+}
+
+html[data-theme="dark"] .dashboard-signout:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 3px;
+}
+
+
 .dashboard-content {
   min-width: 0;
 }
