@@ -1,0 +1,159 @@
+.aurora-background {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #090e1c;
+}
+
+.aurora-background::before {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  z-index: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 25% 30%, rgba(139, 92, 246, 0.5), transparent 40%),
+    radial-gradient(circle at 75% 45%, rgba(6, 182, 212, 0.35), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.4), transparent 45%);
+
+  filter: blur(55px);
+  animation: auroraMove 10s ease-in-out infinite alternate;
+}
+
+.aurora-background > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes auroraMove {
+  0% {
+    transform: translate(-4%, -3%) rotate(0deg);
+  }
+
+  50% {
+    transform: translate(4%, 3%) rotate(5deg);
+  }
+
+  100% {
+    transform: translate(-3%, 5%) rotate(-5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-background::before {
+    animation: none;
+  }
+}
+
+
+/* Smooth glowing feature cards */
+.landing-feature-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(167, 139, 250, 0.6);
+  box-shadow:
+    0 18px 45px rgba(99, 102, 241, 0.18),
+    0 0 22px rgba(139, 92, 246, 0.12);
+}
+
+.landing-feature-icon {
+  transition: transform 0.3s ease;
+}
+
+.landing-feature-card:hover .landing-feature-icon {
+  transform: scale(1.12) rotate(-5deg);
+}
+
+/* Floating PDF document preview */
+.landing-document-card {
+  animation: documentFloat 6s ease-in-out infinite;
+}
+
+@keyframes documentFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+/* Premium animated buttons */
+.landing-primary-button,
+.landing-signup-link {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
+}
+
+.landing-primary-button:hover,
+.landing-signup-link:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.1);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3);
+}
+
+.landing-primary-button:active,
+.landing-signup-link:active {
+  transform: scale(0.97);
+}
+
+/* Premium pricing card hover */
+.landing-price-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.landing-price-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 18px 40px rgba(99, 102, 241, 0.15);
+}
+
+/* Smooth navigation underline */
+.landing-nav a {
+  position: relative;
+}
+
+.landing-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+
+.landing-nav a:hover::after {
+  transform: scaleX(1);
+}
+
+/* Respect accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+  .landing-document-card {
+    animation: none;
+  }
+
+  .landing-feature-card,
+  .landing-feature-icon,
+  .landing-primary-button,
+  .landing-signup-link,
+  .landing-price-card,
+  .landing-nav a::after {
+    transition: none;
+  }
+}

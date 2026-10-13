@@ -1,5 +1,5 @@
 import logo from '../assets/logo.png'
-
+import '../styles/aurora.css'
 const featureCards = [
 	{
 		number: '01',
@@ -80,24 +80,38 @@ const pricingPreview = [
 
 function LandingPage({ notice = '' }) {
 	return (
-		<main className="landing-page">
-			<header className="landing-header">
-				<a className="landing-brand" href="/" aria-label="S19 home">
-					<img src={logo} alt="" />
-					<span>S19</span>
-				</a>
-				<nav className="landing-nav" aria-label="Main navigation">
-					<a href="#home">Home</a>
-					<a href="#tools">Tools</a>
-					<a href="#features">Features</a>
-					<a href="#pricing">Pricing</a>
-					<a href="#about">About</a>
-				</nav>
-				<div className="landing-header-actions">
-					<a className="landing-login-link" href="/login">Log in</a>
-					<a className="landing-signup-link" href="/signup">Start creating <span aria-hidden="true">→</span></a>
-				</div>
-			</header>
+		<main className="landing-page aurora-background">
+			
+               
+<header className="landing-header">
+  <div className="landing-header-inner">
+
+    <a className="landing-brand" href="/" aria-label="S19 home">
+      <img src={logo} alt="" />
+      <span>S19</span>
+    </a>
+
+    <nav className="landing-nav" aria-label="Main navigation">
+      <a href="#home">Home</a>
+      <a href="#tools">Tools</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#about">About</a>
+    </nav>
+
+    <div className="landing-header-actions">
+      <a className="landing-login-link" href="/login">
+        Log in
+      </a>
+
+      <a className="landing-signup-link" href="/signup">
+        Sign up
+      </a>
+    </div>
+
+  </div>
+</header>
+
 
 			{notice && <p className="landing-auth-notice" role="status">{notice} <a href="/login">Return to sign in</a></p>}
 
