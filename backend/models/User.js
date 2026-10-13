@@ -65,6 +65,14 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    address: {
+       street: { type: String, default: "" },
+       city: { type: String, default: "" },
+       state: { type: String, default: "" },
+       country: { type: String, default: "" },
+       postalCode: { type: String, default: "" }
+     }
+
     profilePicture: {
       type: String,
       default: "",
