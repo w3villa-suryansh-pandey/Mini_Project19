@@ -157,3 +157,18 @@
     transition: none;
   }
 }
+html {
+  scroll-behavior: smooth;
+}
+
+#home,
+#tools,
+#features,
+#pricing,
+#about {
+  scroll-margin-top: 90px;
+}
+
+.landing-nav a {
+  cursor: pointer;
+}

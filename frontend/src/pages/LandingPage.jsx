@@ -1,5 +1,25 @@
 import logo from '../assets/logo.png'
 import '../styles/aurora.css'
+const scrollToSection = (event, sectionId) => {
+  event.preventDefault()
+
+  if (sectionId === 'home') {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+    return
+  }
+
+  const section = document.getElementById(sectionId)
+
+  if (section) {
+    section.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
+}
 const featureCards = [
 	{
 		number: '01',
@@ -92,12 +112,26 @@ function LandingPage({ notice = '' }) {
                        </a>
 
                         <nav className="landing-nav" aria-label="Main navigation">
-                             <a href="#home">Home</a>
-                             <a href="#tools">Tools</a>
-                             <a href="#features">Features</a>
-                             <a href="#pricing">Pricing</a>
-                             <a href="#about">About</a>
-                       </nav>
+                           <a href="#home" onClick={(e) => scrollToSection(e, 'home')}>
+                              Home
+                            </a>
+
+                           <a href="#tools" onClick={(e) => scrollToSection(e, 'tools')}>
+                              Tools
+                           </a>
+
+                           <a href="#features" onClick={(e) => scrollToSection(e, 'features')}>
+                              Features
+                           </a>
+
+                           <a href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')}>
+                              Pricing
+                           </a>
+
+                           <a href="#about" onClick={(e) => scrollToSection(e, 'about')}>
+                                About
+                           </a>
+                        </nav>
 
                    <div className="landing-header-actions">
                       <a className="landing-login-link" href="/login">
@@ -129,7 +163,13 @@ function LandingPage({ notice = '' }) {
 					</p>
 					<div className="landing-hero-actions">
 						<a className="landing-primary-button" href="/signup">Start Creating <span aria-hidden="true">→</span></a>
-						<a className="landing-secondary-button" href="#tools">Explore Tools</a>
+						<a
+                          className="landing-secondary-button"
+                          href="#tools"
+                          onClick={(e) => scrollToSection(e, 'tools')}
+                         >
+                         Explore Tools
+                        </a>
 					</div>
 					<div className="landing-trust-note"><span aria-hidden="true">✓</span> A faster way to manage PDF and document tasks.</div>
 				</div>
