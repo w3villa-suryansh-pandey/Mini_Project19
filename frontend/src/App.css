@@ -1160,20 +1160,53 @@
   border-top: 1px solid #edf0ed;
 }
 
+
+/* ===== SIGN OUT - LIGHT MODE ===== */
+
 .dashboard-signout {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
   width: 100%;
-  padding: 0;
-  border: 0;
-  color: #78837d;
-  background: transparent;
+  min-height: 46px;
+  padding: 12px 18px;
+
+  color: #334155;
+  background: #f1f5ff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+
   text-decoration: none;
-  text-align: left;
+  text-align: center;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
+
   cursor: pointer;
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
+
+.dashboard-signout:hover {
+  color: #1d4ed8;
+  background: #e0eaff;
+  border-color: #93b4f8;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+.dashboard-signout:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
 
 /* Dark theme - Sidebar Sign out */
 html[data-theme="dark"] .dashboard-signout {
