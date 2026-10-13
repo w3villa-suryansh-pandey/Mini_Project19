@@ -364,7 +364,7 @@ async function fillAddressFromCurrentLocation() {
                             </div>
                         )}
 
-						</div>
+						
 						<div className="photo-actions">
 							<label className="upload-photo-button" htmlFor="profile-photo">
 								<svg viewBox="0 0 20 20" aria-hidden="true">
