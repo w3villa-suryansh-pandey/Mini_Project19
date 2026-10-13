@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
-import { getAddressFromCoordinates } from "../services/location.service";
+import { getAddressFromCoordinates } from '../../services/location.service.js'
 import {
 	downloadUserProfile,
 	getUserProfile,
@@ -510,3 +510,4 @@ async function fillAddressFromCurrentLocation() {
 }
 
 export default UserProfile
+
