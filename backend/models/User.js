@@ -71,7 +71,7 @@ const userSchema = new mongoose.Schema(
        state: { type: String, default: "" },
        country: { type: String, default: "" },
        postalCode: { type: String, default: "" }
-     }
+     },
 
     profilePicture: {
       type: String,
