@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
 import { getUserProfile } from '../../services/api.js'
-import ThemeToggle from '../components/ThemeToggle.jsx'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
 
 
 const actions = [
