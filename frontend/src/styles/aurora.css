@@ -184,7 +184,7 @@ html {
 }
 
 .landing-page {
-  overflow: visible;
+  overflow-x: clip;
 }
 
 #home,
@@ -207,6 +207,19 @@ html {
   gap: 14px;
 }
 
+.landing-header-actions .theme-toggle {
+  position: static;
+  flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.header-actions .theme-toggle,
 .landing-header-actions .theme-toggle {
   position: static;
   flex-shrink: 0;

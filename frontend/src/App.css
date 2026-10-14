@@ -6321,6 +6321,26 @@ html[data-theme="light"] .landing-cta .landing-primary-button:hover {
   outline-offset: 4px;
 }
 
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+.landing-page {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: clip;
+}
+
+.landing-footer {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
 .section-anchor {
   scroll-margin-top: 24px;
 }
