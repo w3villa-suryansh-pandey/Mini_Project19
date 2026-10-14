@@ -167,8 +167,10 @@ function FileCompressor() {
 			<section className="dashboard-content">
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> Compress files</div>
-					<AccountBadge />
-					<ThemeToggle/>
+					 <div className="dashboard-header-actions">
+    <AccountBadge />
+    <ThemeToggle />
+  </div>
 				</header>
 
 				<div className="document-editor-main">

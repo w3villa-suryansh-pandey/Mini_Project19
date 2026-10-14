@@ -138,8 +138,11 @@ function Payment() {
 			<section className="dashboard-content">
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> Payments</div>
-					<AccountBadge />
-					<ThemeToggle/>
+					 <div className="dashboard-header-actions">
+    <AccountBadge />
+    <ThemeToggle />
+  </div>
+					
 				</header>
 				<div className="dashboard-main">
 					<div className="dashboard-welcome">

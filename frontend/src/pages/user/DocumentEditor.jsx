@@ -176,8 +176,10 @@ function DocumentEditor() {
 			<section className="dashboard-content">
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> Document editor</div>
-					<AccountBadge />
-					<ThemeToggle/>
+					 <div className="dashboard-header-actions">
+    <AccountBadge />
+    <ThemeToggle />
+  </div>
 				</header>
 
 				<div className="document-editor-main">

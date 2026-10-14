@@ -311,8 +311,10 @@ function ImageTools() {
           <div className="dashboard-header-left">
             <div className="dashboard-breadcrumb">Workspace <span>/</span> Image tools</div>
           </div>
-          <AccountBadge />
-          <ThemeToggle/>
+           <div className="dashboard-header-actions">
+    <AccountBadge />
+    <ThemeToggle />
+  </div>
         </header>
 
         <div className="dashboard-main image-tools-main">
