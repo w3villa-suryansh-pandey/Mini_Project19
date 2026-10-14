@@ -167,7 +167,7 @@ function LandingPage({ notice = '' }) {
 							<span className="landing-toolbar-download">↓</span>
 						</div>
 					</div>
-					<div className="landing-float-note"><span aria-hidden="true">✦</span> Everything in one place</div>
+					
 				</div>
 			</section>
 
