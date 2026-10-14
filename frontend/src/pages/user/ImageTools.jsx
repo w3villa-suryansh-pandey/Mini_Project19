@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { createWorker } from 'tesseract.js'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
+
 
 const toolOptions = [
   {
@@ -310,6 +312,7 @@ function ImageTools() {
             <div className="dashboard-breadcrumb">Workspace <span>/</span> Image tools</div>
           </div>
           <AccountBadge />
+          <ThemeToggle/>
         </header>
 
         <div className="dashboard-main image-tools-main">

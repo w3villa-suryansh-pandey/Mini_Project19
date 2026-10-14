@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
+
 import { getUserProfile, getUserSubscription } from '../../services/api.js'
 import {
 	getPdfEditorSessionId,
@@ -1454,6 +1456,7 @@ function PrimePdfEditor() {
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> PDF editor</div>
 					<AccountBadge />
+					<ThemeToggle/>
 				</header>
 
 				<div className="document-editor-main">

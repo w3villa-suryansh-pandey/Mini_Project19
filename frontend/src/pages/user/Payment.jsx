@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
+
 import {
 	confirmRazorpayPayment,
 	createRazorpayOrder,
@@ -137,6 +139,7 @@ function Payment() {
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> Payments</div>
 					<AccountBadge />
+					<ThemeToggle/>
 				</header>
 				<div className="dashboard-main">
 					<div className="dashboard-welcome">

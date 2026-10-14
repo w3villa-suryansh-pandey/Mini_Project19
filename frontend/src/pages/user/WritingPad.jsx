@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
+
 
 const STICKERS = ['⭐', '✅', '📌', '💡', '🎉', '❤️', '📎', '🌱']
 
@@ -210,6 +212,7 @@ function WritingPad() {
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> Writing pad</div>
 					<AccountBadge />
+					<ThemeToggle/>
 				</header>
 
 				<div className="document-editor-main">

@@ -3,6 +3,7 @@ import WebViewer from '@pdftron/webviewer'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import { getUserSubscription } from '../../services/api.js'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
 
 const APRYSE_LICENSE_KEY = import.meta.env.VITE_APRYSE_LICENSE_KEY
 
@@ -176,6 +177,7 @@ function DocumentEditor() {
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> Document editor</div>
 					<AccountBadge />
+					<ThemeToggle/>
 				</header>
 
 				<div className="document-editor-main">

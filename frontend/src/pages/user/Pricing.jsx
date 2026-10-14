@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import { getPricingPlans } from '../../services/api.js'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
+
 
 function Pricing() {
 	const [plans, setPlans] = useState([])
@@ -31,6 +33,7 @@ function Pricing() {
 				<header className="dashboard-header">
 					<div className="dashboard-breadcrumb">Workspace <span>/</span> Pricing plans</div>
 					<AccountBadge />
+					<ThemeToggle/>
 				</header>
 				<div className="dashboard-main">
 					<div className="dashboard-welcome pricing-welcome">

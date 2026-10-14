@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import AccountBadge from '../../components/AccountBadge.jsx'
+import ThemeToggle from '../../components/ThemeToggle.jsx'
+
 import Sidebar from '../../components/Sidebar.jsx'
 import { getAddressFromCoordinates } from '../../services/location.service.js'
 import {
@@ -287,6 +289,7 @@ async function fillAddressFromCurrentLocation() {
 				<div className="profile-topbar-actions">
 					<AccountBadge user={{ name: profile.fullName, email: profile.email }} />
 					<a className="profile-back-link" href="/dashboard">Back to overview <span aria-hidden="true">↗</span></a>
+					<ThemeToggle/>
 				</div>
 			</header>
 
