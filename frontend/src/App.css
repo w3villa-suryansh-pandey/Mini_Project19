@@ -1271,6 +1271,18 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   background: #fff;
 }
 
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.dashboard-header-actions .theme-toggle {
+  position: static;
+  flex-shrink: 0;
+}
 .dashboard-breadcrumb {
   color: #89938d;
   font-size: 11px;
@@ -6144,7 +6156,7 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   padding: 47px 50px;
   box-sizing: border-box;
   border: 1px solid #e8eef7;
-  border-radius: 7px;
+  border-radius: 20px;
   background: linear-gradient(110deg, #f6f9ff, #fbfcff);
 }
 
@@ -7652,7 +7664,7 @@ body {
 .landing-about {
   display: grid;
   grid-template-columns: auto minmax(0, 1.2fr) auto;
-  gap: 28px;
+  gap: 24px;
   align-items: center;
   padding-bottom: 30px;
 }
