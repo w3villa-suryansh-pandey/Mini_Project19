@@ -2,7 +2,7 @@
   position: relative;
   isolation: isolate;
   overflow: clip;
-  background: #090e1c;
+  background: #d9c9a9;
 }
 
 .aurora-background::before {
@@ -13,9 +13,9 @@
   pointer-events: none;
 
   background:
-    radial-gradient(circle at 25% 30%, rgba(139, 92, 246, 0.5), transparent 40%),
-    radial-gradient(circle at 75% 45%, rgba(6, 182, 212, 0.35), transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.4), transparent 45%);
+    radial-gradient(circle at 25% 30%, rgba(214, 181, 119, 0.25), transparent 40%),
+    radial-gradient(circle at 75% 45%, rgba(230, 208, 161, 0.28), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(197, 157, 93, 0.2), transparent 45%);
 
   filter: blur(55px);
   animation: auroraMove 10s ease-in-out infinite alternate;

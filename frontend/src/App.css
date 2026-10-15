@@ -698,7 +698,7 @@
 
 .workspace-home-layout { min-height: 100vh; }
 .workspace-home-main { width: min(100% - 64px, 1280px); margin: 0 auto; padding: clamp(30px, 5vw, 64px) 0 36px; }
-.workspace-home-intro { position: relative; display: grid; min-height: 0; grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.2fr); align-items: center; gap: clamp(24px, 4vw, 52px); overflow: hidden; margin-bottom: 40px; padding: clamp(24px, 3.5vw, 42px); border: 1px solid rgba(106, 100, 215, 0.16); border-radius: 22px; background: linear-gradient(112deg, #f1f1ff 0%, #f8faff 55%, #edf7ff 100%); box-shadow: 0 18px 55px rgba(66, 74, 140, 0.09); }
+.workspace-home-intro { position: relative; display: grid; min-height: 0; grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.2fr); align-items: center; gap: clamp(24px, 4vw, 52px); overflow: hidden; margin-bottom: 40px; padding: clamp(24px, 3.5vw, 42px); border: 1px solid rgba(130, 101, 51, 0.24); border-radius: 22px; background: linear-gradient(112deg, #e5d5b4 0%, #eee2c8 55%, #dfcda8 100%); box-shadow: 0 18px 55px rgba(104, 83, 44, 0.12); }
 .workspace-home-intro-copy { position: relative; z-index: 1; }
 .workspace-home-intro .dashboard-eyebrow { margin-bottom: 10px; }
 .workspace-home-intro h1 { margin: 0; color: #202943; font-size: clamp(30px, 4vw, 45px); letter-spacing: -0.055em; line-height: 1.08; }
@@ -737,7 +737,7 @@
 .workspace-home-card.tone-slate .workspace-home-card-icon { color: #5d6c82; background: #f1f4f8; }
 .workspace-home-privacy { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 26px 0 0; color: #8b96a8; font-size: 10px; }
 .workspace-home-privacy span { color: #7169d9; }
-:root[data-theme='dark'] .workspace-home-intro { border-color: #393c60; background: linear-gradient(112deg, #252741, #202b3d 65%, #1d3442); }
+:root[data-theme='dark'] .workspace-home-intro { border-color: #554a35; background: linear-gradient(112deg, #342d20, #2c281f 65%, #38301f); }
 :root[data-theme='dark'] .workspace-home-intro h1,
 :root[data-theme='dark'] .workspace-home-section-heading h2,
 :root[data-theme='dark'] .workspace-home-card-copy strong { color: #edf2fb; }
@@ -1655,13 +1655,43 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
 }
 
 .pdf-pricing-card {
+	position: relative;
+	overflow: hidden;
   display: flex;
   min-width: 0;
   flex-direction: column;
   padding: 21px 20px 20px;
-  border: 1px solid #e0e7e2;
-  border-radius: 6px;
-  background: #fff;
+  border: 1px solid var(--plan-border, #e0e7e2);
+  border-radius: 14px;
+  background: var(--plan-surface, #fff);
+  box-shadow: 0 10px 26px rgba(70, 56, 34, 0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.pdf-pricing-card::before {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 5px;
+	background: var(--plan-accent, #7d70d8);
+	content: '';
+}
+
+.pdf-pricing-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 16px 32px rgba(70, 56, 34, 0.13);
+}
+
+.pdf-pricing-card:nth-child(4n + 1) { --plan-accent: #7567d8; --plan-border: #d7d0f5; --plan-surface: #f3f0ff; }
+.pdf-pricing-card:nth-child(4n + 2) { --plan-accent: #258e72; --plan-border: #bfe5d5; --plan-surface: #eaf7f0; }
+.pdf-pricing-card:nth-child(4n + 3) { --plan-accent: #d27a36; --plan-border: #f0d2b5; --plan-surface: #fff2e5; }
+.pdf-pricing-card:nth-child(4n + 4) { --plan-accent: #3980c3; --plan-border: #c4ddf2; --plan-surface: #edf6ff; }
+
+.pdf-pricing-card .pdf-plan-index,
+.pdf-pricing-card .pdf-plan-price strong,
+.pdf-pricing-card .pdf-plan-features li::before {
+	color: var(--plan-accent, #7567d8);
 }
 
 .pdf-pricing-card.featured {
@@ -1738,10 +1768,10 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   justify-content: space-between;
   gap: 8px;
   padding: 0 12px;
-  border: 1px solid #cdd3db;
-  border-radius: 4px;
-  color: #354b6b;
-  background: #fff;
+  border: 1px solid var(--plan-accent, #7567d8);
+  border-radius: 8px;
+  color: #fff;
+  background: var(--plan-accent, #7567d8);
   text-decoration: none;
   font-size: 10px;
   font-weight: 650;
@@ -1755,8 +1785,9 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
 }
 
 .pdf-plan-action:hover {
-  border-color: #8896a9;
-  background: #f2f4f7;
+  border-color: var(--plan-accent, #7567d8);
+  background: var(--plan-accent, #7567d8);
+  filter: brightness(0.92);
 }
 
 .featured .pdf-plan-action:hover {
@@ -6869,8 +6900,8 @@ body,
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.11), transparent 28%),
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 22%),
+    radial-gradient(circle at top left, rgba(214, 181, 119, 0.24), transparent 29%),
+    radial-gradient(circle at top right, rgba(197, 157, 93, 0.17), transparent 28%),
     var(--background);
 }
 
@@ -6883,8 +6914,8 @@ body {
   gap: 26px;
   padding: 32px 18px 24px;
   background:
-    radial-gradient(circle at top left, rgba(139, 92, 246, 0.12), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.12), transparent 20%),
+    radial-gradient(circle at top left, rgba(214, 181, 119, 0.24), transparent 29%),
+    radial-gradient(circle at bottom right, rgba(197, 157, 93, 0.17), transparent 28%),
     var(--background);
 }
 
@@ -10637,9 +10668,9 @@ body {
 :root:not([data-theme='dark']) .verify-page,
 :root:not([data-theme='dark']) .password-page {
   background:
-    radial-gradient(circle at top left, rgba(39, 108, 230, 0.4), transparent 29%),
-    radial-gradient(circle at right center, rgba(26, 143, 207, 0.32), transparent 28%),
-    linear-gradient(180deg, #a9cafa 0%, #bdd6fb 58%, #9ebff2 100%);
+    radial-gradient(circle at top left, rgba(214, 181, 119, 0.24), transparent 29%),
+    radial-gradient(circle at right center, rgba(197, 157, 93, 0.17), transparent 28%),
+    linear-gradient(180deg, #d9c9a9 0%, #e3d6bc 58%, #cfbd98 100%);
 }
 
 :root[data-theme='dark'] .dashboard-layout,
@@ -10650,23 +10681,23 @@ body {
 :root[data-theme='dark'] .verify-page,
 :root[data-theme='dark'] .password-page {
   background:
-    radial-gradient(circle at top left, rgba(50, 117, 210, 0.38), transparent 29%),
-    radial-gradient(circle at right center, rgba(24, 143, 184, 0.28), transparent 28%),
+    radial-gradient(circle at top left, rgba(178, 141, 79, 0.18), transparent 29%),
+    radial-gradient(circle at right center, rgba(137, 104, 51, 0.14), transparent 28%),
     var(--background);
 }
 
 :root:not([data-theme='dark']) .workspace-home-layout {
   background:
-    radial-gradient(circle at 12% 4%, rgba(39, 108, 230, 0.4), transparent 29%),
-    radial-gradient(circle at 92% 38%, rgba(26, 143, 207, 0.32), transparent 28%),
-    linear-gradient(180deg, #a9cafa 0%, #bdd6fb 58%, #9ebff2 100%);
+    radial-gradient(circle at 12% 4%, rgba(214, 181, 119, 0.24), transparent 29%),
+    radial-gradient(circle at 92% 38%, rgba(197, 157, 93, 0.17), transparent 28%),
+    linear-gradient(180deg, #d9c9a9 0%, #e3d6bc 58%, #cfbd98 100%);
 }
 
 :root[data-theme='dark'] .workspace-home-layout {
   background:
-    radial-gradient(circle at 12% 4%, rgba(50, 117, 210, 0.38), transparent 29%),
-    radial-gradient(circle at 92% 38%, rgba(24, 143, 184, 0.28), transparent 28%),
-    linear-gradient(180deg, #0c1e3c 0%, #102447 58%, #0b1c38 100%);
+    radial-gradient(circle at 12% 4%, rgba(178, 141, 79, 0.18), transparent 29%),
+    radial-gradient(circle at 92% 38%, rgba(137, 104, 51, 0.14), transparent 28%),
+    linear-gradient(180deg, #252117 0%, #30291d 58%, #211e17 100%);
 }
 
 .dashboard-header-actions .dashboard-account-link,
@@ -10847,3 +10878,12 @@ body {
 @media (max-width: 760px) {
 	.landing-page { --landing-container-gutter: 18px; }
 }
+
+:root:not([data-theme='dark']) .landing-page {
+	background-color: #d9c9a9;
+}
+
+:root[data-theme='dark'] .pdf-pricing-card:nth-child(4n + 1) { --plan-accent: #a89cf3; --plan-border: #5b527f; --plan-surface: #302b42; background-color: var(--plan-surface); }
+:root[data-theme='dark'] .pdf-pricing-card:nth-child(4n + 2) { --plan-accent: #69c7a5; --plan-border: #3e6d60; --plan-surface: #22372f; background-color: var(--plan-surface); }
+:root[data-theme='dark'] .pdf-pricing-card:nth-child(4n + 3) { --plan-accent: #efa967; --plan-border: #78583d; --plan-surface: #3b3025; background-color: var(--plan-surface); }
+:root[data-theme='dark'] .pdf-pricing-card:nth-child(4n + 4) { --plan-accent: #78b7ed; --plan-border: #456784; --plan-surface: #243443; background-color: var(--plan-surface); }
