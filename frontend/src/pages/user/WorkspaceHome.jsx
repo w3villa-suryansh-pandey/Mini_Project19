@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { getUserProfile } from '../../services/api.js'
+import pdfWorkspaceImage from '../../assets/Modern PDF Editing Workspace.png'
 
 const destinations = [
 	{ title: 'Dashboard', description: 'See your workspace at a glance and jump back into your recent tools.', href: '/dashboard', icon: 'dashboard', label: 'Open dashboard', tone: 'violet' },
@@ -50,12 +51,16 @@ function WorkspaceHome() {
 			<section className="dashboard-content">
 				<div className="workspace-home-main">
 					<section className="workspace-home-intro" aria-labelledby="workspace-home-title">
-						<div>
+						<div className="workspace-home-intro-copy">
 							<p className="dashboard-eyebrow">YOUR S19 WORKSPACE</p>
 							<h1 id="workspace-home-title">Welcome, {firstName}</h1>
-							<p>Everything you need to work with documents, presentations, and images is right here. Choose a workspace to get started.</p>
+							<p>Make your documents work harder. Edit PDFs, organize files, and create polished work from one simple space.</p>
+							<Link className="workspace-home-primary-action" to="/editor">Open PDF editor <span aria-hidden="true">↗</span></Link>
 						</div>
-						<div className="workspace-home-spark" aria-hidden="true">✦</div>
+						<div className="workspace-home-visual">
+							<img src={pdfWorkspaceImage} alt="A modern PDF editing workspace with tools for editing text, adding images, erasing content, and signing" />
+							<span className="workspace-home-visual-badge"><span aria-hidden="true">✦</span> Your document studio</span>
+						</div>
 					</section>
 
 					<section className="workspace-home-directory" aria-labelledby="workspace-home-directory-title">

@@ -698,12 +698,19 @@
 
 .workspace-home-layout { min-height: 100vh; }
 .workspace-home-main { width: min(100% - 64px, 1280px); margin: 0 auto; padding: clamp(30px, 5vw, 64px) 0 36px; }
-.workspace-home-intro { position: relative; display: flex; min-height: 188px; align-items: center; justify-content: space-between; gap: 24px; overflow: hidden; margin-bottom: 40px; padding: clamp(25px, 4vw, 44px); border: 1px solid rgba(106, 100, 215, 0.13); border-radius: 22px; background: linear-gradient(112deg, #f1f1ff 0%, #f8faff 55%, #edf7ff 100%); }
-.workspace-home-intro > div:first-child { position: relative; z-index: 1; max-width: 710px; }
+.workspace-home-intro { position: relative; display: grid; min-height: 0; grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.2fr); align-items: center; gap: clamp(24px, 4vw, 52px); overflow: hidden; margin-bottom: 40px; padding: clamp(24px, 3.5vw, 42px); border: 1px solid rgba(106, 100, 215, 0.16); border-radius: 22px; background: linear-gradient(112deg, #f1f1ff 0%, #f8faff 55%, #edf7ff 100%); box-shadow: 0 18px 55px rgba(66, 74, 140, 0.09); }
+.workspace-home-intro-copy { position: relative; z-index: 1; }
 .workspace-home-intro .dashboard-eyebrow { margin-bottom: 10px; }
 .workspace-home-intro h1 { margin: 0; color: #202943; font-size: clamp(30px, 4vw, 45px); letter-spacing: -0.055em; line-height: 1.08; }
 .workspace-home-intro p:last-child { max-width: 630px; margin: 13px 0 0; color: #6d7890; font-size: 13px; line-height: 1.7; }
-.workspace-home-spark { display: grid; width: 112px; height: 112px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(101, 94, 207, 0.12); border-radius: 32px; color: #625ad3; background: rgba(255, 255, 255, 0.52); font-size: 55px; transform: rotate(8deg); }
+.workspace-home-primary-action { display: inline-flex; align-items: center; gap: 24px; margin-top: 22px; padding: 12px 16px; border: 1px solid #6d65d8; border-radius: 11px; color: #fff; background: linear-gradient(125deg, #6d65d8, #526ee0); box-shadow: 0 8px 18px rgba(91, 91, 203, 0.22); font-size: 12px; font-weight: 750; text-decoration: none; transition: transform 160ms ease, box-shadow 160ms ease; }
+.workspace-home-primary-action:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(91, 91, 203, 0.3); }
+.workspace-home-primary-action:focus-visible { outline: 2px solid #5148bb; outline-offset: 3px; }
+.workspace-home-visual { position: relative; min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.85); border-radius: 18px; background: #e9eaff; box-shadow: 0 14px 35px rgba(57, 65, 130, 0.14); animation: workspace-visual-enter 560ms cubic-bezier(0.2, 0.75, 0.25, 1) both; }
+.workspace-home-visual img { display: block; width: 100%; aspect-ratio: 1.78; object-fit: cover; }
+.workspace-home-visual-badge { position: absolute; right: 14px; bottom: 14px; display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px; border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 20px; color: #3d4772; background: rgba(255, 255, 255, 0.82); box-shadow: 0 5px 18px rgba(39, 44, 86, 0.12); font-size: 9px; font-weight: 750; backdrop-filter: blur(10px); }
+.workspace-home-visual-badge span { color: #7169d9; }
+@keyframes workspace-visual-enter { from { opacity: 0; transform: translateY(12px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .workspace-home-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
 .workspace-home-section-heading .dashboard-eyebrow { margin-bottom: 7px; }
 .workspace-home-section-heading h2 { margin: 0; color: #202943; font-size: clamp(20px, 2.5vw, 26px); letter-spacing: -0.04em; }
@@ -736,7 +743,8 @@
 :root[data-theme='dark'] .workspace-home-card-copy strong { color: #edf2fb; }
 :root[data-theme='dark'] .workspace-home-intro p:last-child,
 :root[data-theme='dark'] .workspace-home-card-copy small { color: #a5b0c1; }
-:root[data-theme='dark'] .workspace-home-spark { border-color: #424866; color: #c1bcff; background: rgba(24, 31, 47, 0.55); }
+:root[data-theme='dark'] .workspace-home-visual { border-color: #3d4661; background: #202b3d; }
+:root[data-theme='dark'] .workspace-home-visual-badge { border-color: rgba(94, 103, 133, 0.65); color: #e0e6f5; background: rgba(30, 39, 57, 0.86); }
 :root[data-theme='dark'] .workspace-home-section-heading > span,
 :root[data-theme='dark'] .workspace-home-card { border-color: #344156; color: #dbe3f0; background: #1b2636; }
 :root[data-theme='dark'] .workspace-home-card:hover { border-color: #5f5c9a; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22); }
@@ -747,16 +755,23 @@
 @media (max-width: 900px) {
 	.workspace-home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.workspace-home-main { width: min(100% - 40px, 760px); }
+	.workspace-home-intro { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 20px; padding: 24px; }
 }
 @media (max-width: 560px) {
 	.workspace-home-main { width: calc(100% - 30px); padding-top: 23px; }
-	.workspace-home-intro { min-height: 0; margin-bottom: 30px; padding: 24px 20px; border-radius: 17px; }
+	.workspace-home-intro { grid-template-columns: 1fr; gap: 20px; margin-bottom: 30px; padding: 24px 20px; border-radius: 17px; }
 	.workspace-home-intro h1 { font-size: 31px; }
 	.workspace-home-intro p:last-child { max-width: 100%; font-size: 11px; }
-	.workspace-home-spark { width: 48px; height: 48px; border-radius: 15px; font-size: 25px; }
+	.workspace-home-visual { border-radius: 13px; }
+	.workspace-home-visual-badge { right: 8px; bottom: 8px; padding: 7px 9px; font-size: 8px; }
 	.workspace-home-grid { grid-template-columns: 1fr; gap: 10px; }
 	.workspace-home-card { min-height: 178px; padding: 17px; }
 	.workspace-home-section-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.workspace-home-visual { animation: none; }
+	.workspace-home-primary-action { transition: none; }
 }
 
 .profile-page {
@@ -2624,6 +2639,7 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   border: 1px solid #dfe6e1;
   border-radius: 5px;
   background: #fff;
+  animation: compressor-panel-enter 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
 
 .compressor-dropzone {
@@ -2632,12 +2648,13 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   padding: 47px 20px 39px;
   border: 2px dashed transparent;
   text-align: center;
-  transition: background 150ms ease, border-color 150ms ease;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
 .compressor-dropzone.is-dragging {
   border-color: #7588a3;
   background: #f3f5f8;
+  transform: scale(0.995);
 }
 
 .compressor-upload-icon {
@@ -2649,6 +2666,15 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   border-radius: 50%;
   color: #4c6280;
   background: #edf0f5;
+  animation: compressor-icon-float 3.2s ease-in-out infinite;
+  transition: color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.compressor-dropzone:hover .compressor-upload-icon,
+.compressor-dropzone.is-dragging .compressor-upload-icon {
+  color: #fff;
+  background: #7889a5;
+  transform: translateY(-3px) scale(1.04);
 }
 
 .compressor-upload-icon svg {
@@ -2779,6 +2805,16 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   padding: 11px;
   border: 1px solid #e8ede9;
   border-radius: 4px;
+  animation: compressor-row-enter 260ms ease both;
+}
+
+.compressor-file-row:nth-child(2) { animation-delay: 35ms; }
+.compressor-file-row:nth-child(3) { animation-delay: 70ms; }
+.compressor-file-row:nth-child(4) { animation-delay: 105ms; }
+.compressor-file-row:nth-child(5) { animation-delay: 140ms; }
+
+.compressor-file-row:has(.compressor-item-status) .compressor-item-status {
+  animation: compressor-status-pulse 1.15s ease-in-out infinite;
 }
 
 .compressor-file-type {
@@ -2877,6 +2913,40 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
 .compressor-remove-button:focus-visible {
   outline: 2px solid #435f85;
   outline-offset: 3px;
+}
+
+@keyframes compressor-panel-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes compressor-icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes compressor-row-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes compressor-status-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compressor-panel,
+  .compressor-upload-icon,
+  .compressor-file-row,
+  .compressor-file-row:has(.compressor-item-status) .compressor-item-status {
+    animation: none;
+  }
+
+  .compressor-dropzone,
+  .compressor-upload-icon {
+    transition: none;
+  }
 }
 
 .converter-mode-list {
@@ -10567,9 +10637,9 @@ body {
 :root:not([data-theme='dark']) .verify-page,
 :root:not([data-theme='dark']) .password-page {
   background:
-    radial-gradient(circle at top left, rgba(139, 92, 246, 0.14), transparent 22%),
-    radial-gradient(circle at right center, rgba(196, 181, 253, 0.2), transparent 24%),
-    linear-gradient(180deg, #f5f1ff, #faf8ff 58%, #f3efff 100%);
+    radial-gradient(circle at top left, rgba(39, 108, 230, 0.4), transparent 29%),
+    radial-gradient(circle at right center, rgba(26, 143, 207, 0.32), transparent 28%),
+    linear-gradient(180deg, #a9cafa 0%, #bdd6fb 58%, #9ebff2 100%);
 }
 
 :root[data-theme='dark'] .dashboard-layout,
@@ -10580,9 +10650,23 @@ body {
 :root[data-theme='dark'] .verify-page,
 :root[data-theme='dark'] .password-page {
   background:
-    radial-gradient(circle at top left, rgba(139, 92, 246, 0.1), transparent 24%),
-    radial-gradient(circle at right center, rgba(59, 130, 246, 0.1), transparent 24%),
+    radial-gradient(circle at top left, rgba(50, 117, 210, 0.38), transparent 29%),
+    radial-gradient(circle at right center, rgba(24, 143, 184, 0.28), transparent 28%),
     var(--background);
+}
+
+:root:not([data-theme='dark']) .workspace-home-layout {
+  background:
+    radial-gradient(circle at 12% 4%, rgba(39, 108, 230, 0.4), transparent 29%),
+    radial-gradient(circle at 92% 38%, rgba(26, 143, 207, 0.32), transparent 28%),
+    linear-gradient(180deg, #a9cafa 0%, #bdd6fb 58%, #9ebff2 100%);
+}
+
+:root[data-theme='dark'] .workspace-home-layout {
+  background:
+    radial-gradient(circle at 12% 4%, rgba(50, 117, 210, 0.38), transparent 29%),
+    radial-gradient(circle at 92% 38%, rgba(24, 143, 184, 0.28), transparent 28%),
+    linear-gradient(180deg, #0c1e3c 0%, #102447 58%, #0b1c38 100%);
 }
 
 .dashboard-header-actions .dashboard-account-link,
