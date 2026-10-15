@@ -131,7 +131,7 @@ function LandingPage({ notice = '' }) {
 			
                
                  <header className={`landing-header${headerScrolled ? ' is-scrolled' : ''}`}>
-                   <div className="landing-header-inner">
+                   <div className="landing-header-inner landing-container">
 
                       <Link className="landing-brand" to="/" aria-label="S19 home">
                           <img src={logo} alt="" />
@@ -164,9 +164,9 @@ function LandingPage({ notice = '' }) {
                 </header>
 
 
-			{notice && <p className="landing-auth-notice" role="status">{notice} <Link to="/login">Return to sign in</Link></p>}
+			{notice && <p className="landing-auth-notice landing-container" role="status">{notice} <Link to="/login">Return to sign in</Link></p>}
 
-			<section className="landing-hero" id="home" aria-labelledby="landing-hero-title">
+			<section className="landing-hero landing-container" id="home" aria-labelledby="landing-hero-title">
 				<div className="landing-hero-copy">
 					<div className="landing-hero-brand" aria-label="S19 workspace">
 						<img src={logo} alt="" />
@@ -216,7 +216,7 @@ function LandingPage({ notice = '' }) {
 				</div>
 			</section>
 
-			<section className="landing-tools-strip" id="tools" aria-label="S19 tools">
+			<section className="landing-tools-strip landing-container" id="tools" aria-label="S19 tools">
 				<span>DESIGNED FOR DAILY WORK</span>
 				<strong>PDF editor</strong><i />
 				<strong>Document editor</strong><i />
@@ -224,7 +224,7 @@ function LandingPage({ notice = '' }) {
 				<strong>Writing pad</strong>
 			</section>
 
-			<section className="landing-features section-anchor" id="features" aria-labelledby="landing-features-title">
+			<section className="landing-features landing-container section-anchor" id="features" aria-labelledby="landing-features-title">
 				<div className="landing-section-heading">
 					<div>
 						<p className="landing-eyebrow">A LITTLE LESS BUSYWORK</p>
@@ -247,7 +247,7 @@ function LandingPage({ notice = '' }) {
 				</div>
 			</section>
 
-			<section className="landing-workflow" aria-labelledby="landing-workflow-title">
+			<section className="landing-workflow landing-container" aria-labelledby="landing-workflow-title">
 				<div className="landing-section-heading compact">
 					<div>
 						<p className="landing-eyebrow">HOW IT WORKS</p>
@@ -265,7 +265,7 @@ function LandingPage({ notice = '' }) {
 				</div>
 			</section>
 
-			<section className="landing-benefits" aria-labelledby="landing-benefits-title">
+			<section className="landing-benefits landing-container" aria-labelledby="landing-benefits-title">
 				<div className="landing-benefits-copy">
 					<p className="landing-eyebrow">WHY S19</p>
 					<h2 id="landing-benefits-title">Built to keep work moving.</h2>
@@ -282,7 +282,7 @@ function LandingPage({ notice = '' }) {
 				</div>
 			</section>
 
-			<section className="landing-pricing" id="pricing" aria-labelledby="landing-pricing-title">
+			<section className="landing-pricing landing-container" id="pricing" aria-labelledby="landing-pricing-title">
 				<div className="landing-section-heading compact">
 					<div>
 						<p className="landing-eyebrow">PLANS</p>
@@ -309,7 +309,7 @@ function LandingPage({ notice = '' }) {
 				{!plansLoading && !plansError && plans.length === 0 && <p className="landing-pricing-status">No plans are currently available.</p>}
 			</section>
 
-			<section className="landing-about section-anchor" id="about" aria-labelledby="landing-about-title">
+			<section className="landing-about landing-container section-anchor" id="about" aria-labelledby="landing-about-title">
 				<div className="landing-about-mark"><img src={logo} alt="" /><span>S19</span></div>
 				<div className="landing-about-copy">
 					<p className="landing-eyebrow">ABOUT S19</p>
@@ -319,7 +319,7 @@ function LandingPage({ notice = '' }) {
 				<div className="landing-about-aside"><span>01</span><p>Simple by design.<br />Ready when you are.</p></div>
 			</section>
 
-			<section className="landing-cta" aria-labelledby="landing-cta-title">
+			<section className="landing-cta landing-container" aria-labelledby="landing-cta-title">
 				<div>
 					<p className="landing-eyebrow">MAKE SPACE FOR YOUR NEXT IDEA</p>
 					<h2 id="landing-cta-title">Ready to create something better?</h2>
@@ -328,7 +328,7 @@ function LandingPage({ notice = '' }) {
 				<Link className="landing-primary-button" to="/signup">Start Now <span aria-hidden="true">→</span></Link>
 			</section>
 
-			<footer className="landing-footer">
+			<footer className="landing-footer landing-container">
 				<Link className="landing-brand" to="/" aria-label="S19 home">
 					<img src={logo} alt="" />
 					<span>S19</span>

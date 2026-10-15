@@ -10744,3 +10744,22 @@ body {
 @media (max-width: 420px) {
 	.dashboard-layout { --s19-content-width: calc(100% - 22px); }
 }
+
+/* Shared landing-page bounds match the horizontal padding inside the full-width navbar. */
+.landing-page { --landing-container-gutter: 28px; }
+.landing-page .landing-container {
+	box-sizing: border-box;
+	width: calc(100% - var(--landing-container-gutter) - var(--landing-container-gutter));
+	max-width: none;
+	margin-right: auto;
+	margin-left: auto;
+}
+.landing-page .landing-header-inner.landing-container { padding-right: 0; padding-left: 0; }
+
+@media (max-width: 1050px) {
+	.landing-page { --landing-container-gutter: 20px; }
+}
+
+@media (max-width: 760px) {
+	.landing-page { --landing-container-gutter: 18px; }
+}
