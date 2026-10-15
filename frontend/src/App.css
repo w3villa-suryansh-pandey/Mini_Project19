@@ -10720,34 +10720,27 @@ body {
   }
 }
 
-/* Keep signed-in page containers aligned with the workspace header content. */
+/* Use one shared width so page containers track the header at every viewport. */
+.dashboard-layout { --s19-content-width: min(calc(100% - 48px), 1440px); }
+.s19-topnav-inner,
 .dashboard-content > .dashboard-main,
 .dashboard-content > .document-editor-main,
 .dashboard-content > .presentation-studio-main,
 .dashboard-content > .workspace-home-main,
 .profile-page > .profile-main {
 	box-sizing: border-box;
-	width: min(calc(100% - 48px), 1440px);
+	width: var(--s19-content-width);
 	max-width: 1440px;
 	margin-right: auto;
 	margin-left: auto;
 }
-
-.dashboard-content > .presentation-studio-main { padding-right: 0; padding-left: 0; }
+.dashboard-content > .presentation-studio-main,
 .dashboard-content > .dashboard-main { padding-right: 0; padding-left: 0; }
 
 @media (max-width: 780px) {
-	.dashboard-content > .dashboard-main,
-	.dashboard-content > .document-editor-main,
-	.dashboard-content > .presentation-studio-main,
-	.dashboard-content > .workspace-home-main,
-	.profile-page > .profile-main { width: calc(100% - 30px); }
+	.dashboard-layout { --s19-content-width: calc(100% - 30px); }
 }
 
 @media (max-width: 420px) {
-	.dashboard-content > .dashboard-main,
-	.dashboard-content > .document-editor-main,
-	.dashboard-content > .presentation-studio-main,
-	.dashboard-content > .workspace-home-main,
-	.profile-page > .profile-main { width: calc(100% - 22px); }
+	.dashboard-layout { --s19-content-width: calc(100% - 22px); }
 }
