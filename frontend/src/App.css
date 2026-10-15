@@ -10719,3 +10719,35 @@ body {
     top: auto;
   }
 }
+
+/* Keep signed-in page containers aligned with the workspace header content. */
+.dashboard-content > .dashboard-main,
+.dashboard-content > .document-editor-main,
+.dashboard-content > .presentation-studio-main,
+.dashboard-content > .workspace-home-main,
+.profile-page > .profile-main {
+	box-sizing: border-box;
+	width: min(calc(100% - 48px), 1440px);
+	max-width: 1440px;
+	margin-right: auto;
+	margin-left: auto;
+}
+
+.dashboard-content > .presentation-studio-main { padding-right: 0; padding-left: 0; }
+.dashboard-content > .dashboard-main { padding-right: 0; padding-left: 0; }
+
+@media (max-width: 780px) {
+	.dashboard-content > .dashboard-main,
+	.dashboard-content > .document-editor-main,
+	.dashboard-content > .presentation-studio-main,
+	.dashboard-content > .workspace-home-main,
+	.profile-page > .profile-main { width: calc(100% - 30px); }
+}
+
+@media (max-width: 420px) {
+	.dashboard-content > .dashboard-main,
+	.dashboard-content > .document-editor-main,
+	.dashboard-content > .presentation-studio-main,
+	.dashboard-content > .workspace-home-main,
+	.profile-page > .profile-main { width: calc(100% - 22px); }
+}
