@@ -698,7 +698,7 @@
 
 .workspace-home-layout { min-height: 100vh; }
 .workspace-home-main { width: min(100% - 64px, 1280px); margin: 0 auto; padding: clamp(30px, 5vw, 64px) 0 36px; }
-.workspace-home-intro { position: relative; min-height: 0; overflow: hidden; margin-bottom: 26px; padding: clamp(24px, 3.5vw, 42px); border: 1px solid rgba(130, 101, 51, 0.24); border-radius: 22px; background: linear-gradient(112deg, #e5d5b4 0%, #eee2c8 55%, #dfcda8 100%); box-shadow: 0 18px 55px rgba(104, 83, 44, 0.12); }
+.workspace-home-intro { position: relative; min-height: 0; overflow: hidden; margin-bottom: 26px; padding: clamp(24px, 3.5vw, 42px); border: 1px solid rgba(90, 119, 190, 0.18); border-radius: 22px; background: linear-gradient(112deg, #edf3ff 0%, #ffffff 55%, #e7f1ff 100%); box-shadow: 0 18px 55px rgba(57, 86, 150, 0.1); }
 .workspace-home-intro-copy { position: relative; z-index: 1; }
 .workspace-home-intro-copy { max-width: 760px; }
 .workspace-home-intro .dashboard-eyebrow { margin-bottom: 10px; }
@@ -738,7 +738,7 @@
 .workspace-home-card.tone-slate .workspace-home-card-icon { color: #5d6c82; background: #f1f4f8; }
 .workspace-home-privacy { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 26px 0 0; color: #8b96a8; font-size: 10px; }
 .workspace-home-privacy span { color: #7169d9; }
-:root[data-theme='dark'] .workspace-home-intro { border-color: #554a35; background: linear-gradient(112deg, #342d20, #2c281f 65%, #38301f); }
+:root[data-theme='dark'] .workspace-home-intro { border-color: #3a4a6b; background: linear-gradient(112deg, #1c2b43, #243653 65%, #1a2c47); }
 :root[data-theme='dark'] .workspace-home-intro h1,
 :root[data-theme='dark'] .workspace-home-section-heading h2,
 :root[data-theme='dark'] .workspace-home-card-copy strong { color: #edf2fb; }
@@ -6900,8 +6900,8 @@ body,
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(214, 181, 119, 0.24), transparent 29%),
-    radial-gradient(circle at top right, rgba(197, 157, 93, 0.17), transparent 28%),
+    radial-gradient(circle at top left, rgba(89, 143, 230, 0.15), transparent 29%),
+    radial-gradient(circle at top right, rgba(107, 190, 242, 0.13), transparent 28%),
     var(--background);
 }
 
@@ -6914,8 +6914,8 @@ body {
   gap: 26px;
   padding: 32px 18px 24px;
   background:
-    radial-gradient(circle at top left, rgba(214, 181, 119, 0.24), transparent 29%),
-    radial-gradient(circle at bottom right, rgba(197, 157, 93, 0.17), transparent 28%),
+    radial-gradient(circle at top left, rgba(89, 143, 230, 0.15), transparent 29%),
+    radial-gradient(circle at bottom right, rgba(107, 190, 242, 0.13), transparent 28%),
     var(--background);
 }
 
@@ -10668,9 +10668,9 @@ body {
 :root:not([data-theme='dark']) .verify-page,
 :root:not([data-theme='dark']) .password-page {
   background:
-    radial-gradient(circle at top left, rgba(214, 181, 119, 0.24), transparent 29%),
-    radial-gradient(circle at right center, rgba(197, 157, 93, 0.17), transparent 28%),
-    linear-gradient(180deg, #d9c9a9 0%, #e3d6bc 58%, #cfbd98 100%);
+    radial-gradient(circle at top left, rgba(89, 143, 230, 0.15), transparent 29%),
+    radial-gradient(circle at right center, rgba(107, 190, 242, 0.13), transparent 28%),
+    linear-gradient(180deg, #f7faff 0%, #edf4ff 58%, #f3f8ff 100%);
 }
 
 :root[data-theme='dark'] .dashboard-layout,
@@ -10688,16 +10688,16 @@ body {
 
 :root:not([data-theme='dark']) .workspace-home-layout {
   background:
-    radial-gradient(circle at 12% 4%, rgba(214, 181, 119, 0.24), transparent 29%),
-    radial-gradient(circle at 92% 38%, rgba(197, 157, 93, 0.17), transparent 28%),
-    linear-gradient(180deg, #d9c9a9 0%, #e3d6bc 58%, #cfbd98 100%);
+    radial-gradient(circle at 12% 4%, rgba(89, 143, 230, 0.15), transparent 29%),
+    radial-gradient(circle at 92% 38%, rgba(107, 190, 242, 0.13), transparent 28%),
+    linear-gradient(180deg, #f7faff 0%, #edf4ff 58%, #f3f8ff 100%);
 }
 
 :root[data-theme='dark'] .workspace-home-layout {
   background:
-    radial-gradient(circle at 12% 4%, rgba(178, 141, 79, 0.18), transparent 29%),
-    radial-gradient(circle at 92% 38%, rgba(137, 104, 51, 0.14), transparent 28%),
-    linear-gradient(180deg, #252117 0%, #30291d 58%, #211e17 100%);
+    radial-gradient(circle at 12% 4%, rgba(69, 119, 197, 0.2), transparent 29%),
+    radial-gradient(circle at 92% 38%, rgba(39, 135, 184, 0.16), transparent 28%),
+    linear-gradient(180deg, #111d33 0%, #162747 58%, #101d34 100%);
 }
 
 .dashboard-header-actions .dashboard-account-link,
@@ -10880,7 +10880,7 @@ body {
 }
 
 :root:not([data-theme='dark']) .landing-page {
-	background-color: #d9c9a9;
+	background-color: #f7faff;
 }
 
 :root[data-theme='dark'] .pdf-pricing-card:nth-child(4n + 1) { --plan-accent: #a89cf3; --plan-border: #5b527f; --plan-surface: #302b42; background-color: var(--plan-surface); }

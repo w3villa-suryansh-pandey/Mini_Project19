@@ -3,7 +3,7 @@
 :root {
   font-family: 'Inter', 'Avenir Next', sans-serif;
   color: #17172e;
-  background: #d9c9a9;
+  background: #f7faff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +18,7 @@
   --pink: #ec4899;
   --coral: #f97316;
   --emerald: #10b981;
-  --background: #d9c9a9;
+  --background: #f7faff;
   --card: #ffffff;
   --ink: #17172e;
   --muted: #6b7280;
@@ -29,8 +29,8 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  background: #252117;
-  --background: #252117;
+  background: #111d33;
+  --background: #111d33;
   --card: #1f2937;
   --ink: #e5e7eb;
   --muted: #9ca3af;
@@ -53,7 +53,7 @@ body {
 
 :root[data-theme='dark'] body {
   color: var(--ink);
-  background: #252117;
+  background: #111d33;
 }
 
 #root {
