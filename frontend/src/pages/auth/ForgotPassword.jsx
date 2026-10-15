@@ -1,4 +1,5 @@
 
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { forgotPassword } from '../../services/api.js'
 import './PasswordReset.css'
@@ -28,7 +29,7 @@ export default function ForgotPassword() {
   return (
     <main className="password-page">
       <div className="password-card">
-        <a href="/" className="password-brand">S19</a>
+        <Link to="/" className="password-brand">S19</Link>
 
         <div className="password-icon" aria-hidden="true">✉</div>
 
@@ -63,9 +64,9 @@ export default function ForgotPassword() {
           </button>
         </form>
 
-        <a href="/login" className="password-back-link">
+        <Link to="/login" className="password-back-link">
           ← Back to login
-        </a>
+        </Link>
       </div>
     </main>
   )

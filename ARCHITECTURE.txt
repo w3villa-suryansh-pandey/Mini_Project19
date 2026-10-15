@@ -1,0 +1,157 @@
+S19 PROJECT ARCHITECTURE
+========================
+
+OVERVIEW
+--------
+S19 is a browser-based document workspace. The frontend is built with React
+and Vite. The backend is an Express API backed by MongoDB. Razorpay handles
+paid PDF-editing passes, and Google and Facebook provide optional sign-in.
+
+
+HIGH-LEVEL FLOW
+---------------
+
+  Browser
+    |
+    +-- React frontend
+    |     +-- Landing page and signup/login
+    |     +-- User workspace: PDF editor, converter, compressor, writing pad
+    |     +-- Admin workspace
+    |
+    |     HTTP requests with secure session cookie
+    v
+  Express API
+    +-- Routes -> middleware -> controllers -> services
+    +-- Authentication, role checks, email and payment processing
+    +-- MongoDB models
+
+
+MAIN LAYERS
+-----------
+
+Frontend entry and routing
+  frontend/src/main.jsx
+    Starts React and renders the application.
+
+  frontend/src/App.jsx
+    Selects the page from the URL and lazily loads workspace pages.
+
+Frontend pages and components
+  frontend/src/pages/
+    Contains the landing page, email verification, user tools, and admin pages.
+
+  frontend/src/components/
+    Contains shared navigation, theme controls, and protected-route handling.
+
+Frontend API client
+  frontend/src/services/api.js
+    Sends API requests with credentials, handles sign-in and sign-out, and
+    stores role and subscription details in sessionStorage for the current
+    browser tab session.
+
+Backend startup and middleware
+  backend/server.js
+    Connects to MongoDB, initializes default plans and the subscription
+    expiry job, and starts the HTTP server.
+
+  backend/src/app.js
+    Configures CORS, request parsing, API routes, and error handling.
+
+Backend routes and controllers
+  backend/src/routes/
+    Maps API paths to controller functions.
+
+  backend/src/controllers/
+    Handles API request workflows, validation, and responses.
+
+Backend data and domain services
+  backend/models/
+    Defines MongoDB records.
+
+  backend/src/services/
+    Contains reusable plan, subscription, email, and scheduled-job logic.
+
+
+TYPICAL USER WORKFLOW
+---------------------
+
+1. Landing page
+   Visiting "/" displays the product overview and links to "/signup" and
+   "/login". The page is implemented in frontend/src/pages/LandingPage.jsx.
+
+2. Signup and email verification
+   The frontend sends signup details to POST /api/auth/signup. The backend
+   creates the account and sends a verification email. The verification page
+   calls POST /api/auth/verify-email.
+
+3. Login
+   POST /api/auth/login checks the credentials, account status, and email
+   verification. On success, the backend sets an HTTP-only session cookie and
+   returns the user and current subscription information.
+
+4. Enter the workspace
+   User accounts go to "/dashboard"; admin accounts go to "/admin".
+   frontend/src/components/ProtectedRoute.jsx gates protected pages. The
+   frontend caches role and subscription details in sessionStorage for the
+   current tab session. The backend continues to authenticate and authorize
+   protected API requests.
+
+5. Use document tools
+   User-facing tools are under frontend/src/pages/user/. File operations such
+   as conversion and compression are generally performed in the browser. The
+   PDF editor checks subscription access before enabling paid export actions.
+
+6. Purchase a PDF pass
+   The frontend requests a checkout order. The backend creates it through
+   Razorpay. After payment, the frontend sends payment details to the backend,
+   which verifies them and records a subscription in MongoDB. The returned
+   entitlement updates the current tab's cached subscription.
+
+
+TYPICAL API REQUEST FLOW
+------------------------
+
+  Frontend page
+    -> frontend/src/services/api.js
+    -> backend/src/routes/
+    -> authentication / role middleware (where required)
+    -> backend/src/controllers/
+    -> backend/src/services/ and backend/models/
+    -> MongoDB or an external provider
+    -> JSON response to the frontend
+
+For example, user profile routes authenticate before invoking the profile
+controller. Admin routes authenticate and require the "admin" role before
+allowing access.
+
+Relevant files:
+  backend/src/routes/user.routes.js
+  backend/src/routes/admin.routes.js
+  backend/src/middleware/authenticate.js
+  backend/src/middleware/require-role.js
+
+
+IMPORTANT DATABASE RECORDS AND BACKGROUND WORK
+-----------------------------------------------
+
+  backend/models/User.js
+    Account details, role, verification, and account status.
+
+  backend/models/Plan.js
+    Available pass pricing and duration.
+
+  backend/models/Subscription.js
+    Purchased passes and their active dates.
+
+  backend/models/CronJobConfig.js
+    Configuration and run history for the expiry job.
+
+  backend/src/services/subscription-expiry.service.js
+    Scheduled task that marks expired passes inactive.
+
+
+SECURITY NOTE
+-------------
+Cached browser access data is for frontend behavior only. API permissions are
+enforced by the server using the session cookie and role middleware. Frontend
+state does not grant access to protected server data or actions.

@@ -1,0 +1,16 @@
+{
+  "name": "mini_project",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "frontend": "npm run dev --prefix frontend",
+    "backend": "npm run dev --prefix backend",
+    "dev": "concurrently -k -n FRONTEND,BACKEND \"npm:frontend\" \"npm:backend\""
+  },
+  "dependencies": {
+    "razorpay": "^2.9.8"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

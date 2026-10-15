@@ -41,10 +41,11 @@ function VerifyEmail() {
         <h1>{status === 'verified' ? 'Email verified' : status === 'error' ? 'Verification link issue' : 'Verify your email'}</h1>
         <p>{message}</p>
         {status === 'verifying' && <p className="verify-progress">Verifying your email address…</p>}
-        {status !== 'verifying' && <a className="verify-signin-link" href="/login">Return to sign in</a>}
+        {status !== 'verifying' && <Link className="verify-signin-link" to="/login">Return to sign in</Link>}
       </section>
     </main>
   )
 }
 
 export default VerifyEmail
+import { Link } from 'react-router-dom'

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { signOut } from '../services/api.js'
 import logo from '../assets/logo.png'
 
@@ -31,22 +32,22 @@ function AdminSidebar({ active = 'overview' }) {
 
   return (
     <aside className="admin-sidebar">
-      <a className="admin-brand" href="/admin" aria-label="S19 admin overview">
+      <Link className="admin-brand" to="/admin" aria-label="S19 admin overview">
         <img className="admin-brand-mark" src={logo} alt="" />
         <span>19 <small>ADMIN</small></span>
-      </a>
+      </Link>
       <p className="admin-nav-label">MANAGE</p>
       <nav className="admin-nav" aria-label="Admin navigation">
         {adminNavigation.map((item) => (
-          <a
+          <Link
             className={active === item.icon ? 'admin-nav-link active' : 'admin-nav-link'}
-            href={item.href}
+            to={item.href}
             key={item.icon}
             aria-current={active === item.icon ? 'page' : undefined}
           >
             <AdminIcon name={item.icon} />
             <span>{item.label}</span>
-          </a>
+          </Link>
         ))}
       </nav>
       <div className="admin-sidebar-bottom">
@@ -57,3 +58,4 @@ function AdminSidebar({ active = 'overview' }) {
 }
 
 export default AdminSidebar
+import { Link } from 'react-router-dom'

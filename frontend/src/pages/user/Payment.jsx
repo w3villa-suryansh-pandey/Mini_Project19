@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import ThemeToggle from '../../components/ThemeToggle.jsx'
@@ -172,7 +173,7 @@ function Payment() {
 							? <button className="payment-checkout-button" type="button" onClick={startCheckout} disabled={isLoading || isStartingCheckout}>
 								{isStartingCheckout ? 'Opening checkout…' : `Pay ${selectedPrice}`}
 							</button>
-							: <a href="/pricing">View passes <span aria-hidden="true">→</span></a>}
+							: <Link to="/pricing">View passes <span aria-hidden="true">→</span></Link>}
 					</section>
 					<p className="subscription-expiry-note">Access is activated only after Razorpay verifies successful payment. {subscription?.active ? `Your current pass is valid until ${formattedExpiry}.` : ''}</p>
 				</div>

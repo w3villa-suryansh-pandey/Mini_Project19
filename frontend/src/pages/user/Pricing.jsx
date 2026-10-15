@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import { getPricingPlans } from '../../services/api.js'
@@ -61,9 +62,9 @@ function Pricing() {
 									<span>/ {plan.durationValue} {plan.durationUnit}{plan.durationValue === 1 ? '' : 's'}</span>
 								</div>
 								<p className="pdf-plan-billing">One-time payment</p>
-								<a className="pdf-plan-action" href={`/payment?plan=${plan.id}`}>
+								<Link className="pdf-plan-action" to={`/payment?plan=${plan.id}`}>
 									Select plan <span aria-hidden="true">→</span>
-								</a>
+								</Link>
 								<div className="pdf-plan-divider" />
 								<p className="pdf-plan-includes">INCLUDED TOOLS</p>
 								<ul className="pdf-plan-features">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import WebViewer from '@pdftron/webviewer'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
@@ -246,7 +247,7 @@ function DocumentEditor() {
 							: viewerStatus === 'loading'
 								? 'Loading Apryse WebViewer…'
 								: 'Set VITE_APRYSE_LICENSE_KEY in frontend/.env.local to enable editing.')}</p>
-						{subscriptionStatus !== 'active' && <a href="/pricing">View PDF plans <span aria-hidden="true">→</span></a>}
+						{subscriptionStatus !== 'active' && <Link to="/pricing">View PDF plans <span aria-hidden="true">→</span></Link>}
 					</div>
 				</div>
 			</section>

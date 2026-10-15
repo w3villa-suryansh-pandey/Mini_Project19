@@ -1,4 +1,5 @@
 
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { resetPassword } from '../../services/api.js'
 import './PasswordReset.css'
@@ -53,7 +54,7 @@ export default function ResetPassword() {
   return (
     <main className="password-page">
       <div className="password-card">
-        <a href="/" className="password-brand">S19</a>
+        <Link to="/" className="password-brand">S19</Link>
 
         <div className="password-icon" aria-hidden="true">🔒</div>
 
@@ -65,18 +66,18 @@ export default function ResetPassword() {
         {completed ? (
           <>
             <p className="password-alert success" role="status">{message}</p>
-            <a href="/login" className="password-button password-button-link">
+            <Link to="/login" className="password-button password-button-link">
               Continue to login
-            </a>
+            </Link>
           </>
         ) : !token ? (
           <>
             <p className="password-alert error" role="alert">
               This reset link is invalid or missing a token.
             </p>
-            <a href="/forgot-password" className="password-button password-button-link">
+            <Link to="/forgot-password" className="password-button password-button-link">
               Request new link
-            </a>
+            </Link>
           </>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -129,9 +130,9 @@ export default function ResetPassword() {
           </form>
         )}
 
-        <a href="/login" className="password-back-link">
+        <Link to="/login" className="password-back-link">
           ← Back to login
-        </a>
+        </Link>
       </div>
     </main>
   )

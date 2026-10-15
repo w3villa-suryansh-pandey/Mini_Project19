@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar.jsx'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import ThemeToggle from '../../components/ThemeToggle.jsx'
@@ -1590,7 +1591,7 @@ function PrimePdfEditor() {
 									: 'An active PDF editing pass is required to save, merge, or split PDFs.'}</span>
 								{subscriptionError
 									? <button className="editor-open-button" type="button" onClick={refreshSubscription}>Retry check</button>
-									: <a href="/pricing">View PDF plans</a>}
+									: <Link to="/pricing">View PDF plans</Link>}
 							</div>
 						)}
 

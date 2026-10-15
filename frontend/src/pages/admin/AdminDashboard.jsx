@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import AdminSidebar from '../../components/AdminSidebar.jsx'
 import { getAdminActiveSubscriberCount, getAdminPlans, getAdminUsers, getSubscriptionExpiryJob } from '../../services/api.js'
@@ -46,7 +47,7 @@ function AdminDashboard() {
 							<h1>Workspace overview</h1>
 							<p>Here’s what’s happening across your workspace.</p>
 						</div>
-						<a className="admin-primary-link" href="/admin/users">View users <span aria-hidden="true">→</span></a>
+						<Link className="admin-primary-link" to="/admin/users">View users <span aria-hidden="true">→</span></Link>
 					</div>
 
 					<section className="admin-stat-grid" aria-label="Workspace summary">
@@ -72,7 +73,7 @@ function AdminDashboard() {
 						<section className="admin-panel activity-panel">
 							<div className="admin-panel-heading">
 								<div><h2>Recent activity</h2><p>Latest changes across your workspace</p></div>
-								<a href="/admin/users">All users <span aria-hidden="true">→</span></a>
+								<Link to="/admin/users">All users <span aria-hidden="true">→</span></Link>
 							</div>
 							<div className="admin-activity-list">
 								{activity.length === 0 && <p className="admin-empty-state">No activity records are available yet.</p>}
@@ -89,9 +90,9 @@ function AdminDashboard() {
 
 						<section className="admin-panel admin-quick-actions">
 							<div className="admin-panel-heading"><div><h2>Quick access</h2><p>Manage your workspace</p></div></div>
-							<a className="admin-action-link" href="/admin/plans"><span className="admin-action-icon">＋</span><span><strong>Create a plan</strong><small>Add or update subscription options</small></span><span className="admin-chevron">→</span></a>
-							<a className="admin-action-link" href="/admin/cronjobs"><span className="admin-action-icon clock">◷</span><span><strong>Review cron jobs</strong><small>Check scheduled background tasks</small></span><span className="admin-chevron">→</span></a>
-							<a className="admin-action-link" href="/admin/users"><span className="admin-action-icon users">◎</span><span><strong>Manage users</strong><small>Search and filter accounts</small></span><span className="admin-chevron">→</span></a>
+							<Link className="admin-action-link" to="/admin/plans"><span className="admin-action-icon">＋</span><span><strong>Create a plan</strong><small>Add or update subscription options</small></span><span className="admin-chevron">→</span></Link>
+							<Link className="admin-action-link" to="/admin/cronjobs"><span className="admin-action-icon clock">◷</span><span><strong>Review cron jobs</strong><small>Check scheduled background tasks</small></span><span className="admin-chevron">→</span></Link>
+							<Link className="admin-action-link" to="/admin/users"><span className="admin-action-icon users">◎</span><span><strong>Manage users</strong><small>Search and filter accounts</small></span><span className="admin-chevron">→</span></Link>
 						</section>
 					</div>
 					<p className="admin-data-note">Counts refresh when this page loads and reflect current database records.</p>

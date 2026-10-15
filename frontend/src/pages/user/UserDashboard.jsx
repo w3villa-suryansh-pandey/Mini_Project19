@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
 import { getUserProfile } from '../../services/api.js'
@@ -132,12 +133,7 @@ function UserDashboard() {
 						<div>
 							<p className="dashboard-eyebrow">YOUR WORKSPACE</p>
 							<h1>{isLoading ? 'Loading your workspace…' : greeting}</h1>
-								<p>Choose a tool to work with your documents, create something new, or prepare a file to share.</p>
-						</div>
-						<div className="dashboard-summary-card">
-								<span>Tools in your workspace</span>
-								<strong>{actions.length}</strong>
-								<small>PDF, writing, conversion, and compression</small>
+							<p>Choose a tool to work with your documents, create something new, or prepare a file to share.</p>
 						</div>
 					</div>
 
@@ -154,14 +150,14 @@ function UserDashboard() {
 							</div>
 							<div className="dashboard-action-grid">
 								{filteredActions.length > 0 ? filteredActions.map((action) => (
-									<a href={action.href} className={`dashboard-action-card accent-${action.accent}`} key={action.label}>
+								<Link to={action.href} className={`dashboard-action-card accent-${action.accent}`} key={action.label}>
 										<span className="dashboard-action-icon"><ActionIcon type={action.icon} /></span>
 										<span className="dashboard-action-copy">
 											<strong>{action.label}</strong>
 											<small>{action.description}</small>
 										</span>
 										<span className="dashboard-action-arrow" aria-hidden="true">↗</span>
-									</a>
+								</Link>
 								)) : (
 									<div className="dashboard-no-results" role="status">
 										<p>No tools match “{searchTerm.trim()}”.</p>
@@ -183,7 +179,7 @@ function UserDashboard() {
 										<h3>No saved files here yet</h3>
 										<p>Files are opened and processed in the tools above; this workspace does not keep a cloud file library.</p>
 									</div>
-									<a href="/editor">Open a PDF <span aria-hidden="true">→</span></a>
+									<Link to="/editor">Open a PDF <span aria-hidden="true">→</span></Link>
 								</div>
 							</section>
 
@@ -201,7 +197,7 @@ function UserDashboard() {
 										<strong>Account settings</strong>
 										<span>Manage your profile and sign-in options.</span>
 									</div>
-									<a href="/profile" aria-label="Open account settings">→</a>
+								<Link to="/profile" aria-label="Open account settings">→</Link>
 								</div>
 							</aside>
 					</div>

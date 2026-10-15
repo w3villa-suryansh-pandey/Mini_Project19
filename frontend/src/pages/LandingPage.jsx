@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react'
 import logo from '../assets/logo.png'
 import '../styles/aurora.css'
 import ThemeToggle from '../components/ThemeToggle.jsx'
+import { getPricingPlans } from '../services/api.js'
+import { Link } from 'react-router-dom'
 
 const featureCards = [
 	{
@@ -74,13 +77,47 @@ const benefitCards = [
 	{ title: 'Flexible productivity', text: 'Swap between PDF, writing, and document tasks while keeping context intact.' },
 ]
 
-const pricingPreview = [
-	{ name: 'Starter', price: '$12', detail: 'per month', featured: false },
-	{ name: 'Pro', price: '$29', detail: 'per month', featured: true },
-	{ name: 'Business', price: '$59', detail: 'per month', featured: false },
+// Keep the backend's standard catalog visible if the public plans endpoint is unreachable.
+const defaultPlans = [
+	{
+		id: 'day',
+		name: 'Day pass',
+		priceRupees: 10,
+		durationValue: 1,
+		durationUnit: 'day',
+		features: ['PDF editing tools', 'Edited PDF downloads'],
+	},
+	{
+		id: 'month',
+		name: 'Monthly pass',
+		priceRupees: 200,
+		durationValue: 1,
+		durationUnit: 'month',
+		features: ['PDF editing tools', 'Edited PDF downloads'],
+	},
 ]
 
 function LandingPage({ notice = '' }) {
+	const [plans, setPlans] = useState(defaultPlans)
+	const [plansLoading, setPlansLoading] = useState(true)
+	const [plansError, setPlansError] = useState(false)
+
+	useEffect(() => {
+		let isCurrent = true
+		getPricingPlans()
+			.then(({ plans: availablePlans }) => {
+				if (isCurrent) setPlans(availablePlans)
+			})
+			.catch(() => {
+				if (isCurrent) setPlansError(true)
+			})
+			.finally(() => {
+				if (isCurrent) setPlansLoading(false)
+			})
+
+		return () => { isCurrent = false }
+	}, [])
+
 	return (
 		<main className="landing-page aurora-background">
 			
@@ -88,10 +125,10 @@ function LandingPage({ notice = '' }) {
                  <header className="landing-header">
                    <div className="landing-header-inner">
 
-                      <a className="landing-brand" href="/" aria-label="S19 home">
+                      <Link className="landing-brand" to="/" aria-label="S19 home">
                           <img src={logo} alt="" />
                           <span>S19</span>
-                       </a>
+                       </Link>
 
                         <nav className="landing-nav" aria-label="Main navigation">
   <a href="#home">Home</a>
@@ -104,13 +141,13 @@ function LandingPage({ notice = '' }) {
                    <div className="landing-header-actions">
 					 
 
-                      <a className="landing-login-link" href="/login">
+                      <Link className="landing-login-link" to="/login">
                                  Log in
-                        </a>
+                        </Link>
 
-                       <a className="landing-signup-link" href="/signup">
+                       <Link className="landing-signup-link" to="/signup">
                          Sign up
-                        </a>
+                        </Link>
 
 						 <ThemeToggle />
                    </div>
@@ -119,7 +156,7 @@ function LandingPage({ notice = '' }) {
                 </header>
 
 
-			{notice && <p className="landing-auth-notice" role="status">{notice} <a href="/login">Return to sign in</a></p>}
+			{notice && <p className="landing-auth-notice" role="status">{notice} <Link to="/login">Return to sign in</Link></p>}
 
 			<section className="landing-hero" id="home" aria-labelledby="landing-hero-title">
 				<div className="landing-hero-copy">
@@ -134,7 +171,7 @@ function LandingPage({ notice = '' }) {
 						Edit, convert, compress, and organize your documents with powerful tools designed to make everyday work effortless.
 					</p>
 					<div className="landing-hero-actions">
-						<a className="landing-primary-button" href="/signup">Start Creating <span aria-hidden="true">→</span></a>
+						<Link className="landing-primary-button" to="/signup">Start Creating <span aria-hidden="true">→</span></Link>
 						<a className="landing-secondary-button" href="#tools">
                            Explore Tools
                         </a>
@@ -196,7 +233,7 @@ function LandingPage({ notice = '' }) {
 							</div>
 							<h3>{feature.title}</h3>
 							<p>{feature.description}</p>
-							<a href="/login" className="landing-feature-link">Explore tool <span aria-hidden="true">→</span></a>
+							<Link to="/login" className="landing-feature-link">Explore tool <span aria-hidden="true">→</span></Link>
 						</article>
 					))}
 				</div>
@@ -245,22 +282,23 @@ function LandingPage({ notice = '' }) {
 					</div>
 				</div>
 				<div className="landing-pricing-grid">
-					{pricingPreview.map((plan) => (
-						<div className={`landing-price-card ${plan.featured ? 'featured' : ''}`} key={plan.name}>
+					{plans.map((plan) => (
+						<div className="landing-price-card" key={plan.id}>
 							<p className="landing-price-name">{plan.name}</p>
 							<div className="landing-price-row">
-								<span className="landing-price">{plan.price}</span>
-								<span className="landing-price-detail">{plan.detail}</span>
+								<span className="landing-price">₹{Number(plan.priceRupees).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+								<span className="landing-price-detail">/ {plan.durationValue} {plan.durationUnit}{plan.durationValue === 1 ? '' : 's'}</span>
 							</div>
 							<ul>
-								<li>Core document tools</li>
-								<li>Custom export options</li>
-								<li>Priority project access</li>
+								{plan.features.map((feature) => <li key={feature}>{feature}</li>)}
 							</ul>
-							<a href="/pricing">Choose plan</a>
+							<Link to="/pricing">Choose plan</Link>
 						</div>
 					))}
 				</div>
+				{plansLoading && <p className="landing-pricing-status" role="status">Checking current plan prices…</p>}
+				{plansError && <p className="landing-pricing-status" role="status">Could not refresh current plans. Showing the standard prices.</p>}
+				{!plansLoading && !plansError && plans.length === 0 && <p className="landing-pricing-status">No plans are currently available.</p>}
 			</section>
 
 			<section className="landing-about section-anchor" id="about" aria-labelledby="landing-about-title">
@@ -279,16 +317,16 @@ function LandingPage({ notice = '' }) {
 					<h2 id="landing-cta-title">Ready to create something better?</h2>
 					<p>Bring your document workflow together and get more done with less friction.</p>
 				</div>
-				<a className="landing-primary-button" href="/signup">Start for free <span aria-hidden="true">→</span></a>
+				<Link className="landing-primary-button" to="/signup">Start Now <span aria-hidden="true">→</span></Link>
 			</section>
 
 			<footer className="landing-footer">
-				<a className="landing-brand" href="/" aria-label="S19 home">
+				<Link className="landing-brand" to="/" aria-label="S19 home">
 					<img src={logo} alt="" />
 					<span>S19</span>
-				</a>
+				</Link>
 				<span>© 2026 S19. Made for clearer work.</span>
-				<a href="/login">Log in <span aria-hidden="true">↗</span></a>
+				<Link to="/login">Log in <span aria-hidden="true">↗</span></Link>
 			</footer>
 		</main>
 	)

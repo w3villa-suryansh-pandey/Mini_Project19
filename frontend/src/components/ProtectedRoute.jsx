@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import {
 	cacheAdminSession,
@@ -87,7 +88,7 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 				<p className="admin-eyebrow">S19 {requiredRole.toUpperCase()}</p>
 				<h1>{title}</h1>
 				<p>{message}</p>
-				{accessState !== 'checking' && <a href="/">Return to sign in</a>}
+				{accessState !== 'checking' && <Link to="/">Return to sign in</Link>}
 			</section>
 		</main>
 	)

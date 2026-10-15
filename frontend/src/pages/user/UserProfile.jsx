@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import ThemeToggle from '../../components/ThemeToggle.jsx'
 
@@ -288,7 +289,7 @@ async function fillAddressFromCurrentLocation() {
 				<div className="profile-breadcrumb">Workspace <span>/</span> My profile</div>
 				<div className="profile-topbar-actions">
 					<AccountBadge user={{ name: profile.fullName, email: profile.email }} />
-					<a className="profile-back-link" href="/dashboard">Back to overview <span aria-hidden="true">↗</span></a>
+					<Link className="profile-back-link" to="/dashboard">Back to overview <span aria-hidden="true">↗</span></Link>
 					<ThemeToggle/>
 				</div>
 			</header>
@@ -321,7 +322,7 @@ async function fillAddressFromCurrentLocation() {
 									: <p>No active subscription.</p>}
 					</div>
 					{!isSubscriptionLoading && !subscriptionError && !subscription?.active && (
-						<a href="/pricing">View plans <span aria-hidden="true">→</span></a>
+						<Link to="/pricing">View plans <span aria-hidden="true">→</span></Link>
 					)}
 				</section>
 
