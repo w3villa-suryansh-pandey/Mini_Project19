@@ -81,13 +81,16 @@ function parsePageRange(value, pageCount) {
 function PdfPage({
 	document,
 	pdfjsLibrary,
+	zoom,
 	pageNumber,
 	rotation,
+	editsRef,
 	editsEnabled,
 	activeTool,
 	addedTexts,
 	annotations,
 	onTextEdit,
+	onTextCancel,
 	onTextCommit,
 	onTextDelete,
 	onAnnotation,
@@ -124,7 +127,7 @@ function PdfPage({
 			const page = await document.getPage(pageNumber)
 			if (!isCurrent) return
 
-			const viewport = page.getViewport({ scale: PAGE_SCALE, rotation: (page.rotate + rotation) % 360 })
+			const viewport = page.getViewport({ scale: PAGE_SCALE * zoom, rotation: (page.rotate + rotation) % 360 })
 			setPageViewport(viewport)
 			const canvas = canvasRef.current
 			const context = canvas.getContext('2d', { alpha: false })
@@ -145,6 +148,7 @@ function PdfPage({
 			if (!isCurrent) return
 
 			const textContent = await page.getTextContent()
+			textLayerRef.current.replaceChildren()
 			textLayer = new pdfjsLibrary.TextLayer({
 				textContentSource: textContent,
 				container: textLayerRef.current,
@@ -164,44 +168,66 @@ function PdfPage({
 				textDiv.setAttribute('aria-multiline', 'true')
 				textDiv.contentEditable = editsEnabled ? 'true' : 'false'
 				textDiv.spellcheck = false
+				const edit = editsRef.current[`${pageNumber}:${itemIndex}`]
+				if (edit) {
+					textDiv.textContent = edit.replacementText
+					textDiv.dataset.pdfPatch = JSON.stringify(edit)
+					textDiv.dataset.pdfEdited = 'true'
+					textDiv.classList.add('prime-pdf-text-edited')
+				}
 			})
 
+			const getTextPatch = (textDiv) => {
+				if (textDiv.dataset.pdfPatch) return JSON.parse(textDiv.dataset.pdfPatch)
+				const bounds = textDiv.getBoundingClientRect()
+				const pageBounds = pageElement.getBoundingClientRect()
+				const topLeft = viewport.convertToPdfPoint(bounds.left - pageBounds.left, bounds.top - pageBounds.top)
+				const bottomRight = viewport.convertToPdfPoint(bounds.right - pageBounds.left, bounds.bottom - pageBounds.top)
+				const computedStyle = window.getComputedStyle(textDiv)
+				const patch = {
+					x: Math.min(topLeft[0], bottomRight[0]),
+					y: Math.min(topLeft[1], bottomRight[1]),
+					width: Math.abs(bottomRight[0] - topLeft[0]),
+					height: Math.abs(bottomRight[1] - topLeft[1]),
+					fontSize: Number.parseFloat(computedStyle.fontSize) / viewport.scale,
+					fontFamily: computedStyle.fontFamily,
+					color: computedStyle.color,
+				}
+				textDiv.dataset.pdfPatch = JSON.stringify(patch)
+				return patch
+			}
 			const handleFocus = (event) => {
 				const textDiv = event.target.closest('[data-pdf-text-index]')
 				if (!textDiv || !pageElement) return
-				if (!textDiv.dataset.pdfPatch) {
-					const bounds = textDiv.getBoundingClientRect()
-					const pageBounds = pageElement.getBoundingClientRect()
-					const topLeft = viewport.convertToPdfPoint(bounds.left - pageBounds.left, bounds.top - pageBounds.top)
-					const bottomRight = viewport.convertToPdfPoint(bounds.right - pageBounds.left, bounds.bottom - pageBounds.top)
-					const computedStyle = window.getComputedStyle(textDiv)
-					textDiv.dataset.pdfPatch = JSON.stringify({
-						x: Math.min(topLeft[0], bottomRight[0]),
-						y: Math.min(topLeft[1], bottomRight[1]),
-						width: Math.abs(bottomRight[0] - topLeft[0]),
-						height: Math.abs(bottomRight[1] - topLeft[1]),
-						fontSize: Number.parseFloat(computedStyle.fontSize) / viewport.scale,
-						fontFamily: computedStyle.fontFamily,
-						color: computedStyle.color,
-					})
-				}
+				getTextPatch(textDiv)
 				textDiv.classList.add('prime-pdf-text-editing')
 			}
 			const handleInput = (event) => {
 				const textDiv = event.target.closest('[data-pdf-text-index]')
 				if (!textDiv) return
 				const originalText = textLayer.textContentItemsStr[Number(textDiv.dataset.pdfTextIndex)]
-				const geometry = textDiv.dataset.pdfPatch
-				if (!originalText || !geometry) return
+				if (!originalText) return
+				const geometry = getTextPatch(textDiv)
 				textDiv.dataset.pdfEdited = 'true'
 				textDiv.classList.add('prime-pdf-text-edited')
 				onTextEdit({
+					...geometry,
 					pageNumber,
 					itemIndex: Number(textDiv.dataset.pdfTextIndex),
 					originalText,
 					replacementText: textDiv.innerText.replace(/\r/g, ''),
-					...JSON.parse(geometry),
 				})
+			}
+			const handleTextKeyDown = (event) => {
+				if (event.key !== 'Escape') return
+				const textDiv = event.target.closest('[data-pdf-text-index]')
+				if (!textDiv) return
+				event.preventDefault()
+				const itemIndex = Number(textDiv.dataset.pdfTextIndex)
+				textDiv.textContent = textLayer.textContentItemsStr[itemIndex] || ''
+				textDiv.classList.remove('prime-pdf-text-editing', 'prime-pdf-text-edited')
+				delete textDiv.dataset.pdfEdited
+				onTextCancel({ pageNumber, itemIndex })
 			}
 			const handleBlur = (event) => {
 				const textDiv = event.target.closest('[data-pdf-text-index]')
@@ -236,17 +262,42 @@ function PdfPage({
 					text: text.trim(),
 					selectOnFocus: activeToolRef.current === 'text',
 					isEditing: true,
-					width: 180 / PAGE_SCALE,
-					height: 36 / PAGE_SCALE,
+					width: 180 / (PAGE_SCALE * zoom),
+					height: 36 / (PAGE_SCALE * zoom),
 					fontSize: activeToolRef.current === 'signature' ? 18 : 12,
 					color: '#171c19',
 					fontFamily: activeToolRef.current === 'signature' ? 'Times Italic' : 'Arial',
 				})
 			}
 			const textLayerElement = textLayerRef.current
+			const handleEraseClick = (event) => {
+				if (activeToolRef.current !== 'erase') return
+				const textDiv = event.target.closest('[data-pdf-text-index]')
+				if (!textDiv) return
+				event.preventDefault()
+				event.stopPropagation()
+				const itemIndex = Number(textDiv.dataset.pdfTextIndex)
+				const currentEdit = editsRef.current[`${pageNumber}:${itemIndex}`]
+				if (currentEdit?.replacementText === '') return
+				const originalText = currentEdit?.originalText || textLayer.textContentItemsStr[itemIndex]
+				if (!originalText?.trim()) return
+				const geometry = currentEdit || getTextPatch(textDiv)
+				textDiv.dataset.pdfEdited = 'true'
+				textDiv.textContent = ''
+				textDiv.classList.add('prime-pdf-text-edited')
+				onTextEdit({
+					...geometry,
+					pageNumber,
+					itemIndex,
+					originalText,
+					replacementText: '',
+				})
+			}
+			textLayerElement.addEventListener('click', handleEraseClick, true)
 			textLayerElement.addEventListener('focusin', handleFocus)
 			textLayerElement.addEventListener('focusout', handleBlur)
 			textLayerElement.addEventListener('input', handleInput)
+			textLayerElement.addEventListener('keydown', handleTextKeyDown)
 			pageElement.addEventListener('click', handlePageClick)
 			const svg = svgRef.current
 			const getPoint = (event) => {
@@ -292,9 +343,11 @@ function PdfPage({
 			svg.addEventListener('pointermove', handlePointerMove)
 			svg.addEventListener('pointerup', handlePointerUp)
 			cleanupTextEvents = () => {
+				textLayerElement.removeEventListener('click', handleEraseClick, true)
 				textLayerElement.removeEventListener('focusin', handleFocus)
 				textLayerElement.removeEventListener('focusout', handleBlur)
 				textLayerElement.removeEventListener('input', handleInput)
+				textLayerElement.removeEventListener('keydown', handleTextKeyDown)
 				pageElement.removeEventListener('click', handlePageClick)
 				svg.removeEventListener('pointerdown', handlePointerDown)
 				svg.removeEventListener('pointermove', handlePointerMove)
@@ -313,7 +366,7 @@ function PdfPage({
 			textLayer?.cancel()
 			cleanupTextEvents?.()
 		}
-	}, [document, editsEnabled, onAnnotation, onImagePlace, onPageRendered, onTextEdit, pageNumber, pdfjsLibrary, renderKey, rotation])
+	}, [document, editsEnabled, editsRef, onAnnotation, onImagePlace, onPageRendered, onTextCancel, onTextEdit, pageNumber, pdfjsLibrary, renderKey, rotation, zoom])
 
 	const viewport = pageViewport
 	const annotationRect = (annotation) => {
@@ -461,7 +514,7 @@ function PdfPage({
 				{drawingPreview && renderDrawing(drawingPreview, true)}
 			</svg>
 			{addedTexts.filter((item) => item.pageNumber === pageNumber).map((item) => (
-				<div key={item.id} className="prime-pdf-added-text-wrap" style={{ left: item.left, top: item.top }}>
+				<div key={item.id} className="prime-pdf-added-text-wrap" style={{ left: viewport?.convertToViewportPoint(item.x, item.y)[0] ?? item.left, top: viewport?.convertToViewportPoint(item.x, item.y)[1] ?? item.top }}>
 					{item.isEditing ? (
 						<textarea
 							data-added-text={item.id}
@@ -484,9 +537,9 @@ function PdfPage({
 							}}
 							autoFocus
 							style={{
-								width: `${item.width * PAGE_SCALE}px`,
-								minHeight: `${item.height * PAGE_SCALE}px`,
-								fontSize: `${item.fontSize * PAGE_SCALE}px`,
+								width: `${item.width * PAGE_SCALE * zoom}px`,
+								minHeight: `${item.height * PAGE_SCALE * zoom}px`,
+								fontSize: `${item.fontSize * PAGE_SCALE * zoom}px`,
 							}}
 						/>
 					) : (
@@ -494,9 +547,9 @@ function PdfPage({
 							className={`prime-pdf-added-text-display${item.annotationType === 'comment' ? ' is-comment' : ''}${item.annotationType === 'signature' ? ' is-signature' : ''}`}
 							dir="ltr"
 							style={{
-								width: `${item.width * PAGE_SCALE}px`,
-								minHeight: `${item.height * PAGE_SCALE}px`,
-								fontSize: `${item.fontSize * PAGE_SCALE}px`,
+								width: `${item.width * PAGE_SCALE * zoom}px`,
+								minHeight: `${item.height * PAGE_SCALE * zoom}px`,
+								fontSize: `${item.fontSize * PAGE_SCALE * zoom}px`,
 							}}
 						>{item.text}</div>
 					)}
@@ -533,6 +586,7 @@ function PrimePdfEditor() {
 	const [deletedPages, setDeletedPages] = useState([])
 	const [pageRotations, setPageRotations] = useState({})
 	const [activeTool, setActiveTool] = useState('')
+	const [zoom, setZoom] = useState(1)
 	const [pendingImage, setPendingImage] = useState(null)
 	const [mergeFiles, setMergeFiles] = useState([])
 	const [splitRange, setSplitRange] = useState('')
@@ -866,12 +920,6 @@ function PrimePdfEditor() {
 	}, [])
 
 	const recordEdit = useCallback((edit) => {
-		if (edit.type === 'add') {
-			recordChange(editsRef.current, [...addedTextsRef.current, { ...edit, id: crypto.randomUUID() }])
-			setActiveTool('')
-			setNotice(`${edit.annotationType === 'comment' ? 'Comment' : edit.annotationType === 'signature' ? 'Signature' : 'Text box'} added. Save / download to apply it to the PDF.`)
-			return
-		}
 		if (edit.id) {
 			const nextAddedTexts = addedTextsRef.current.map((item) => item.id === edit.id ? edit : item)
 			addedTextsRef.current = nextAddedTexts
@@ -885,9 +933,24 @@ function PrimePdfEditor() {
 			setIsSaved(false)
 			return
 		}
+		if (edit.type === 'add') {
+			recordChange(editsRef.current, [...addedTextsRef.current, { ...edit, id: crypto.randomUUID() }])
+			setActiveTool('')
+			setNotice(`${edit.annotationType === 'comment' ? 'Comment' : edit.annotationType === 'signature' ? 'Signature' : 'Text box'} added. Save / download to apply it to the PDF.`)
+			return
+		}
 
 		const key = `${edit.pageNumber}:${edit.itemIndex}`
 		recordChange({ ...editsRef.current, [key]: edit }, addedTextsRef.current)
+	}, [recordChange])
+
+	const cancelTextEdit = useCallback(({ pageNumber, itemIndex }) => {
+		const key = `${pageNumber}:${itemIndex}`
+		if (!Object.hasOwn(editsRef.current, key)) return
+		const nextEdits = { ...editsRef.current }
+		delete nextEdits[key]
+		recordChange(nextEdits, addedTextsRef.current)
+		setNotice('Text edit cancelled.')
 	}, [recordChange])
 
 	const recordAnnotation = useCallback((annotation) => {
@@ -1511,9 +1574,17 @@ function PrimePdfEditor() {
 											<button className="editor-open-button" type="button" onClick={undoEdit} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">Undo</button>
 											<button className="editor-open-button" type="button" onClick={redoEdit} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)">Redo</button>
 										</div>
+										<div className="prime-pdf-tool-group" role="group" aria-label="Zoom">
+											<span className="prime-pdf-tool-group-label">Zoom</span>
+											<button className="editor-open-button" type="button" onClick={() => setZoom((value) => Math.max(0.5, Math.round((value - 0.1) * 10) / 10))} disabled={zoom <= 0.5} aria-label="Zoom out">−</button>
+											<span aria-live="polite">{Math.round(zoom * 100)}%</span>
+											<button className="editor-open-button" type="button" onClick={() => setZoom((value) => Math.min(2, Math.round((value + 0.1) * 10) / 10))} disabled={zoom >= 2} aria-label="Zoom in">+</button>
+											<button className="editor-open-button" type="button" onClick={() => setZoom(1)}>Reset</button>
+										</div>
 										<div className="prime-pdf-tool-group prime-pdf-annotation-tools" role="group" aria-label="Add and annotate">
 											<span className="prime-pdf-tool-group-label">Add & annotate</span>
 										{[
+							['erase', 'Erase text', 'Click a native PDF text block to cover it and remove its visible text.'],
 											['text', 'Add text', 'Click a page to add text.'],
 											['highlight', 'Highlight', 'Drag over a page to highlight an area.'],
 											['draw', 'Draw', 'Draw on a page with your pointer or finger.'],
@@ -1622,13 +1693,16 @@ function PrimePdfEditor() {
 										<PdfPage
 											document={pdfDocument}
 											pdfjsLibrary={pdfjsLibrary}
+											zoom={zoom}
 											pageNumber={pageIndex + 1}
 											rotation={pageRotations[pageIndex] || 0}
+											editsRef={editsRef}
 											editsEnabled
 											activeTool={activeTool}
 											addedTexts={addedTexts}
 											annotations={annotations}
 											onTextEdit={recordEdit}
+											onTextCancel={cancelTextEdit}
 											onTextCommit={commitAddedText}
 											onTextDelete={deleteAddedText}
 											onAnnotation={recordAnnotation}
@@ -1653,7 +1727,7 @@ function PrimePdfEditor() {
 					<div className="document-editor-footer">
 						<p>{pdfDocument
 							? activeTool
-								? `${activeTool[0].toUpperCase()}${activeTool.slice(1)} tool is active. ${activeTool === 'draw' || activeTool === 'highlight' ? 'Drag on a page to mark it.' : 'Click a page to place it.'}`
+								? `${activeTool[0].toUpperCase()}${activeTool.slice(1)} tool is active. ${activeTool === 'draw' || activeTool === 'highlight' ? 'Drag on a page to mark it.' : activeTool === 'erase' ? 'Click a text block to erase it.' : 'Click a page to place it.'}`
 								: editCount
 									? `${editCount} unsaved change${editCount === 1 ? '' : 's'} · use the page controls, annotation tools, Undo / Redo, and Save / Download.`
 									: 'Select PDF text to replace it. Use the toolbar to annotate, insert an image/signature/comment, or manage pages.'

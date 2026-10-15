@@ -10567,9 +10567,9 @@ body {
 :root:not([data-theme='dark']) .verify-page,
 :root:not([data-theme='dark']) .password-page {
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.14), transparent 18%),
-    radial-gradient(circle at right center, rgba(6, 182, 212, 0.12), transparent 18%),
-    linear-gradient(180deg, #f7f8fc, #ffffff 28%, #f8fafc 100%);
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.14), transparent 22%),
+    radial-gradient(circle at right center, rgba(196, 181, 253, 0.2), transparent 24%),
+    linear-gradient(180deg, #f5f1ff, #faf8ff 58%, #f3efff 100%);
 }
 
 :root[data-theme='dark'] .dashboard-layout,
