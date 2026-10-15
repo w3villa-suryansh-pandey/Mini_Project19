@@ -57,9 +57,11 @@ function WorkspaceHome() {
 							<p>Make your documents work harder. Edit PDFs, organize files, and create polished work from one simple space.</p>
 							<Link className="workspace-home-primary-action" to="/editor">Open PDF editor <span aria-hidden="true">↗</span></Link>
 						</div>
+					</section>
+
+					<section className="workspace-home-showcase" aria-label="PDF editing workspace preview">
 						<div className="workspace-home-visual">
 							<img src={pdfWorkspaceImage} alt="A modern PDF editing workspace with tools for editing text, adding images, erasing content, and signing" />
-							<span className="workspace-home-visual-badge"><span aria-hidden="true">✦</span> Your document studio</span>
 						</div>
 					</section>
 
