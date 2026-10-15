@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import Sidebar from '../../components/Sidebar.jsx'
-import AccountBadge from '../../components/AccountBadge.jsx'
+import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { convertDocxToPdf } from '../../utils/docxToPdf.js'
-import ThemeToggle from '../../components/ThemeToggle.jsx'
 
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024
@@ -291,15 +289,8 @@ function FileConverter() {
 
 	return (
 		<main className="dashboard-layout">
-			<Sidebar active="converter" />
+			<WorkspaceHeader active="converter" />
 			<section className="dashboard-content">
-				<header className="dashboard-header">
-					<div className="dashboard-breadcrumb">Workspace <span>/</span> File converter</div>
-					 <div className="dashboard-header-actions">
-    <AccountBadge />
-    <ThemeToggle />
-  </div>
-				</header>
 
 				<div className="document-editor-main">
 					<div className="document-editor-heading">

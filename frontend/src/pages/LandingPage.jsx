@@ -101,6 +101,14 @@ function LandingPage({ notice = '' }) {
 	const [plans, setPlans] = useState(defaultPlans)
 	const [plansLoading, setPlansLoading] = useState(true)
 	const [plansError, setPlansError] = useState(false)
+	const [headerScrolled, setHeaderScrolled] = useState(() => window.scrollY > 24)
+
+	useEffect(() => {
+		const updateHeader = () => setHeaderScrolled(window.scrollY > 24)
+		window.addEventListener('scroll', updateHeader, { passive: true })
+		updateHeader()
+		return () => window.removeEventListener('scroll', updateHeader)
+	}, [])
 
 	useEffect(() => {
 		let isCurrent = true
@@ -122,7 +130,7 @@ function LandingPage({ notice = '' }) {
 		<main className="landing-page aurora-background">
 			
                
-                 <header className="landing-header">
+                 <header className={`landing-header${headerScrolled ? ' is-scrolled' : ''}`}>
                    <div className="landing-header-inner">
 
                       <Link className="landing-brand" to="/" aria-label="S19 home">

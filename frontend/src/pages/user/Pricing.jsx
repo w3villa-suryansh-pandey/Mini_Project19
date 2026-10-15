@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Sidebar from '../../components/Sidebar.jsx'
-import AccountBadge from '../../components/AccountBadge.jsx'
+import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { getPricingPlans } from '../../services/api.js'
-import ThemeToggle from '../../components/ThemeToggle.jsx'
 
 
 function Pricing() {
@@ -29,16 +27,8 @@ function Pricing() {
 
 	return (
 		<main className="dashboard-layout">
-			<Sidebar active="plans" />
+			<WorkspaceHeader active="plans" />
 			<section className="dashboard-content">
-				<header className="dashboard-header">
-					<div className="dashboard-breadcrumb">Workspace <span>/</span> Pricing plans</div>
-					 <div className="dashboard-header-actions">
-    <AccountBadge />
-    <ThemeToggle />
-  </div>
-					
-				</header>
 				<div className="dashboard-main">
 					<div className="dashboard-welcome pricing-welcome">
 						<p className="dashboard-eyebrow">PDF WORKSPACE</p>

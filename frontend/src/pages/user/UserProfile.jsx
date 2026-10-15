@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import AccountBadge from '../../components/AccountBadge.jsx'
-import ThemeToggle from '../../components/ThemeToggle.jsx'
 
-import Sidebar from '../../components/Sidebar.jsx'
+import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { getAddressFromCoordinates } from '../../services/location.service.js'
 import {
 	downloadUserProfile,
@@ -283,17 +281,8 @@ async function fillAddressFromCurrentLocation() {
 
 	return (
 		<div className="dashboard-layout profile-layout">
-			<Sidebar active="profile" />
+			<WorkspaceHeader active="profile" />
 			<main className="profile-page">
-			<header className="profile-topbar">
-				<div className="profile-breadcrumb">Workspace <span>/</span> My profile</div>
-				<div className="profile-topbar-actions">
-					<AccountBadge user={{ name: profile.fullName, email: profile.email }} />
-					<Link className="profile-back-link" to="/dashboard">Back to overview <span aria-hidden="true">↗</span></Link>
-					<ThemeToggle/>
-				</div>
-			</header>
-
 			<div className="profile-main">
 				<div className="profile-page-heading">
 					<div>

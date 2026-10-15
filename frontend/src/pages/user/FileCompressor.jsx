@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import Sidebar from '../../components/Sidebar.jsx'
-import AccountBadge from '../../components/AccountBadge.jsx'
-import ThemeToggle from '../../components/ThemeToggle.jsx'
+import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 
 
 const ACCEPTED_FILE_TYPES = '.jpg,.jpeg,.png,.webp,.bmp,.pdf'
@@ -163,15 +161,8 @@ function FileCompressor() {
 
 	return (
 		<main className="dashboard-layout">
-			<Sidebar active="compressor" />
+			<WorkspaceHeader active="compressor" />
 			<section className="dashboard-content">
-				<header className="dashboard-header">
-					<div className="dashboard-breadcrumb">Workspace <span>/</span> Compress files</div>
-					 <div className="dashboard-header-actions">
-    <AccountBadge />
-    <ThemeToggle />
-  </div>
-				</header>
 
 				<div className="document-editor-main">
 					<div className="document-editor-heading">

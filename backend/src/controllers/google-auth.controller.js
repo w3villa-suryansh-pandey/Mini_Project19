@@ -211,7 +211,7 @@ function completeGoogleAuth(error, user, info, req, res) {
 		}
 		return res.redirect(new URL('/profile?googleLinked=true', googleFrontendUrl || frontendUrl).toString())
 	}
-	const destination = user.role === 'admin' ? '/admin' : '/dashboard'
+	const destination = user.role === 'admin' ? '/admin' : '/home'
 	return res.redirect(new URL(destination, googleFrontendUrl || frontendUrl).toString())
 }
 

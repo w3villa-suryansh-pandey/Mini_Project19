@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import WebViewer from '@pdftron/webviewer'
-import Sidebar from '../../components/Sidebar.jsx'
-import AccountBadge from '../../components/AccountBadge.jsx'
+import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { getUserSubscription } from '../../services/api.js'
-import ThemeToggle from '../../components/ThemeToggle.jsx'
 
 const APRYSE_LICENSE_KEY = import.meta.env.VITE_APRYSE_LICENSE_KEY
 
@@ -173,15 +171,8 @@ function DocumentEditor() {
 
 	return (
 		<main className="dashboard-layout">
-			<Sidebar active="editor" />
+			<WorkspaceHeader active="editor" />
 			<section className="dashboard-content">
-				<header className="dashboard-header">
-					<div className="dashboard-breadcrumb">Workspace <span>/</span> Document editor</div>
-					 <div className="dashboard-header-actions">
-    <AccountBadge />
-    <ThemeToggle />
-  </div>
-				</header>
 
 				<div className="document-editor-main">
 					<div className="document-editor-heading">

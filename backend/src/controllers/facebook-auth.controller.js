@@ -188,7 +188,7 @@ function completeFacebookAuth(error, user, info, req, res) {
 		}
 		return res.redirect(new URL('/profile?facebookLinked=true', facebookFrontendUrl).toString())
 	}
-	return res.redirect(new URL(user.role === 'admin' ? '/admin' : '/dashboard', facebookFrontendUrl).toString())
+	return res.redirect(new URL(user.role === 'admin' ? '/admin' : '/home', facebookFrontendUrl).toString())
 }
 
 module.exports = {

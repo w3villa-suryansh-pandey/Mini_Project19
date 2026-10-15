@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import AccountBadge from '../../components/AccountBadge.jsx'
-import Sidebar from '../../components/Sidebar.jsx'
+import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { getUserProfile } from '../../services/api.js'
-import ThemeToggle from '../../components/ThemeToggle.jsx'
 
 
 const actions = [
@@ -106,29 +104,13 @@ function UserDashboard() {
 
 	return (
 		<main className="dashboard-layout">
-			<Sidebar active="/dashboard" />
+			<WorkspaceHeader active="/dashboard" />
 			<section className="dashboard-content">
-				<header className="dashboard-header">
-					<div className="dashboard-header-left">
-						<div className="dashboard-breadcrumb">Workspace <span>/</span> Overview</div>
-					</div>
-					<div className="dashboard-header-actions">
-						<label className="dashboard-search">
-							<span aria-hidden="true">⌕</span>
-							<input
-								type="search"
-								placeholder="Search tools…"
-								aria-label="Search tools"
-								value={searchTerm}
-								onChange={(event) => setSearchTerm(event.target.value)}
-							/>
-						</label>
-						<AccountBadge user={profile} />
-						<ThemeToggle/>
-					</div>
-				</header>
-
 				<div className="dashboard-main">
+					<label className="dashboard-search dashboard-search-main">
+						<span aria-hidden="true">⌕</span>
+						<input type="search" placeholder="Search tools…" aria-label="Search tools" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
+					</label>
 					<div className="dashboard-welcome">
 						<div>
 							<p className="dashboard-eyebrow">YOUR WORKSPACE</p>

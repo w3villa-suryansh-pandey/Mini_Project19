@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Sidebar from '../../components/Sidebar.jsx'
-import AccountBadge from '../../components/AccountBadge.jsx'
-import ThemeToggle from '../../components/ThemeToggle.jsx'
+import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 
 import { getUserProfile, getUserSubscription } from '../../services/api.js'
 import {
@@ -1452,16 +1450,8 @@ function PrimePdfEditor() {
 
 	return (
 		<main className="dashboard-layout">
-			<Sidebar active="editor" />
+			<WorkspaceHeader active="editor" />
 			<section className="dashboard-content">
-				<header className="dashboard-header">
-					<div className="dashboard-breadcrumb">Workspace <span>/</span> PDF editor</div>
-					 <div className="dashboard-header-actions">
-    <AccountBadge />
-    <ThemeToggle />
-  </div>
-					
-				</header>
 
 				<div className="document-editor-main">
 					<div className="document-editor-heading">

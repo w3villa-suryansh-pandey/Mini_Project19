@@ -34,11 +34,15 @@ const UserProfile = lazy(() => import('./pages/user/UserProfile.jsx'))
 
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard.jsx'))
 
+const WorkspaceHome = lazy(() => import('./pages/user/WorkspaceHome.jsx'))
+
 const Pricing = lazy(() => import('./pages/user/Pricing.jsx'))
 
 const Payment = lazy(() => import('./pages/user/Payment.jsx'))
 
 const PrimePdfEditor = lazy(() => import('./pages/user/PrimePdfEditor.jsx'))
+
+const PresentationStudio = lazy(() => import('./pages/user/PresentationStudio.jsx'))
 
 const FileCompressor = lazy(() => import('./pages/user/FileCompressor.jsx'))
 
@@ -223,7 +227,7 @@ function AuthPage({ notice, setNotice }) {
 
         const result = await signIn(credentials)
 
-        navigate(result.user.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
+        navigate(result.user.role === 'admin' ? '/admin' : '/home', { replace: true })
 
       }
 
@@ -665,10 +669,12 @@ function App() {
         </Suspense>
       } />
       <Route path="/profile" element={<LazyRoute requiredRole="user" Page={UserProfile} />} />
+      <Route path="/home" element={<LazyRoute requiredRole="user" Page={WorkspaceHome} />} />
       <Route path="/dashboard" element={<LazyRoute requiredRole="user" Page={UserDashboard} />} />
       <Route path="/pricing" element={<LazyRoute requiredRole="user" Page={Pricing} />} />
       <Route path="/payment" element={<LazyRoute requiredRole="user" Page={Payment} />} />
       <Route path="/editor" element={<LazyRoute requiredRole="user" Page={PrimePdfEditor} />} />
+      <Route path="/presentation" element={<LazyRoute requiredRole="user" Page={PresentationStudio} />} />
       <Route path="/compressor" element={<LazyRoute requiredRole="user" Page={FileCompressor} />} />
       <Route path="/converter" element={<LazyRoute requiredRole="user" Page={FileConverter} />} />
       <Route path="/writing-pad" element={<LazyRoute requiredRole="user" Page={WritingPad} />} />

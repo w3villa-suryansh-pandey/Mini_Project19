@@ -32,7 +32,9 @@ module.exports = Object.freeze({
 	googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL || 'https://mini-project19.onrender.com/api/auth/google/callback',
 	googleClientId: process.env.GOOGLE_CLIENT_ID || '',
 	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-	facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL || 'http://localhost:5000/api/auth/facebook/callback',
+	facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL || (nodeEnv === 'production'
+		? 'https://mini-project19.onrender.com/api/auth/facebook/callback'
+		: 'http://localhost:5000/api/auth/facebook/callback'),
 	facebookClientId: process.env.FACEBOOK_CLIENT_ID || '',
 	facebookClientSecret: process.env.FACEBOOK_CLIENT_SECRET || '',
 	facebookFrontendUrl: process.env.FACEBOOK_FRONTEND_URL || process.env.FRONTEND_URL || 'https://mini-project19.vercel.app/',
