@@ -278,6 +278,8 @@ async function fillAddressFromCurrentLocation() {
 		.map((part) => part.charAt(0))
 		.join('')
 		.toUpperCase()
+	const completionFields = [profile.fullName, profile.email, profile.phone, profile.address, profile.company, profile.jobTitle, profile.bio, profile.photo]
+	const profileCompletion = Math.round((completionFields.filter((value) => String(value || '').trim()).length / completionFields.length) * 100)
 
 	return (
 		<div className="dashboard-layout profile-layout">
@@ -297,6 +299,20 @@ async function fillAddressFromCurrentLocation() {
 						Download profile
 					</button>
 				</div>
+
+				<section className="profile-hero" aria-label="Profile overview">
+					<div className="profile-hero-avatar">{profile.photo ? <img src={profile.photo} alt="" /> : <span>{initials || 'W'}</span>}</div>
+					<div className="profile-hero-copy">
+						<p className="profile-hero-kicker">YOUR ACCOUNT</p>
+						<h2>{profile.fullName || (isLoading ? 'Loading your profile…' : 'Welcome to your profile')}</h2>
+						<p>{profile.email || 'Add your email and details to personalize your workspace.'}</p>
+						<div className="profile-progress-track" role="progressbar" aria-label="Profile completeness" aria-valuemin="0" aria-valuemax="100" aria-valuenow={profileCompletion}>
+							<span style={{ width: `${profileCompletion}%` }} />
+						</div>
+						<small>{profileCompletion === 100 ? 'Profile complete' : `${profileCompletion}% complete · Add details to finish your profile`}</small>
+					</div>
+					<div className="profile-completion-stat"><strong>{profileCompletion}<span>%</span></strong><small>complete</small></div>
+				</section>
 
 				<section className="profile-section workspace-notice subscription-profile-notice" aria-labelledby="profile-subscription-heading">
 					<span className="subscription-active-mark" aria-hidden="true">{subscription?.active ? '✓' : '₹'}</span>
