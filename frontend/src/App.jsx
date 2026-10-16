@@ -211,6 +211,8 @@ function AuthPage({ notice, setNotice }) {
 
       if (isSignup) {
 
+        const password = String(formData.get('password') || '')
+
         const result = await signUp({
 
           ...credentials,
@@ -222,6 +224,11 @@ function AuthPage({ notice, setNotice }) {
         setNotice(result.message)
 
         setCanResendVerification(true)
+
+        navigate('/login', {
+          replace: true,
+          state: { signupCredentials: { email, password } },
+        })
 
       } else {
 
@@ -411,7 +418,7 @@ function AuthPage({ notice, setNotice }) {
 
 
 
-          <form className="auth-form" onSubmit={handleSubmit}>
+          <form key={mode} className="auth-form" onSubmit={handleSubmit}>
 
             <label className="field-label" htmlFor="account-role">
 
@@ -481,6 +488,8 @@ function AuthPage({ notice, setNotice }) {
 
                 autoComplete="email"
 
+                defaultValue={location.state?.signupCredentials?.email || ''}
+
                 required
 
               />
@@ -518,6 +527,8 @@ function AuthPage({ notice, setNotice }) {
                   placeholder={isSignup ? 'At least 8 characters' : 'Enter your password'}
 
                   autoComplete={isSignup ? 'new-password' : 'current-password'}
+
+                  defaultValue={!isSignup ? location.state?.signupCredentials?.password || '' : ''}
 
                   minLength={isSignup ? 8 : undefined}
 

@@ -22,7 +22,7 @@ function createId() {
 }
 
 function makeSlide(title = 'New slide', body = 'Add your ideas here.') {
-	return { id: createId(), title, body, titleStyle: null, bodyStyle: null, sourcePart: null, titleShapeIndex: null, bodyShapeIndex: null }
+	return { id: createId(), title, body, titleStyle: null, bodyStyle: null, titlePosition: { x: 8, y: 23 }, bodyPosition: { x: 8, y: 54 }, textBlocks: [], sourcePart: null, titleShapeIndex: null, bodyShapeIndex: null }
 }
 
 function defaultTextStyle(kind, themeName) {
@@ -139,10 +139,19 @@ function getShapePlaceholder(shape) {
 	return placeholder?.getAttribute('type') || ''
 }
 
+function getShapePosition(shape) {
+	const offset = shape.getElementsByTagNameNS(A_NS, 'off')[0]
+	if (!offset) return null
+	return {
+		x: Math.max(0, Math.min(90, (Number(offset.getAttribute('x')) / 12192000) * 100)),
+		y: Math.max(0, Math.min(88, (Number(offset.getAttribute('y')) / 6858000) * 100)),
+	}
+}
+
 function inspectSlide(xml, sourcePart) {
 	const document = parseXml(xml, 'PowerPoint slide')
 	const shapes = [...document.getElementsByTagNameNS(P_NS, 'sp')]
-	const entries = shapes.map((shape, index) => ({ index, text: extractText(shape).trim(), placeholder: getShapePlaceholder(shape) }))
+	const entries = shapes.map((shape, index) => ({ index, text: extractText(shape).trim(), placeholder: getShapePlaceholder(shape), position: getShapePosition(shape) }))
 	const title = entries.find((shape) => ['title', 'ctrTitle'].includes(shape.placeholder)) || entries.find((shape) => shape.text)
 	const body = entries.find((shape) => ['body', 'subTitle', 'obj'].includes(shape.placeholder) && shape.index !== title?.index)
 		|| entries.find((shape) => shape.text && shape.index !== title?.index)
@@ -154,6 +163,8 @@ function inspectSlide(xml, sourcePart) {
 		sourcePart,
 		titleShapeIndex: title?.index ?? null,
 		bodyShapeIndex: body?.index ?? null,
+		titlePosition: title?.position || { x: 8, y: 23 },
+		bodyPosition: body?.position || { x: 8, y: 54 },
 	}
 }
 
@@ -260,15 +271,18 @@ function appendTextShape(xml, name, value, position, style) {
 	if (!tree) return xml
 	const shapeIds = [...document.getElementsByTagNameNS(P_NS, 'cNvPr')].map((item) => Number(item.getAttribute('id')) || 0)
 	const id = Math.max(1, ...shapeIds) + 1
-	const y = position === 'title' ? 1050000 : 3100000
-	const height = position === 'title' ? 1600000 : 3300000
-	const textStyle = style || defaultTextStyle(position, 'indigo')
+	const x = typeof position === 'object' ? Math.round(position.x * 121920) : 914400
+	const y = typeof position === 'object' ? Math.round(position.y * 68580) : position === 'title' ? 1050000 : 3100000
+	const height = position === 'title' ? 1600000 : 2200000
+	const widthLimit = typeof position === 'object' ? 6500000 : 9509760
+	const width = typeof position === 'object' ? Math.max(500000, Math.min(widthLimit, Math.round((96 - position.x) * 121920))) : widthLimit
+	const textStyle = style || defaultTextStyle(position === 'title' ? 'title' : 'body', 'indigo')
 	const size = Math.round(Number(textStyle.fontSize || 18) * 100)
 	const align = textStyle.align === 'center' ? 'ctr' : textStyle.align === 'right' ? 'r' : 'l'
 	const runFlags = `${textStyle.bold ? ' b="1"' : ''}${textStyle.italic ? ' i="1"' : ''}${textStyle.underline ? ' u="sng"' : ''}`
 	const color = String(textStyle.color || '#202642').replace('#', '').toUpperCase()
 	const fontFamily = escapeXml(textStyle.fontFamily || 'Aptos')
-	const xmlShape = `<p:sp xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}"><p:nvSpPr><p:cNvPr id="${id}" name="${name}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="914400" y="${y}"/><a:ext cx="10363200" cy="${height}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr><p:txBody><a:bodyPr wrap="square"/><a:lstStyle/>${String(value).split('\n').map((line) => `<a:p><a:pPr algn="${align}"/><a:r><a:rPr lang="en-US" sz="${size}"${runFlags}><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:latin typeface="${fontFamily}"/></a:rPr><a:t xml:space="preserve">${escapeXml(line)}</a:t></a:r></a:p>`).join('')}</p:txBody></p:sp>`
+	const xmlShape = `<p:sp xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}"><p:nvSpPr><p:cNvPr id="${id}" name="${name}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${width}" cy="${height}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr><p:txBody><a:bodyPr wrap="square"/><a:lstStyle/>${String(value).split('\n').map((line) => `<a:p><a:pPr algn="${align}"/><a:r><a:rPr lang="en-US" sz="${size}"${runFlags}><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:latin typeface="${fontFamily}"/></a:rPr><a:t xml:space="preserve">${escapeXml(line)}</a:t></a:r></a:p>`).join('')}</p:txBody></p:sp>`
 	const shape = parseXml(xmlShape, 'PowerPoint text box').documentElement
 	tree.appendChild(document.importNode(shape, true))
 	return new XMLSerializer().serializeToString(document)
@@ -298,8 +312,9 @@ function buildSlideXml(slide, themeName) {
 	return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 	<p:sld xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="${theme.background}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree>
 	<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
-	${textShape(2, 'Title', 914400, 1100000, 10363200, 1600000, slide.title || 'Untitled slide', titleStyle)}
-	${textShape(3, 'Body', 1000000, 3100000, 10160000, 3300000, slide.body || '', bodyStyle)}
+	${textShape(2, 'Title', Math.round((slide.titlePosition?.x ?? 8) * 121920), Math.round((slide.titlePosition?.y ?? 23) * 68580), Math.max(500000, Math.round((96 - (slide.titlePosition?.x ?? 8)) * 121920)), 1600000, slide.title || 'Untitled slide', titleStyle)}
+	${textShape(3, 'Body', Math.round((slide.bodyPosition?.x ?? 8) * 121920), Math.round((slide.bodyPosition?.y ?? 54) * 68580), Math.max(500000, Math.round((96 - (slide.bodyPosition?.x ?? 8)) * 121920)), 2200000, slide.body || '', bodyStyle)}
+	${(slide.textBlocks || []).map((block, index) => textShape(index + 4, `Text Box ${index + 1}`, Math.round((block.position?.x ?? 20) * 121920), Math.round((block.position?.y ?? 20) * 68580), Math.max(500000, Math.min(6500000, Math.round((96 - (block.position?.x ?? 20)) * 121920))), 2200000, block.text, block.style || defaultTextStyle('body', themeName))).join('')}
 	</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`
 }
 
@@ -328,6 +343,19 @@ function createPptxArchive(deck) {
 
 function updateXmlShape(xml, index, text, style = null) {
 	return replaceShapeText(xml, index, text, style)
+}
+
+function updateXmlShapePosition(xml, index, position) {
+	if (index == null || !position) return xml
+	const document = parseXml(xml, 'PowerPoint slide')
+	const shape = [...document.getElementsByTagNameNS(P_NS, 'sp')][index]
+	const offset = shape?.getElementsByTagNameNS(A_NS, 'off')[0]
+	if (!offset) return xml
+	offset.setAttribute('x', String(Math.round(position.x * 121920)))
+	offset.setAttribute('y', String(Math.round(position.y * 68580)))
+	const extent = shape?.getElementsByTagNameNS(A_NS, 'ext')[0]
+	if (extent) extent.setAttribute('cx', String(Math.max(500000, Math.round((96 - position.x) * 121920))))
+	return new XMLSerializer().serializeToString(document)
 }
 
 async function updateImportedArchive(zip, deck) {
@@ -366,10 +394,17 @@ async function updateImportedArchive(zip, deck) {
 			const titleStyle = slide.titleStyleDirty ? slide.titleStyle : null
 			const bodyStyle = slide.bodyStyleDirty ? slide.bodyStyle : null
 			if (slide.titleShapeIndex == null && slide.title.trim()) slideXml = appendTextShape(slideXml, 'S19 title', slide.title, 'title', slide.titleStyle || defaultTextStyle('title', deck.theme))
-			else slideXml = updateXmlShape(slideXml, slide.titleShapeIndex, slide.title, titleStyle)
+			else {
+				slideXml = updateXmlShape(slideXml, slide.titleShapeIndex, slide.title, titleStyle)
+				if (slide.titlePositionDirty) slideXml = updateXmlShapePosition(slideXml, slide.titleShapeIndex, slide.titlePosition)
+			}
 			if (slide.bodyShapeIndex == null && slide.body.trim()) slideXml = appendTextShape(slideXml, 'S19 body', slide.body, 'body', slide.bodyStyle || defaultTextStyle('body', deck.theme))
-			else slideXml = updateXmlShape(slideXml, slide.bodyShapeIndex, slide.body, bodyStyle)
+			else {
+				slideXml = updateXmlShape(slideXml, slide.bodyShapeIndex, slide.body, bodyStyle)
+				if (slide.bodyPositionDirty) slideXml = updateXmlShapePosition(slideXml, slide.bodyShapeIndex, slide.bodyPosition)
+			}
 			for (const shape of slide.extraTextShapes || []) slideXml = updateXmlShape(slideXml, shape.shapeIndex, shape.text, shape.styleDirty ? shape.style : null)
+			for (const block of slide.textBlocks || []) slideXml = appendTextShape(slideXml, 'S19 text box', block.text, block.position, block.style || defaultTextStyle('body', deck.theme))
 		} else {
 			part = `ppt/slides/slide${nextSlidePart}.xml`
 			const number = nextSlidePart
@@ -428,6 +463,8 @@ function downloadBlob(blob, filename) {
 
 function PresentationStudio() {
 	const importInputRef = useRef(null)
+	const canvasRef = useRef(null)
+	const dragStateRef = useRef(null)
 	const sourceArchiveRef = useRef(null)
 	const sourceArchiveIdRef = useRef('')
 	const [initialDeck] = useState(getSavedDeck)
@@ -443,11 +480,13 @@ function PresentationStudio() {
 	const colors = THEME_COLORS[deck.theme] || THEME_COLORS.indigo
 	const extraFormatIndex = formatTarget.startsWith('extra:') ? Number(formatTarget.slice(6)) : null
 	const extraFormatShape = activeSlide?.extraTextShapes?.find((shape) => shape.shapeIndex === extraFormatIndex)
+	const blockFormatId = formatTarget.startsWith('block:') ? formatTarget.slice(6) : null
+	const selectedBlock = activeSlide?.textBlocks?.find((block) => block.id === blockFormatId)
 	const selectedStyle = formatTarget === 'title'
 		? activeSlide?.titleStyle || defaultTextStyle('title', deck.theme)
 		: formatTarget === 'body'
 			? activeSlide?.bodyStyle || defaultTextStyle('body', deck.theme)
-			: extraFormatShape?.style || defaultTextStyle('body', deck.theme)
+			: blockFormatId ? selectedBlock?.style || defaultTextStyle('body', deck.theme) : extraFormatShape?.style || defaultTextStyle('body', deck.theme)
 	const textPreviewStyle = (style) => ({ fontSize: `${Number(style.fontSize || 18) * 4 / 3}px`, color: style.color, fontFamily: style.fontFamily, fontWeight: style.bold ? 800 : 500, fontStyle: style.italic ? 'italic' : 'normal', textDecoration: style.underline ? 'underline' : 'none', textAlign: style.align })
 
 	useEffect(() => {
@@ -494,6 +533,47 @@ function PresentationStudio() {
 		}))
 	}
 
+	function startTextDrag(event, field) {
+		if (!canvasRef.current) return
+		event.preventDefault()
+		canvasRef.current.setPointerCapture(event.pointerId)
+		const textBox = event.currentTarget.parentElement.getBoundingClientRect()
+		dragStateRef.current = { field, pointerId: event.pointerId, offsetX: event.clientX - textBox.left, offsetY: event.clientY - textBox.top }
+	}
+
+	function moveTextDrag(event) {
+		const drag = dragStateRef.current
+		const bounds = canvasRef.current?.getBoundingClientRect()
+		if (!drag || drag.pointerId !== event.pointerId || !bounds) return
+		const maxX = 90
+		const maxY = 88
+		const x = Math.max(2, Math.min(maxX, ((event.clientX - bounds.left - drag.offsetX) / bounds.width) * 100))
+		const y = Math.max(3, Math.min(maxY, ((event.clientY - bounds.top - drag.offsetY) / bounds.height) * 100))
+		setDeck((current) => ({
+			...current,
+			slides: current.slides.map((slide) => {
+				if (slide.id !== activeSlideId) return slide
+				if (drag.field.startsWith('block:')) return { ...slide, textBlocks: (slide.textBlocks || []).map((block) => block.id === drag.field.slice(6) ? { ...block, position: { x, y } } : block) }
+				return { ...slide, [`${drag.field}Position`]: { x, y }, [`${drag.field}PositionDirty`]: true }
+			}),
+		}))
+	}
+
+	function addTextBlock() {
+		const block = { id: createId(), text: 'Write something…', position: { x: 20, y: 36 }, style: defaultTextStyle('body', deck.theme) }
+		setDeck((current) => ({ ...current, slides: current.slides.map((slide) => slide.id === activeSlideId ? { ...slide, textBlocks: [...(slide.textBlocks || []), block] } : slide) }))
+		setFormatTarget(`block:${block.id}`)
+	}
+
+	function updateTextBlock(blockId, text) {
+		setDeck((current) => ({ ...current, slides: current.slides.map((slide) => slide.id === activeSlideId ? { ...slide, textBlocks: (slide.textBlocks || []).map((block) => block.id === blockId ? { ...block, text } : block) } : slide) }))
+	}
+
+	function removeTextBlock(blockId) {
+		setDeck((current) => ({ ...current, slides: current.slides.map((slide) => slide.id === activeSlideId ? { ...slide, textBlocks: (slide.textBlocks || []).filter((block) => block.id !== blockId) } : slide) }))
+		setFormatTarget('body')
+	}
+
 	function updateExtraShape(shapeIndex, value) {
 		setDeck((current) => ({
 			...current,
@@ -510,6 +590,7 @@ function PresentationStudio() {
 				if (slide.id !== activeSlideId) return slide
 				if (formatTarget === 'title') return { ...slide, titleStyle: { ...(slide.titleStyle || defaultTextStyle('title', current.theme)), [property]: value }, titleStyleDirty: true }
 				if (formatTarget === 'body') return { ...slide, bodyStyle: { ...(slide.bodyStyle || defaultTextStyle('body', current.theme)), [property]: value }, bodyStyleDirty: true }
+				if (blockFormatId) return { ...slide, textBlocks: (slide.textBlocks || []).map((block) => block.id === blockFormatId ? { ...block, style: { ...(block.style || defaultTextStyle('body', current.theme)), [property]: value } } : block) }
 				return { ...slide, extraTextShapes: (slide.extraTextShapes || []).map((shape) => shape.shapeIndex === extraFormatIndex ? { ...shape, style: { ...(shape.style || defaultTextStyle('body', current.theme)), [property]: value }, styleDirty: true } : shape) }
 			}),
 		}))
@@ -665,21 +746,23 @@ function PresentationStudio() {
 						<section className="presentation-stage" aria-label={`Editing slide ${activeIndex + 1}`}>
 							<div className="presentation-stage-toolbar"><span>SLIDE {String(activeIndex + 1).padStart(2, '0')} <i>/</i> {String(deck.slides.length).padStart(2, '0')}</span><div><button type="button" onClick={() => setActiveSlideId(deck.slides[Math.max(0, activeIndex - 1)].id)} disabled={activeIndex === 0} aria-label="Previous slide">←</button><button type="button" onClick={() => setActiveSlideId(deck.slides[Math.min(deck.slides.length - 1, activeIndex + 1)].id)} disabled={activeIndex === deck.slides.length - 1} aria-label="Next slide">→</button><button type="button" className="presentation-remove-slide" onClick={removeActiveSlide} aria-label="Remove current slide">Remove slide</button></div></div>
 							<div className="presentation-text-toolbar" aria-label="Text formatting">
-								<label><span>Text box</span><select value={formatTarget} onChange={(event) => setFormatTarget(event.target.value)}><option value="title">Slide title</option><option value="body">Slide body</option>{(activeSlide?.extraTextShapes || []).map((shape, index) => <option key={shape.shapeIndex} value={`extra:${shape.shapeIndex}`}>Other text {index + 1}</option>)}</select></label>
+								<button className="presentation-insert-text" type="button" onClick={addTextBlock}>＋ Insert text box</button>
+								<label><span>Text box</span><select value={formatTarget} onChange={(event) => setFormatTarget(event.target.value)}><option value="title">Slide title</option><option value="body">Slide body</option>{(activeSlide?.textBlocks || []).map((block, index) => <option key={block.id} value={`block:${block.id}`}>Text box {index + 1}</option>)}{(activeSlide?.extraTextShapes || []).map((shape, index) => <option key={shape.shapeIndex} value={`extra:${shape.shapeIndex}`}>Other text {index + 1}</option>)}</select></label>
 								<label><span>Font</span><select value={selectedStyle.fontFamily} onChange={(event) => updateTextStyle('fontFamily', event.target.value)}><option>Aptos</option><option>Aptos Display</option><option>Arial</option><option>Georgia</option><option>Inter</option><option>Verdana</option></select></label>
 								<label><span>Size</span><select value={selectedStyle.fontSize} onChange={(event) => updateTextStyle('fontSize', Number(event.target.value))}>{[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 44, 56, 64, 72].map((size) => <option key={size} value={size}>{size} pt</option>)}</select></label>
 								<label className="presentation-color-control"><span>Color</span><input type="color" aria-label="Text color" value={/^#[0-9a-f]{6}$/i.test(selectedStyle.color) ? selectedStyle.color : '#202642'} onChange={(event) => updateTextStyle('color', event.target.value)} /></label>
 								<div className="presentation-style-toggles"><button type="button" className={selectedStyle.bold ? 'selected' : ''} aria-label="Bold" aria-pressed={Boolean(selectedStyle.bold)} onClick={() => updateTextStyle('bold', !selectedStyle.bold)}><b>B</b></button><button type="button" className={selectedStyle.italic ? 'selected' : ''} aria-label="Italic" aria-pressed={Boolean(selectedStyle.italic)} onClick={() => updateTextStyle('italic', !selectedStyle.italic)}><i>I</i></button><button type="button" className={selectedStyle.underline ? 'selected' : ''} aria-label="Underline" aria-pressed={Boolean(selectedStyle.underline)} onClick={() => updateTextStyle('underline', !selectedStyle.underline)}><u>U</u></button></div>
 								<label><span>Align</span><select value={selectedStyle.align} onChange={(event) => updateTextStyle('align', event.target.value)}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
 							</div>
-							<div className={`presentation-canvas${deck.theme === 'charcoal' && !deck.imported ? ' charcoal' : ''}`} style={deck.imported ? undefined : { '--slide-background': `#${colors.background}`, '--slide-ink': `#${colors.ink}`, '--slide-accent': `#${colors.accent}` }}>
-								<label className="presentation-title-edit"><span className="sr-only">Slide title</span><textarea style={textPreviewStyle(activeSlide?.titleStyle || defaultTextStyle('title', deck.theme))} rows="2" value={activeSlide?.title || ''} maxLength="180" placeholder="Add a slide title" onFocus={() => setFormatTarget('title')} onChange={(event) => updateActiveSlide('title', event.target.value)} /></label>
+							<div ref={canvasRef} className={`presentation-canvas${deck.theme === 'charcoal' && !deck.imported ? ' charcoal' : ''}`} onPointerMove={moveTextDrag} onPointerUp={() => { dragStateRef.current = null }} onPointerCancel={() => { dragStateRef.current = null }} style={deck.imported ? undefined : { '--slide-background': `#${colors.background}`, '--slide-ink': `#${colors.ink}`, '--slide-accent': `#${colors.accent}` }}>
+								<label className="presentation-title-edit" style={{ left: `${activeSlide?.titlePosition?.x ?? 8}%`, top: `${activeSlide?.titlePosition?.y ?? 23}%`, width: `min(78%, calc(100% - ${activeSlide?.titlePosition?.x ?? 8}% - 4%))` }}><button className="presentation-drag-handle" type="button" aria-label="Move slide title" title="Drag to move" onPointerDown={(event) => startTextDrag(event, 'title')}>⠿ Move</button><span className="sr-only">Slide title</span><textarea style={textPreviewStyle(activeSlide?.titleStyle || defaultTextStyle('title', deck.theme))} rows="2" value={activeSlide?.title || ''} maxLength="180" placeholder="Add a slide title" onFocus={() => setFormatTarget('title')} onChange={(event) => updateActiveSlide('title', event.target.value)} /></label>
 								<div className="presentation-slide-rule" />
-								<label className="presentation-body-edit"><span className="sr-only">Slide body</span><textarea style={textPreviewStyle(activeSlide?.bodyStyle || defaultTextStyle('body', deck.theme))} value={activeSlide?.body || ''} maxLength="2400" placeholder="Add supporting details, one idea per line" onFocus={() => setFormatTarget('body')} onChange={(event) => updateActiveSlide('body', event.target.value)} /></label>
+								<label className="presentation-body-edit" style={{ left: `${activeSlide?.bodyPosition?.x ?? 8}%`, top: `${activeSlide?.bodyPosition?.y ?? 54}%`, width: `min(78%, calc(100% - ${activeSlide?.bodyPosition?.x ?? 8}% - 4%))` }}><button className="presentation-drag-handle" type="button" aria-label="Move slide body" title="Drag to move" onPointerDown={(event) => startTextDrag(event, 'body')}>⠿ Move</button><span className="sr-only">Slide body</span><textarea style={textPreviewStyle(activeSlide?.bodyStyle || defaultTextStyle('body', deck.theme))} value={activeSlide?.body || ''} maxLength="2400" placeholder="Add supporting details, one idea per line" onFocus={() => setFormatTarget('body')} onChange={(event) => updateActiveSlide('body', event.target.value)} /></label>
+								{(activeSlide?.textBlocks || []).map((block, index) => <div key={block.id} className={`presentation-text-block${formatTarget === `block:${block.id}` ? ' selected' : ''}`} style={{ left: `${block.position?.x ?? 20}%`, top: `${block.position?.y ?? 36}%`, width: `min(52%, calc(100% - ${block.position?.x ?? 20}% - 4%))` }} onFocusCapture={() => setFormatTarget(`block:${block.id}`)}><div className="presentation-text-block-controls"><button className="presentation-drag-handle" type="button" aria-label={`Move text box ${index + 1}`} title="Drag to move" onPointerDown={(event) => startTextDrag(event, `block:${block.id}`)}>⠿ Move</button><button className="presentation-delete-block" type="button" aria-label={`Delete text box ${index + 1}`} onClick={() => removeTextBlock(block.id)}>×</button></div><textarea aria-label={`Text box ${index + 1}`} style={textPreviewStyle(block.style || defaultTextStyle('body', deck.theme))} value={block.text} maxLength="2400" onChange={(event) => updateTextBlock(block.id, event.target.value)} /></div>)}
 								<span className="presentation-slide-brand">S19 PRESENTATION STUDIO</span>
 							</div>
 							{deck.imported && activeSlide?.extraTextShapes?.length > 0 && <section className="presentation-extra-text" aria-label="Other editable slide text"><h3>Other slide text</h3>{activeSlide.extraTextShapes.map((shape, index) => <label key={shape.shapeIndex}><span>Text box {index + 1}</span><textarea style={textPreviewStyle(shape.style || defaultTextStyle('body', deck.theme))} value={shape.text} maxLength="2400" onFocus={() => setFormatTarget(`extra:${shape.shapeIndex}`)} onChange={(event) => updateExtraShape(shape.shapeIndex, event.target.value)} /></label>)}</section>}
-							<p className="presentation-format-note">Choose a text box, then adjust its font, size, color, emphasis, and alignment. Formatting applies to the full text box. Imported PowerPoints keep their existing images and layout on export.</p>
+							<p className="presentation-format-note">Drag a Move handle to reposition a text box. Choose a text box to adjust its font, size, color, emphasis, and alignment. Imported PowerPoints keep their images and layout on export.</p>
 						</section>
 					</div>
 				</div>
