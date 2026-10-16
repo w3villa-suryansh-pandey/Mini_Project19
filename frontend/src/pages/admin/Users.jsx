@@ -100,36 +100,81 @@ function Users() {
 		setDetailsError('')
 	}
 
-	function downloadUserDetails() {
+	async function downloadUserDetails() {
 		const detail = selectedUserDetails
 		if (!detail) return
 		const { user, lastPurchase } = detail
-		const csvRows = [
-			['Field', 'Information'],
-			['Name', user.name],
-			['Email', user.email],
-			['Status', user.status],
-			['Joined', formatDate(user.createdAt)],
-			['Last login', user.lastLoginAt ? formatDate(user.lastLoginAt, true) : 'No login recorded'],
-			['Phone', user.phone || 'Not provided'],
-			['Address', user.address || 'Not provided'],
-			['Company', user.company || 'Not provided'],
-			['Job title', user.jobTitle || 'Not provided'],
-			['About', user.bio || 'Not provided'],
-			['Profile photo', user.profilePicture || 'Not set'],
-			['Google sign-in', user.googleLinked ? 'Connected' : 'Not connected'],
-			['Facebook sign-in', user.facebookLinked ? 'Connected' : 'Not connected'],
-			['Last purchased plan', lastPurchase?.planName || 'No purchase recorded'],
-			['Purchase date', lastPurchase?.purchasedAt ? formatDate(lastPurchase.purchasedAt, true) : ''],
-			['Purchase value', lastPurchase ? formatCurrency(lastPurchase.amountInPaise) : ''],
+		const sections = [
+			['Profile information', [
+				['Name', user.name], ['Email', user.email], ['Status', user.status],
+				['Phone', user.phone || 'Not provided'], ['Address', user.address || 'Not provided'],
+				['Company', user.company || 'Not provided'], ['Job title', user.jobTitle || 'Not provided'],
+				['About', user.bio || 'Not provided'], ['Profile photo', user.profilePicture || 'Not set'],
+			]],
+			['Account information', [
+				['Joined', formatDate(user.createdAt)],
+				['Last login', user.lastLoginAt ? formatDate(user.lastLoginAt, true) : 'No login recorded'],
+				['Google sign-in', user.googleLinked ? 'Connected' : 'Not connected'],
+				['Facebook sign-in', user.facebookLinked ? 'Connected' : 'Not connected'],
+			]],
+			['Subscription', [
+				['Last purchased plan', lastPurchase?.planName || 'No purchase recorded'],
+				['Purchase date', lastPurchase?.purchasedAt ? formatDate(lastPurchase.purchasedAt, true) : 'Not recorded'],
+				['Purchase value', lastPurchase ? formatCurrency(lastPurchase.amountInPaise) : 'Not recorded'],
+			]],
 		]
-		const csv = csvRows.map((row) => row.map((value) => `"${String(value ?? '').replaceAll('"', '""')}"`).join(',')).join('\r\n')
-		const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }))
-		const link = document.createElement('a')
-		link.href = url
-		link.download = `s19-user-${user.email.replace(/[^a-z0-9]+/gi, '-')}.csv`
-		link.click()
-		setTimeout(() => URL.revokeObjectURL(url), 0)
+		const report = document.createElement('div')
+		Object.assign(report.style, { position: 'fixed', left: '-10000px', top: '0', width: '720px', padding: '36px', color: '#172033', background: '#ffffff', fontFamily: 'Arial, sans-serif' })
+		const title = document.createElement('h1')
+		title.textContent = 'S19 · User information'
+		Object.assign(title.style, { margin: '0 0 6px', color: '#2546a8', fontSize: '24px' })
+		report.append(title)
+		const subtitle = document.createElement('p')
+		subtitle.textContent = `Account report for ${user.name}`
+		Object.assign(subtitle.style, { margin: '0 0 24px', color: '#64748b', fontSize: '13px' })
+		report.append(subtitle)
+		sections.forEach(([heading, rows]) => {
+			const section = document.createElement('section')
+			Object.assign(section.style, { marginBottom: '20px', breakInside: 'avoid' })
+			const sectionTitle = document.createElement('h2')
+			sectionTitle.textContent = heading
+			Object.assign(sectionTitle.style, { margin: '0 0 8px', paddingBottom: '7px', color: '#3154b5', borderBottom: '1px solid #dbe4f5', fontSize: '15px' })
+			section.append(sectionTitle)
+			rows.forEach(([label, value]) => {
+				const row = document.createElement('div')
+				Object.assign(row.style, { display: 'flex', gap: '18px', padding: '7px 0', borderBottom: '1px solid #eef2f8', fontSize: '12px', lineHeight: '1.5', breakInside: 'avoid' })
+				const key = document.createElement('strong')
+				key.textContent = label
+				Object.assign(key.style, { width: '165px', flexShrink: '0', color: '#526078' })
+				const content = document.createElement('span')
+				content.textContent = String(value ?? 'Not provided')
+				Object.assign(content.style, { color: '#172033', overflowWrap: 'anywhere' })
+				row.append(key, content)
+				section.append(row)
+			})
+			report.append(section)
+		})
+		document.body.append(report)
+		try {
+			const html2pdfModule = await import('html2pdf.js')
+			const html2pdf = html2pdfModule.default || html2pdfModule
+			const blob = await html2pdf().set({
+				margin: [32, 36, 32, 36],
+				image: { type: 'jpeg', quality: 0.96 },
+				enableLinks: false,
+				pagebreak: { mode: ['css', 'legacy'] },
+				html2canvas: { scale: 2, backgroundColor: '#ffffff', logging: false },
+				jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+			}).from(report).outputPdf('blob')
+			const url = URL.createObjectURL(blob)
+			const link = document.createElement('a')
+			link.href = url
+			link.download = `s19-user-${user.email.replace(/[^a-z0-9]+/gi, '-')}.pdf`
+			link.click()
+			setTimeout(() => URL.revokeObjectURL(url), 1000)
+		} finally {
+			report.remove()
+		}
 	}
 
 	function handleUserRowKeyDown(event, userId) {
@@ -237,7 +282,7 @@ function Users() {
 							<div><span>Facebook sign-in</span><strong>{selectedUserDetails.user.facebookLinked ? 'Connected' : 'Not connected'}</strong></div>
 						</div>
 						<section className="admin-user-purchase-card"><span className="admin-user-purchase-icon" aria-hidden="true">✦</span><div><p>LAST PURCHASED PLAN</p>{selectedUserDetails.lastPurchase ? <><h3>{selectedUserDetails.lastPurchase.planName}</h3><small>{formatDate(selectedUserDetails.lastPurchase.purchasedAt, true)} · Expires {formatDate(selectedUserDetails.lastPurchase.expiresAt, true)}</small></> : <><h3>No plan purchase yet</h3><small>This user has no recorded subscription purchase.</small></>}</div>{selectedUserDetails.lastPurchase && <strong>{formatCurrency(selectedUserDetails.lastPurchase.amountInPaise)}</strong>}</section>
-						<div className="admin-user-dialog-footer"><button className="admin-secondary-button" type="button" onClick={closeUserDetails}>Close</button><button className="admin-primary-button" type="button" onClick={downloadUserDetails}>↓ Download information</button></div>
+						<div className="admin-user-dialog-footer"><button className="admin-secondary-button" type="button" onClick={closeUserDetails}>Close</button><button className="admin-primary-button" type="button" onClick={downloadUserDetails}>↓ Download PDF</button></div>
 					</>}
 				</section>
 			</div>}
