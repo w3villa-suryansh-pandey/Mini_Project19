@@ -74,15 +74,22 @@ function WorkspaceHeader() {
 		window.location.assign('/')
 	}
 
+	function scrollToPageTop() {
+		const page = headerRef.current?.closest('.dashboard-layout')
+		page?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+		document.scrollingElement?.scrollTo({ top: 0, behavior: 'smooth' })
+		window.scrollTo({ top: 0, behavior: 'smooth' })
+	}
+
 	const initial = (user?.name || user?.email || 'S').trim().charAt(0).toUpperCase()
 
 	return (
 		<header className="s19-topnav" ref={headerRef}>
 			<div className="s19-topnav-inner">
-				<Link className="s19-topnav-brand" to="/" aria-label="S19 home">
+				<button className="s19-topnav-brand" type="button" aria-label="Scroll to top of page" onClick={scrollToPageTop}>
 					<img src={logo} alt="" />
 					<span>S19</span>
-				</Link>
+				</button>
 				<button className="s19-mobile-toggle" type="button" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={mobileOpen} onClick={() => setMobileOpen((open) => !open)}>
 					<span /><span /><span />
 				</button>
@@ -107,7 +114,7 @@ function WorkspaceHeader() {
 							<span className="s19-account-avatar" aria-hidden="true">{user ? initial : <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.7-3.3 3.1-5 7-5s6.3 1.7 7 5" /></svg>}</span><span className="s19-account-label">{user?.name?.split(' ')[0] || 'Account'}</span><svg className="s19-account-chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="m2.5 4.5 3.5 3 3.5-3" /></svg>
 						</button>
 						<div id="s19-account-menu" className="s19-account-menu" aria-hidden={!accountOpen}>
-							{user ? <><div className="s19-account-summary"><b>{user.name || 'My account'}</b><small>{user.email}</small></div><Link to="/profile" tabIndex={accountOpen ? 0 : -1}>Profile &amp; settings</Link><button type="button" tabIndex={accountOpen ? 0 : -1} onClick={handleSignOut}>Sign out</button></> : <><Link to="/login" tabIndex={accountOpen ? 0 : -1}>Sign in</Link><Link to="/signup" tabIndex={accountOpen ? 0 : -1}>Create account</Link></>}
+							{user ? <><div className="s19-account-summary"><span className="s19-account-summary-avatar" aria-hidden="true">{initial}</span><span className="s19-account-summary-copy"><b>{user.name || 'My account'}</b><small>{user.email}</small></span></div><Link className="s19-account-menu-item" to="/profile" tabIndex={accountOpen ? 0 : -1}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.7-3.3 3.1-5 7-5s6.3 1.7 7 5" /></svg><span>Profile &amp; settings</span><span className="s19-account-menu-arrow" aria-hidden="true">›</span></Link><button className="s19-account-menu-item is-signout" type="button" tabIndex={accountOpen ? 0 : -1} onClick={handleSignOut}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8l4 4-4 4M18 12H7" /><path d="M11 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6" /></svg><span>Sign out</span></button></> : <><Link className="s19-account-menu-item" to="/login" tabIndex={accountOpen ? 0 : -1}>Sign in</Link><Link className="s19-account-menu-item" to="/signup" tabIndex={accountOpen ? 0 : -1}>Create account</Link></>}
 						</div>
 					</div>
 				</div>

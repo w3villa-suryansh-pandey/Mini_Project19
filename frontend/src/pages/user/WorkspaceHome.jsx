@@ -50,13 +50,25 @@ function WorkflowIcon({ name }) {
 
 function WorkspaceHome() {
 	const [firstName, setFirstName] = useState('there')
+	const [isReturningUser, setIsReturningUser] = useState(false)
 
 	useEffect(() => {
 		let isCurrent = true
 		getUserProfile()
 			.then(({ profile }) => {
 				const name = profile?.name?.trim()?.split(/\s+/)?.[0]
-				if (isCurrent && name) setFirstName(name)
+				if (!isCurrent) return
+				if (name) setFirstName(name)
+				if (profile?.id) {
+					const visitedKey = `s19-workspace-home-seen-${profile.id}`
+					try {
+						const hasVisited = window.localStorage.getItem(visitedKey) === 'true'
+						setIsReturningUser(hasVisited)
+						window.localStorage.setItem(visitedKey, 'true')
+					} catch {
+						setIsReturningUser(false)
+					}
+				}
 			})
 			.catch(() => undefined)
 		return () => { isCurrent = false }
@@ -70,9 +82,8 @@ function WorkspaceHome() {
 					<section className="workspace-home-intro dashboard-welcome" aria-labelledby="workspace-home-title">
 						<div className="workspace-home-intro-copy">
 							<p className="dashboard-eyebrow">YOUR S19 WORKSPACE</p>
-							<h1 id="workspace-home-title">Welcome, {firstName}</h1>
-							<p>Make your documents work harder. Edit PDFs, organize files, and create polished work from one simple space.</p>
-							<Link className="workspace-home-primary-action" to="/editor">Open PDF editor <span aria-hidden="true">↗</span></Link>
+							<h1 id="workspace-home-title">{isReturningUser ? `Welcome back, ${firstName}` : `Welcome, ${firstName}`}</h1>
+							<p>{isReturningUser ? 'Pick up where you left off and make your documents work harder with all your tools in one place.' : 'Your workspace is ready. Explore the tools to edit PDFs, organize files, and create polished work.'}</p>
 						</div>
 					</section>
 

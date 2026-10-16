@@ -102,6 +102,13 @@ function LandingPage({ notice = '' }) {
 	const [plansLoading, setPlansLoading] = useState(true)
 	const [plansError, setPlansError] = useState(false)
 	const [headerScrolled, setHeaderScrolled] = useState(() => window.scrollY > 24)
+	const [logoSpinKey, setLogoSpinKey] = useState(0)
+
+	function handleLandingLogoClick() {
+		setLogoSpinKey((key) => key + 1)
+		document.scrollingElement?.scrollTo({ top: 0, behavior: 'smooth' })
+		window.scrollTo({ top: 0, behavior: 'smooth' })
+	}
 
 	useEffect(() => {
 		const updateHeader = () => setHeaderScrolled(window.scrollY > 24)
@@ -133,10 +140,10 @@ function LandingPage({ notice = '' }) {
                  <header className={`landing-header${headerScrolled ? ' is-scrolled' : ''}`}>
                    <div className="landing-header-inner landing-container">
 
-                      <Link className="landing-brand" to="/" aria-label="S19 home">
-                          <img src={logo} alt="" />
+                      <button className={`landing-brand landing-home-logo${logoSpinKey ? ' is-spinning' : ''}`} type="button" onClick={handleLandingLogoClick} aria-label="Scroll to top of page">
+                          <img key={logoSpinKey} src={logo} alt="" />
                           <span>S19</span>
-                       </Link>
+                       </button>
 
                         <nav className="landing-nav" aria-label="Main navigation">
   <a href="#home">Home</a>
@@ -329,10 +336,10 @@ function LandingPage({ notice = '' }) {
 			</section>
 
 			<footer className="landing-footer landing-container">
-				<Link className="landing-brand" to="/" aria-label="S19 home">
-					<img src={logo} alt="" />
+				<button className={`landing-brand landing-home-logo${logoSpinKey ? ' is-spinning' : ''}`} type="button" onClick={handleLandingLogoClick} aria-label="Scroll to top of page">
+					<img key={logoSpinKey} src={logo} alt="" />
 					<span>S19</span>
-				</Link>
+				</button>
 				<span>© 2026 S19. Made for clearer work.</span>
 				<Link to="/login">Log in <span aria-hidden="true">↗</span></Link>
 			</footer>
