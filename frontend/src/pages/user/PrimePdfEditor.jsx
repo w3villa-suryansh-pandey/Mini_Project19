@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 
 import { getUserProfile, getUserSubscription } from '../../services/api.js'
@@ -567,6 +567,9 @@ function PdfPage({
 }
 
 function PrimePdfEditor() {
+	const location = useLocation()
+	const navigate = useNavigate()
+	const dashboardFileConsumedRef = useRef(false)
 	const fileInputRef = useRef(null)
 	const mergeInputRef = useRef(null)
 	const imageInputRef = useRef(null)
@@ -1220,6 +1223,16 @@ function PrimePdfEditor() {
 		event.preventDefault()
 		openFile(event.dataTransfer.files?.[0])
 	}
+
+	useEffect(() => {
+		const dashboardFile = location.state?.dashboardFile
+		if (!dashboardFile || isRestoring || dashboardFileConsumedRef.current) return
+		dashboardFileConsumedRef.current = true
+		openFile(dashboardFile)
+		navigate(location.pathname, { replace: true, state: null })
+		// openFile is a local event handler; only run it when the route handoff or restore state changes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.pathname, location.state, isRestoring, navigate])
 
 	async function createEditedPdfBytes() {
 		const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib')

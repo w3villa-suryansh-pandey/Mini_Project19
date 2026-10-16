@@ -1,73 +1,55 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
-import { getUserProfile } from '../../services/api.js'
-
-
-const actions = [
-	{
-		label: 'Edit a PDF',
-		description: 'Open and annotate a PDF in your browser.',
-		href: '/editor',
-		accent: 'indigo',
-		icon: 'pdf',
-		keywords: 'pdf edit annotate sign pages',
-	},
-	{
-		label: 'Write a document',
-		description: 'Draft, format, and export a document.',
-		href: '/writing-pad',
-		accent: 'pink',
-		icon: 'write',
-		keywords: 'write document notes draft text',
-	},
-	{
-		label: 'Convert files',
-		description: 'Convert images, PDFs, or Word documents.',
-		href: '/converter',
-		accent: 'cyan',
-		icon: 'convert',
-		keywords: 'convert images pdf docx word format',
-	},
-	{
-		label: 'Compress files',
-		description: 'Reduce image or PDF file sizes.',
-		href: '/compressor',
-		accent: 'orange',
-		icon: 'compress',
-		keywords: 'compress reduce image pdf size',
-	},
-	{
-		label: 'Image tools',
-		description: 'Create a passport photo or remove a background in seconds.',
-		href: '/image-tools',
-		accent: 'blue',
-		icon: 'image',
-		keywords: 'image passport photo background remover editor',
-	},
-]
+import { getUserProfile, getUserSubscription } from '../../services/api.js'
 
 function ActionIcon({ type }) {
-	const icons = {
+	const paths = {
 		pdf: <><path d="M7 4h7l4 4v12H7z" /><path d="M9 14h6M9 17h6M9 10h2" /></>,
-		write: <><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /><path d="m17 16 3 3" /></>,
-		convert: <><path d="M4 7h15l-3-3m4 13H5l3 3M4 7l3-3m13 13-3 3" /></>,
 		compress: <><path d="M12 3v12m0-12L8 7m4-4 4 4M5 14v6h14v-6M9 17h6" /></>,
 		image: <><rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="2.2" /><path d="M20 15l-4.2-4.2a1.6 1.6 0 0 0-2.2 0L9 16l-1.8-1.8a1.6 1.6 0 0 0-2.2 0L4 16" /></>,
 	}
-
-	return (
-		<svg viewBox="0 0 24 24" aria-hidden="true">
-			{icons[type]}
-		</svg>
-	)
+	return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[type]}</svg>
 }
 
 function UserDashboard() {
+	const uploadInputRef = useRef(null)
+	const navigate = useNavigate()
 	const [profile, setProfile] = useState({ name: '', email: '' })
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState('')
-	const [searchTerm, setSearchTerm] = useState('')
+	const [subscription, setSubscription] = useState(null)
+	const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true)
+	const [subscriptionError, setSubscriptionError] = useState('')
+	const [dashboardFile, setDashboardFile] = useState(null)
+	const [selectedFeature, setSelectedFeature] = useState('')
+	const [uploadError, setUploadError] = useState('')
+	const [isDraggingUpload, setIsDraggingUpload] = useState(false)
+
+	const uploadFeatures = [
+		{ label: 'PDF Editor', description: 'Edit, annotate, and organize documents.', href: '/editor', icon: 'pdf', accepts: (file) => /\.pdf$/i.test(file.name) || /\.docx$/i.test(file.name), hint: 'PDF or DOCX' },
+		{ label: 'File Compressor', description: 'Shrink PDFs and images for easier sharing.', href: '/compressor', icon: 'compress', accepts: (file) => /\.pdf$/i.test(file.name) || /^image\//.test(file.type), hint: 'PDF or image' },
+		{ label: 'Image Tools', description: 'Prepare, enhance, and transform images.', href: '/image-tools', icon: 'image', accepts: (file) => /^image\//.test(file.type), hint: 'Image' },
+	]
+	const activeUploadFeature = uploadFeatures.find((feature) => feature.href === selectedFeature)
+	function selectDashboardFile(file) {
+		if (!file) return
+		setDashboardFile(file)
+		setUploadError('')
+		if (/\.pdf$/i.test(file.name)) setSelectedFeature('/editor')
+		else if (/\.docx$/i.test(file.name)) setSelectedFeature('/editor')
+		else if (/^image\//.test(file.type)) setSelectedFeature('/image-tools')
+		else setSelectedFeature('')
+	}
+
+	function continueWithDashboardFile() {
+		if (!dashboardFile || !activeUploadFeature) return
+		if (!activeUploadFeature.accepts(dashboardFile)) {
+			setUploadError(`Choose a ${activeUploadFeature.hint.toLowerCase()} file for ${activeUploadFeature.label}.`)
+			return
+		}
+		navigate(activeUploadFeature.href, { state: { dashboardFile } })
+	}
 
 	useEffect(() => {
 		let isCurrent = true
@@ -87,6 +69,19 @@ function UserDashboard() {
 		return () => { isCurrent = false }
 	}, [])
 
+	useEffect(() => {
+		let isCurrent = true
+		getUserSubscription({ refresh: true })
+			.then(({ subscription: currentSubscription }) => {
+				if (isCurrent) setSubscription(currentSubscription)
+			})
+			.catch((exception) => {
+				if (isCurrent) setSubscriptionError(exception.message || 'Subscription details could not be loaded.')
+			})
+			.finally(() => { if (isCurrent) setIsSubscriptionLoading(false) })
+		return () => { isCurrent = false }
+	}, [])
+
 	const greeting = useMemo(() => {
 		const currentHour = new Date().getHours()
 		const timeOfDay = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening'
@@ -94,60 +89,81 @@ function UserDashboard() {
 		return `${timeOfDay}! ${name === 'there' ? 'What would you like to create today?' : `${name}, what would you like to create today?`}`
 	}, [profile.name])
 
-	const filteredActions = useMemo(() => {
-		const query = searchTerm.trim().toLowerCase()
-		if (!query) return actions
-		return actions.filter((action) => (
-			`${action.label} ${action.description} ${action.keywords}`.toLowerCase().includes(query)
-		))
-	}, [searchTerm])
+	const featureLabels = {
+		pdf_editor: 'PDF Editor',
+		file_converter: 'File Converter',
+		file_compressor: 'File Compressor',
+		image_tools: 'Image Tools',
+		presentation_studio: 'Presentation Studio',
+	}
+	const planFeatures = (subscription?.featureKeys || []).map((feature) => featureLabels[feature] || feature.replaceAll('_', ' '))
+	const subscriptionExpiry = subscription?.expiresAt ? new Date(subscription.expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
 
 	return (
 		<main className="dashboard-layout">
 			<WorkspaceHeader active="/dashboard" />
 			<section className="dashboard-content">
 				<div className="dashboard-main">
-					<label className="dashboard-search dashboard-search-main">
-						<span aria-hidden="true">⌕</span>
-						<input type="search" placeholder="Search tools…" aria-label="Search tools" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
-					</label>
-					<div className="dashboard-welcome">
-						<div>
-							<p className="dashboard-eyebrow">YOUR WORKSPACE</p>
-							<h1>{isLoading ? 'Loading your workspace…' : greeting}</h1>
-							<p>Choose a tool to work with your documents, create something new, or prepare a file to share.</p>
-						</div>
+					<div className="dashboard-page-heading">
+						<p className="dashboard-eyebrow">YOUR WORKSPACE</p>
+						<h1>{isLoading ? 'Loading your workspace…' : greeting}</h1>
 					</div>
+					<section className="dashboard-subscription-card" aria-labelledby="dashboard-subscription-title">
+						<div className="dashboard-subscription-mark" aria-hidden="true">✦</div>
+						<div className="dashboard-subscription-main">
+							<p className="dashboard-eyebrow">YOUR PLAN</p>
+							<h2 id="dashboard-subscription-title">{isSubscriptionLoading ? 'Checking your subscription…' : subscriptionError ? 'Subscription status unavailable' : subscription?.active ? (subscription.planName || 'Active plan') : 'No active subscription'}</h2>
+							<p>{isSubscriptionLoading ? 'Loading your plan details.' : subscriptionError ? subscriptionError : subscription?.active ? `Your plan is active${subscriptionExpiry ? ` through ${subscriptionExpiry}` : ''}.` : 'Choose a plan to unlock PDF editing and downloads.'}</p>
+							{subscription?.active && planFeatures.length > 0 && <div className="dashboard-subscription-features" aria-label="Included features">{planFeatures.map((feature) => <span key={feature}>{feature}</span>)}</div>}
+						</div>
+						<div className={`dashboard-subscription-status${subscription?.active ? ' is-active' : ''}`}>{isSubscriptionLoading ? 'CHECKING' : subscriptionError ? 'UNAVAILABLE' : subscription?.active ? 'ACTIVE' : 'INACTIVE'}</div>
+						<Link className="dashboard-subscription-link" to={subscription?.active ? '/profile' : '/pricing'}>{subscription?.active ? 'View account' : 'Browse plans'} <span aria-hidden="true">→</span></Link>
+					</section>
+
+					<section className="dashboard-quick-start" aria-labelledby="dashboard-quick-start-title">
+						<div className="dashboard-quick-start-heading">
+							<div className="dashboard-quick-start-icon" aria-hidden="true">↑</div>
+							<div><p className="dashboard-eyebrow">QUICK START</p><h2 id="dashboard-quick-start-title">Choose a file and get started</h2><p>Upload a file, choose a tool, and continue straight to your workspace.</p></div>
+						</div>
+						<div
+							className={`dashboard-quick-start-dropzone${isDraggingUpload ? ' is-dragging' : ''}${dashboardFile ? ' has-file' : ''}`}
+							onDragOver={(event) => { event.preventDefault(); setIsDraggingUpload(true) }}
+							onDragLeave={() => setIsDraggingUpload(false)}
+							onDrop={(event) => { event.preventDefault(); setIsDraggingUpload(false); selectDashboardFile(event.dataTransfer.files?.[0]) }}
+						>
+							<input ref={uploadInputRef} type="file" accept=".pdf,.docx,image/*" onChange={(event) => { selectDashboardFile(event.target.files?.[0]); event.target.value = '' }} aria-label="Choose a PDF, DOCX, or image file" />
+							<span className="dashboard-quick-start-file-icon" aria-hidden="true">▤</span>
+							<div className="dashboard-quick-start-file-copy"><strong>{dashboardFile ? dashboardFile.name : 'Drop your file here'}</strong><span>{dashboardFile ? `${(dashboardFile.size / (1024 * 1024)).toFixed(2)} MB · Ready to open` : 'PDF, DOCX, or image · Choose a file from your device'}</span></div>
+							<button type="button" className="dashboard-quick-start-browse" onClick={() => uploadInputRef.current?.click()}>{dashboardFile ? 'Change file' : 'Choose file'}</button>
+						</div>
+						<div className="dashboard-quick-start-feature-picker" role="group" aria-labelledby="dashboard-quick-start-feature-title">
+							<div className="dashboard-quick-start-feature-heading"><span id="dashboard-quick-start-feature-title">Choose a feature</span><small>{dashboardFile ? 'Tools supported by your selected file' : 'Select a file to see compatible tools'}</small></div>
+							<div className="dashboard-quick-start-feature-list">
+								{uploadFeatures.map((feature) => {
+									const isCompatible = !dashboardFile || feature.accepts(dashboardFile)
+									const isSelected = selectedFeature === feature.href
+									return (
+										<button type="button" className={`dashboard-quick-start-feature${isSelected ? ' is-selected' : ''}`} key={feature.href} aria-pressed={isSelected} disabled={!isCompatible} onClick={() => { setSelectedFeature(feature.href); setUploadError('') }}>
+											<span className="dashboard-quick-start-feature-icon"><ActionIcon type={feature.icon} /></span>
+											<span className="dashboard-quick-start-feature-copy"><strong>{feature.label}</strong><small>{feature.description}</small></span>
+											<span className="dashboard-quick-start-feature-check" aria-hidden="true">{isSelected ? '✓' : '→'}</span>
+										</button>
+									)
+								})}
+							</div>
+						</div>
+						<div className="dashboard-quick-start-controls">
+							<span>{activeUploadFeature ? `Selected: ${activeUploadFeature.label}` : 'Choose one of the tools above'}</span>
+							<button type="button" className="dashboard-quick-start-go" onClick={continueWithDashboardFile} disabled={!dashboardFile || !activeUploadFeature}>Open feature <span aria-hidden="true">→</span></button>
+						</div>
+						{uploadError && <p className="dashboard-quick-start-error" role="alert">{uploadError}</p>}
+					</section>
 
 						{error && (
 							<p className="dashboard-profile-error" role="alert">
 								Your account details could not be loaded: {error} You can still use the workspace tools.
 							</p>
 						)}
-
-						<section className="dashboard-actions-panel">
-							<div className="dashboard-section-heading">
-								<h2>Workspace tools</h2>
-								<span className="dashboard-tool-count">{filteredActions.length} {filteredActions.length === 1 ? 'tool' : 'tools'}</span>
-							</div>
-							<div className="dashboard-action-grid">
-								{filteredActions.length > 0 ? filteredActions.map((action) => (
-								<Link to={action.href} className={`dashboard-action-card accent-${action.accent}`} key={action.label}>
-										<span className="dashboard-action-icon"><ActionIcon type={action.icon} /></span>
-										<span className="dashboard-action-copy">
-											<strong>{action.label}</strong>
-											<small>{action.description}</small>
-										</span>
-										<span className="dashboard-action-arrow" aria-hidden="true">↗</span>
-								</Link>
-								)) : (
-									<div className="dashboard-no-results" role="status">
-										<p>No tools match “{searchTerm.trim()}”.</p>
-										<button type="button" onClick={() => setSearchTerm('')}>Clear search</button>
-								</div>
-								)}
-							</div>
-						</section>
 
 						<div className="dashboard-panels">
 							<section className="dashboard-panel dashboard-files-panel">

@@ -16,6 +16,13 @@ const destinations = [
 	{ title: 'Account Settings', description: 'Update your profile details and manage your account preferences.', href: '/profile', icon: 'account', label: 'Manage account', tone: 'slate' },
 ]
 
+const workflowSteps = [
+	{ title: 'Choose Your Tool', description: 'Choose the right tool for your task, from PDF editing and merging to compression, conversion, and more.', icon: 'tools' },
+	{ title: 'Upload Your File', description: 'Upload a document from your device using our simple drag-and-drop workflow.', icon: 'upload' },
+	{ title: 'Edit & Customize', description: 'Make changes, adjust your document, apply your chosen operation, and preview the result.', icon: 'edit' },
+	{ title: 'Download Your Final File', description: 'Download your finished document in the supported format and get on with your work.', icon: 'download' },
+]
+
 function HomeIcon({ name }) {
 	const paths = {
 		dashboard: <><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="11" width="7" height="10" rx="1.5" /><rect x="3" y="14" width="8" height="7" rx="1.5" /></>,
@@ -27,6 +34,16 @@ function HomeIcon({ name }) {
 		compress: <><path d="M12 3v12m0-12L8 7m4-4 4 4M5 14v6h14v-6M9 17h6" /></>,
 		plans: <><path d="M4 6h16M4 12h16M4 18h10" /><circle cx="8" cy="6" r="1" /><circle cx="16" cy="12" r="1" /></>,
 		account: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.7-3.3 3.1-5 7-5s6.3 1.7 7 5" /></>,
+	}
+	return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>
+}
+
+function WorkflowIcon({ name }) {
+	const paths = {
+		tools: <><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></>,
+		upload: <><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" /><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></>,
+		edit: <><path d="M4 20h4l11-11a2.1 2.1 0 0 0-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4M12 20h8" /></>,
+		download: <><path d="M12 4v12m0 0 4.5-4.5M12 16l-4.5-4.5" /><path d="M5 16v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" /><path d="m9 19 2 2 4-4" /></>,
 	}
 	return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>
 }
@@ -50,7 +67,7 @@ function WorkspaceHome() {
 			<WorkspaceHeader />
 			<section className="dashboard-content">
 				<div className="workspace-home-main">
-					<section className="workspace-home-intro" aria-labelledby="workspace-home-title">
+					<section className="workspace-home-intro dashboard-welcome" aria-labelledby="workspace-home-title">
 						<div className="workspace-home-intro-copy">
 							<p className="dashboard-eyebrow">YOUR S19 WORKSPACE</p>
 							<h1 id="workspace-home-title">Welcome, {firstName}</h1>
@@ -62,6 +79,24 @@ function WorkspaceHome() {
 					<section className="workspace-home-showcase" aria-label="PDF editing workspace preview">
 						<div className="workspace-home-visual">
 							<img src={pdfWorkspaceImage} alt="A modern PDF editing workspace with tools for editing text, adding images, erasing content, and signing" />
+						</div>
+					</section>
+
+					<section className="workspace-home-how" aria-labelledby="workspace-home-how-title">
+						<div className="workspace-home-how-heading">
+							<p className="workspace-home-how-eyebrow">HOW IT WORKS</p>
+							<h2 id="workspace-home-how-title">From Upload to Results in Just a Few Steps</h2>
+							<p>Everything you need to work with your files in one place. Choose a tool, upload your document, make your changes, and download your finished result.</p>
+						</div>
+						<div className="workspace-home-steps">
+							{workflowSteps.map((step, index) => (
+								<article className="workspace-home-step" key={step.title}>
+									<div className={`workspace-home-step-icon step-tone-${index + 1}`}><WorkflowIcon name={step.icon} /></div>
+									<span className={`workspace-home-step-number step-tone-${index + 1}`}>0{index + 1}</span>
+									<h3>{step.title}</h3>
+									<p>{step.description}</p>
+								</article>
+							))}
 						</div>
 					</section>
 

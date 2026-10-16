@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { createWorker } from 'tesseract.js'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
@@ -194,6 +195,9 @@ function createBackgroundRemovedImage(sourceImage) {
 }
 
 function ImageTools() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const dashboardFileConsumedRef = useRef(false)
   const featureAccess = useFeatureAccess('image_tools')
   const [selectedTool, setSelectedTool] = useState(toolOptions[0].id)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -210,8 +214,7 @@ function ImageTools() {
     [selectedTool],
   )
 
-  async function handleFileChange(event) {
-    const file = event.target.files?.[0]
+  async function openImageFile(file) {
     if (!file) return
 
     setSelectedFile(file)
@@ -227,6 +230,19 @@ function ImageTools() {
       setNotice(error.message)
     }
   }
+
+  function handleFileChange(event) {
+    openImageFile(event.target.files?.[0])
+    event.target.value = ''
+  }
+
+  useEffect(() => {
+    const dashboardFile = location.state?.dashboardFile
+    if (!dashboardFile || dashboardFileConsumedRef.current) return
+    dashboardFileConsumedRef.current = true
+    openImageFile(dashboardFile)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, location.state, navigate])
 
   async function handleProcessImage() {
     if (!selectedFile) {

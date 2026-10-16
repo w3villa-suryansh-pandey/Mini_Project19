@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
 
@@ -72,7 +73,10 @@ function getSizeSummary(originalSize, compressedSize) {
 }
 
 function FileCompressor() {
+	const location = useLocation()
+	const navigate = useNavigate()
 	const featureAccess = useFeatureAccess('file_compressor')
+	const dashboardFileConsumedRef = useRef(false)
 	const fileInputRef = useRef(null)
 	const downloadUrlsRef = useRef(new Map())
 	const [files, setFiles] = useState([])
@@ -154,6 +158,14 @@ function FileCompressor() {
 		addFiles(event.target.files)
 		event.target.value = ''
 	}
+
+	useEffect(() => {
+		const dashboardFile = location.state?.dashboardFile
+		if (!dashboardFile || dashboardFileConsumedRef.current) return
+		dashboardFileConsumedRef.current = true
+		addFiles([dashboardFile])
+		navigate(location.pathname, { replace: true, state: null })
+	}, [location.pathname, location.state, navigate])
 
 	function handleDrop(event) {
 		event.preventDefault()
