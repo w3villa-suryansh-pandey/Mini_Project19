@@ -34,6 +34,41 @@ function formatCurrency(amountInPaise, currency = 'INR') {
 	return `${currency || 'INR'} ${amount}`
 }
 
+async function embedProfilePhoto(pdf, source) {
+	if (!source || typeof source !== 'string') return null
+	try {
+		let blob
+		if (source.startsWith('data:')) {
+			const response = await fetch(source)
+			blob = await response.blob()
+		} else {
+			const response = await fetch(source, { mode: 'cors', credentials: 'omit' })
+			if (!response.ok) return null
+			blob = await response.blob()
+		}
+		let bytes = new Uint8Array(await blob.arrayBuffer())
+		let mimeType = blob.type.toLowerCase()
+		if (mimeType.includes('png')) return await pdf.embedPng(bytes)
+		if (mimeType.includes('jpeg') || mimeType.includes('jpg')) return await pdf.embedJpg(bytes)
+
+		// Convert formats such as WebP to PNG so pdf-lib can embed them.
+		const bitmap = await createImageBitmap(blob)
+		const canvas = document.createElement('canvas')
+		canvas.width = bitmap.width
+		canvas.height = bitmap.height
+		canvas.getContext('2d').drawImage(bitmap, 0, 0)
+		bitmap.close()
+		const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+		if (!pngBlob) return null
+		bytes = new Uint8Array(await pngBlob.arrayBuffer())
+		mimeType = pngBlob.type
+		return mimeType.includes('png') ? await pdf.embedPng(bytes) : null
+	} catch {
+		// Cross-origin profile photo hosts can block downloads; the initials badge is used instead.
+		return null
+	}
+}
+
 function wrapText(text, font, size, maxWidth) {
 	const words = pdfText(text).split(/\s+/)
 	const lines = []
@@ -60,6 +95,7 @@ export async function downloadAdminUserReport(detail) {
 	pdf.setCreator('S19 Admin')
 	const regular = await pdf.embedFont(StandardFonts.Helvetica)
 	const bold = await pdf.embedFont(StandardFonts.HelveticaBold)
+	const profilePhoto = await embedProfilePhoto(pdf, user.profilePicture)
 	let page
 	let y
 
@@ -102,13 +138,31 @@ export async function downloadAdminUserReport(detail) {
 	addPage()
 	page.drawText('S19  /  ADMIN ACCOUNT REPORT', { x: MARGIN, y: y - 2, size: 8, font: bold, color: COLORS.blue, characterSpacing: 1 })
 	y -= 30
-	const nameLines = wrapText(user.name || 'User information', bold, 21, CONTENT_WIDTH)
+	const photoSize = 64
+	const photoX = PAGE.width - MARGIN - photoSize
+	const photoY = y - 63
+	if (profilePhoto) {
+		const dimensions = profilePhoto.scaleToFit(photoSize, photoSize)
+		page.drawImage(profilePhoto, {
+			x: photoX + (photoSize - dimensions.width) / 2,
+			y: photoY + (photoSize - dimensions.height) / 2,
+			...dimensions,
+		})
+		page.drawRectangle({ x: photoX - 1, y: photoY - 1, width: photoSize + 2, height: photoSize + 2, borderColor: COLORS.line, borderWidth: 1 })
+	} else {
+		page.drawEllipse({ x: photoX + photoSize / 2, y: photoY + photoSize / 2, xScale: photoSize / 2, yScale: photoSize / 2, color: COLORS.pale })
+		const initials = pdfText((user.name || 'U').trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase())
+		const initialsSize = 18
+		page.drawText(initials, { x: photoX + (photoSize - bold.widthOfTextAtSize(initials, initialsSize)) / 2, y: photoY + 22, size: initialsSize, font: bold, color: COLORS.blue })
+	}
+	const headerWidth = profilePhoto ? CONTENT_WIDTH - photoSize - 16 : CONTENT_WIDTH
+	const nameLines = wrapText(user.name || 'User information', bold, 21, headerWidth)
 	nameLines.forEach((line) => {
 		ensureSpace(28)
 		page.drawText(line, { x: MARGIN, y: y - 19, size: 21, font: bold, color: COLORS.ink })
 		y -= 27
 	})
-	const identityLines = wrapText(`${user.email || ''}  |  ${user.status || 'Status unavailable'}`, regular, 9, CONTENT_WIDTH)
+	const identityLines = wrapText(`${user.email || ''}  |  ${user.status || 'Status unavailable'}`, regular, 9, headerWidth)
 	identityLines.forEach((line) => {
 		page.drawText(line, { x: MARGIN, y: y - 4, size: 9, font: regular, color: COLORS.muted })
 		y -= 14
@@ -118,7 +172,7 @@ export async function downloadAdminUserReport(detail) {
 	drawSection('PROFILE INFORMATION', [
 		['User ID', user.id], ['Full name', user.name], ['Email address', user.email],
 		['Phone number', user.phone], ['Address', user.address], ['Company', user.company],
-		['Job title', user.jobTitle], ['About', user.bio], ['Profile photo URL', user.profilePicture],
+		['Job title', user.jobTitle], ['About', user.bio], ['Profile photo', user.profilePicture ? 'Embedded above' : 'No photo provided'],
 	])
 	drawSection('ACCOUNT INFORMATION', [
 		['Account status', user.status], ['Account created', formatDate(user.createdAt, true)],
