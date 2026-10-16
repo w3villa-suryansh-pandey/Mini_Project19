@@ -9,6 +9,7 @@ const {
 	razorpayWebhookSecret,
 } = require('../config/env')
 const { findActiveSubscription, subscriptionDetails } = require('../services/subscription.service')
+const { PLAN_FEATURES, planForClient } = require('../services/plan.service')
 
 const DURATION_UNITS = new Set(['hour', 'day', 'week', 'month', 'year'])
 
@@ -87,6 +88,15 @@ function capturedPaymentDetails(order, payment) {
 async function saveCapturedPayment(order, payment) {
 	const details = capturedPaymentDetails(order, payment)
 	if (!details) return null
+	let featureKeys = ['pdf_editor']
+	if (typeof order.notes?.featureKeys === 'string') {
+		try {
+			const parsedKeys = JSON.parse(order.notes.featureKeys)
+			featureKeys = Array.isArray(parsedKeys) ? [...new Set(parsedKeys.filter((key) => PLAN_FEATURES.some((feature) => feature.key === key)))] : []
+		} catch {
+			return null
+		}
+	}
 
 	const startsAt = new Date()
 	try {
@@ -98,6 +108,7 @@ async function saveCapturedPayment(order, payment) {
 					razorpayPaymentId: payment.id,
 					planId: details.planId,
 					planName: details.planName,
+					featureKeys,
 					amountInPaise: details.amountInPaise,
 					currency: 'inr',
 					durationValue: details.durationValue,
@@ -144,6 +155,7 @@ async function createCheckoutOrder(req, res) {
 			userId,
 			planId: plan.id,
 			planName: plan.name,
+			featureKeys: JSON.stringify(planForClient(plan).featureKeys),
 			amountInPaise: String(plan.priceInPaise),
 			durationValue: String(plan.durationValue),
 			durationUnit: plan.durationUnit,

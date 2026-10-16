@@ -594,6 +594,7 @@ function PrimePdfEditor() {
 	const [isLoading, setIsLoading] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
 	const [subscriptionActive, setSubscriptionActive] = useState(false)
+	const [subscriptionHasActivePlan, setSubscriptionHasActivePlan] = useState(false)
 	const [subscriptionChecked, setSubscriptionChecked] = useState(false)
 	const [subscriptionError, setSubscriptionError] = useState(false)
 	const [canUndo, setCanUndo] = useState(false)
@@ -697,7 +698,8 @@ function PrimePdfEditor() {
 		getUserSubscription({ refresh: true })
 			.then(({ subscription }) => {
 				if (!isCurrent) return
-				setSubscriptionActive(subscription.active)
+				setSubscriptionHasActivePlan(subscription.active)
+				setSubscriptionActive(subscription.active && subscription.featureKeys?.includes('pdf_editor'))
 				setSubscriptionError(false)
 			})
 			.catch((error) => {
@@ -711,14 +713,22 @@ function PrimePdfEditor() {
 		return () => { isCurrent = false }
 	}, [])
 
+	function getPdfAccessMessage() {
+		return subscriptionHasActivePlan
+			? 'Your active plan does not include PDF editor downloads.'
+			: 'An active plan with PDF editor downloads enabled is required.'
+	}
+
 	async function refreshSubscription() {
 		setSubscriptionChecked(false)
 		setSubscriptionError(false)
 		try {
 			const { subscription } = await getUserSubscription({ refresh: true })
-			setSubscriptionActive(subscription.active)
+			setSubscriptionHasActivePlan(subscription.active)
+			setSubscriptionActive(subscription.active && subscription.featureKeys?.includes('pdf_editor'))
 			setNotice('')
 		} catch (error) {
+			setSubscriptionHasActivePlan(false)
 			setSubscriptionError(true)
 			setNotice(error.message || 'Could not check your PDF editing pass.')
 		} finally {
@@ -1330,7 +1340,7 @@ function PrimePdfEditor() {
 	async function downloadEditedPdf() {
 		if (!pdfBytes) return
 		if (!subscriptionActive) {
-			setNotice('An active editing pass is required to download the edited PDF.')
+			setNotice(getPdfAccessMessage())
 			return
 		}
 
@@ -1351,7 +1361,7 @@ function PrimePdfEditor() {
 	async function savePdf() {
 		if (!pdfBytes) return
 		if (!subscriptionActive) {
-			setNotice('An active editing pass is required to save the edited PDF.')
+			setNotice(getPdfAccessMessage())
 			return
 		}
 
@@ -1388,7 +1398,7 @@ function PrimePdfEditor() {
 
 	async function mergePdfs() {
 		if (!pdfBytes || !mergeFiles.length || !subscriptionActive) {
-			setNotice(!subscriptionActive ? 'An active editing pass is required to download merged PDFs.' : 'Choose at least one additional PDF to merge.')
+			setNotice(!subscriptionActive ? getPdfAccessMessage() : 'Choose at least one additional PDF to merge.')
 			return
 		}
 		setIsSaving(true)
@@ -1413,7 +1423,7 @@ function PrimePdfEditor() {
 
 	async function splitPdf() {
 		if (!pdfBytes || !subscriptionActive) {
-			setNotice('An active editing pass is required to download split PDFs.')
+			setNotice(getPdfAccessMessage())
 			return
 		}
 		setIsSaving(true)
@@ -1649,7 +1659,7 @@ function PrimePdfEditor() {
 							<div className={`prime-pdf-access-notice${subscriptionError ? ' is-error' : ''}`} role={subscriptionError ? 'alert' : 'status'}>
 								<span>{subscriptionError
 									? 'Could not verify your PDF editing pass. Saving, merging, and splitting are unavailable until access is checked.'
-									: 'An active PDF editing pass is required to save, merge, or split PDFs.'}</span>
+									: getPdfAccessMessage()}</span>
 								{subscriptionError
 									? <button className="editor-open-button" type="button" onClick={refreshSubscription}>Retry check</button>
 									: <Link to="/pricing">View PDF plans</Link>}
@@ -1736,7 +1746,7 @@ function PrimePdfEditor() {
 								: subscriptionActive
 									? 'Edits are processed in your browser; PDFs are not uploaded to the server.'
 									: subscriptionChecked
-										? 'An active editing pass is required to download edited PDFs.'
+										? getPdfAccessMessage()
 										: 'Checking PDF editing access…'}</p>
 					</div>
 					<p className="prime-pdf-disclaimer">DOCX conversion creates a visual, image-based PDF, so its source text is not editable as PDF text. Comments and marks are flattened into the exported page, and text replacement uses a white cover rather than securely removing source text. Standard PDF password encryption is not available in the license-free PDF library.</p>

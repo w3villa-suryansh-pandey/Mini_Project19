@@ -51,14 +51,14 @@ router.get('/google', startGoogleAuth, redirectToGoogle)
 router.get('/google/link', authenticate, startGoogleLink, redirectToGoogle)
 router.get('/google/callback', validateGoogleState, (req, res, next) => {
 	passport.authenticate('google', { session: false }, (error, user, info) => {
-		completeGoogleAuth(error, user, info, req, res)
+		completeGoogleAuth(error, user, info, req, res).catch(next)
 	})(req, res, next)
 })
 router.get('/facebook', startFacebookAuth, redirectToFacebook)
 router.get('/facebook/link', authenticate, startFacebookLink, redirectToFacebook)
 router.get('/facebook/callback', validateFacebookState, (req, res, next) => {
 	passport.authenticate('facebook', { session: false }, (error, user, info) => {
-		completeFacebookAuth(error, user, info, req, res)
+		completeFacebookAuth(error, user, info, req, res).catch(next)
 	})(req, res, next)
 })
 router.post('/signup', signUp)

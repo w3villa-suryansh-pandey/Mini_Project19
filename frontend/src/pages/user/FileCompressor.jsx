@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
 
 
 const ACCEPTED_FILE_TYPES = '.jpg,.jpeg,.png,.webp,.bmp,.pdf'
@@ -71,6 +72,7 @@ function getSizeSummary(originalSize, compressedSize) {
 }
 
 function FileCompressor() {
+	const featureAccess = useFeatureAccess('file_compressor')
 	const fileInputRef = useRef(null)
 	const downloadUrlsRef = useRef(new Map())
 	const [files, setFiles] = useState([])
@@ -252,9 +254,9 @@ function FileCompressor() {
 											</div>
 											{item.status === 'compressing' && <span className="compressor-item-status">Compressing…</span>}
 											{item.result && (
-												<a className="editor-download-link compressor-download" href={item.result.downloadUrl} download={item.result.name}>
-													Download
-												</a>
+								featureAccess.allowed
+									? <a className="editor-download-link compressor-download" href={item.result.downloadUrl} download={item.result.name}>Download</a>
+									: <button className="editor-download-link compressor-download" type="button" disabled>Locked</button>
 											)}
 											<button
 												className="compressor-remove-button"
@@ -283,6 +285,7 @@ function FileCompressor() {
 						)}
 					</section>
 					<p className="compressor-notice" aria-live="polite">{notice}</p>
+					<FeatureAccessNotice access={featureAccess} featureName="file compressor downloads" />
 					<p className="compressor-privacy-note">Your files are processed on this device and are not uploaded to a server. PDF compression depends on the contents of the original file.</p>
 				</div>
 			</section>

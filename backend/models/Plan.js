@@ -34,6 +34,10 @@ const planSchema = new mongoose.Schema(
 			type: [String],
 			default: [],
 		},
+		featureKeys: {
+			type: [String],
+			default: [],
+		},
 		isActive: {
 			type: Boolean,
 			default: true,

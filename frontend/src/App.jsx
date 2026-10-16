@@ -56,9 +56,15 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'))
 
 const AdminUsers = lazy(() => import('./pages/admin/Users.jsx'))
 
+const AdminUserDetails = lazy(() => import('./pages/admin/UserDetails.jsx'))
+
 const PricingPlans = lazy(() => import('./pages/admin/PricingPlans.jsx'))
 
 const Cronjobs = lazy(() => import('./pages/admin/Cronjobs.jsx'))
+
+const AdminProfile = lazy(() => import('./pages/admin/AdminProfile.jsx'))
+
+const AdminReports = lazy(() => import('./pages/admin/Reports.jsx'))
 
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail.jsx'))
 
@@ -690,10 +696,13 @@ function App() {
       <Route path="/converter" element={<LazyRoute requiredRole="user" Page={FileConverter} />} />
       <Route path="/writing-pad" element={<LazyRoute requiredRole="user" Page={WritingPad} />} />
       <Route path="/image-tools" element={<LazyRoute requiredRole="user" Page={ImageTools} />} />
-      <Route path="/admin" element={<LazyRoute Page={AdminDashboard} />} />
-      <Route path="/admin/users" element={<LazyRoute Page={AdminUsers} />} />
-      <Route path="/admin/plans" element={<LazyRoute Page={PricingPlans} />} />
-      <Route path="/admin/cronjobs" element={<LazyRoute Page={Cronjobs} />} />
+      <Route path="/admin" element={<LazyRoute requiredRole="admin" Page={AdminDashboard} />} />
+      <Route path="/admin/users" element={<LazyRoute requiredRole="admin" Page={AdminUsers} />} />
+      <Route path="/admin/users/:userId" element={<LazyRoute requiredRole="admin" Page={AdminUserDetails} />} />
+      <Route path="/admin/plans" element={<LazyRoute requiredRole="admin" Page={PricingPlans} />} />
+      <Route path="/admin/cronjobs" element={<LazyRoute requiredRole="admin" Page={Cronjobs} />} />
+      <Route path="/admin/reports" element={<LazyRoute requiredRole="admin" Page={AdminReports} />} />
+      <Route path="/admin/profile" element={<LazyRoute requiredRole="admin" Page={AdminProfile} />} />
       <Route path="*" element={<main className="route-loading">Page not found</main>} />
     </Routes>
   )

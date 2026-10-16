@@ -1,7 +1,7 @@
 const { randomUUID } = require('node:crypto')
 const Plan = require('../../models/Plan')
 const Subscription = require('../../models/Subscription')
-const { planForClient } = require('../services/plan.service')
+const { PLAN_FEATURES, legacyFeatureKeys, planForClient } = require('../services/plan.service')
 
 const DURATION_UNITS = new Set(['hour', 'day', 'week', 'month', 'year'])
 
@@ -10,9 +10,16 @@ function validatePlan(body) {
 	const price = Number(body?.priceRupees)
 	const durationValue = Number(body?.durationValue)
 	const durationUnit = body?.durationUnit
-	const features = Array.isArray(body?.features)
+	let features = Array.isArray(body?.features)
 		? body.features.filter((feature) => typeof feature === 'string').map((feature) => feature.trim()).filter(Boolean).slice(0, 12)
 		: []
+	const featureKeys = Array.isArray(body?.featureKeys)
+		? [...new Set(body.featureKeys.filter((key) => PLAN_FEATURES.some((feature) => feature.key === key)))]
+		: legacyFeatureKeys(features)
+	if (Array.isArray(body?.featureKeys) && featureKeys.length !== new Set(body.featureKeys).size) return { error: 'Choose only supported plan features.' }
+	if (Array.isArray(body?.featureKeys)) {
+		features = featureKeys.map((key) => PLAN_FEATURES.find((feature) => feature.key === key).label)
+	}
 
 	if (!name || name.length > 60) return { error: 'Plan name must be 1 to 60 characters.' }
 	if (!Number.isFinite(price) || price < 1 || price > 1_000_000 || Math.round(price * 100) !== price * 100) {
@@ -30,6 +37,7 @@ function validatePlan(body) {
 			durationValue,
 			durationUnit,
 			features,
+			featureKeys,
 			isActive: body.isActive !== false,
 		},
 	}

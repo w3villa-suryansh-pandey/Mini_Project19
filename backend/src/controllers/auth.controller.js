@@ -315,6 +315,8 @@ async function login(req, res) {
 	if (user.role !== role) {
 		return respondWithError(res, 403, 'ROLE_MISMATCH', `This account is registered as ${user.role}. Choose that account type to sign in.`)
 	}
+	user.lastLoginAt = new Date()
+	await user.save()
 	const sessionToken = jwt.sign({ sub: user._id.toString() }, authTokenSecret, {
 		algorithm: 'HS256',
 		expiresIn: SESSION_WINDOW,

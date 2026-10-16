@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { convertDocxToPdf } from '../../utils/docxToPdf.js'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
 
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024
@@ -176,6 +177,7 @@ async function convertImageFormats(files, format, quality) {
 }
 
 function FileConverter() {
+	const featureAccess = useFeatureAccess('file_converter')
 	const fileInputRef = useRef(null)
 	const outputUrlsRef = useRef([])
 	const [mode, setMode] = useState('images-to-pdf')
@@ -430,6 +432,7 @@ function FileConverter() {
 
 					{outputs.length > 0 && (
 						<section className="converter-results" aria-live="polite" aria-label="Converted files">
+							<FeatureAccessNotice access={featureAccess} featureName="file converter downloads" />
 							<div className="compressor-list-heading">
 								<div>
 									<h2>Ready to download <span>({outputs.length})</span></h2>
@@ -446,7 +449,7 @@ function FileConverter() {
 											<strong title={output.name}>{output.name}</strong>
 											<span>{formatFileSize(output.blob.size)}</span>
 										</div>
-										<a className="editor-download-link compressor-download" href={output.url} download={output.name}>Download</a>
+										{featureAccess.allowed ? <a className="editor-download-link compressor-download" href={output.url} download={output.name}>Download</a> : <button className="editor-download-link compressor-download" type="button" disabled>Locked</button>}
 									</li>
 								))}
 							</ul>

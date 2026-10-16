@@ -30,7 +30,7 @@ function AdminDashboard() {
 	}, [])
 
 	return (
-		<main className="admin-layout">
+		<main className="admin-layout admin-overview-layout">
 			<AdminSidebar active="overview" />
 			<section className="admin-main-panel">
 				<header className="admin-topbar">
@@ -58,7 +58,14 @@ function AdminDashboard() {
 							{ label: 'Cron jobs', value: '—', change: 'Loading', tone: 'amber' },
 						]).map((item) => (
 							<article className="admin-stat" key={item.label}>
-								<div className={`admin-stat-mark ${item.tone}`} aria-hidden="true" />
+								<div className={`admin-stat-mark ${item.tone}`} aria-hidden="true">
+									<svg viewBox="0 0 24 24">
+										{item.label === 'Total users' && <><circle cx="9" cy="8" r="3" /><path d="M3.5 20c.5-3.2 2.3-4.8 5.5-4.8s5 1.6 5.5 4.8M16 5.5a3 3 0 0 1 0 5.8M17 15.3c2.2.5 3.4 2 3.8 4.7" /></>}
+										{item.label === 'Active plans' && <><path d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z" /><path d="M14 3.5v5h4M8 13h8M8 17h6" /></>}
+										{item.label === 'Active subscribers' && <><path d="M12 3.5 14.6 9l6 .9-4.3 4.2 1 6-5.3-2.8-5.3 2.8 1-6-4.3-4.2 6-.9L12 3.5Z" /></>}
+										{item.label === 'Cron jobs' && <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" /></>}
+									</svg>
+								</div>
 								<p>{item.label}</p>
 								<div className="admin-stat-value-row">
 									<strong>{item.value}</strong>

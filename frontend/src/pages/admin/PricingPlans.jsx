@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import AdminSidebar from '../../components/AdminSidebar.jsx'
 import { createAdminPlan, deleteAdminPlan, getAdminPlans, updateAdminPlan } from '../../services/api.js'
+import { getPlanFeatureLabels, PLAN_FEATURE_OPTIONS } from '../../utils/planFeatures.js'
 
-const emptyPlan = { name: '', priceRupees: '', durationValue: '1', durationUnit: 'day', features: '', isActive: true }
+const emptyPlan = { name: '', priceRupees: '', durationValue: '1', durationUnit: 'day', featureKeys: [], isActive: true }
 
 function PricingPlans() {
 	const [plans, setPlans] = useState([])
@@ -56,7 +57,7 @@ function PricingPlans() {
 			priceRupees: String(plan.priceRupees),
 			durationValue: String(plan.durationValue),
 			durationUnit: plan.durationUnit,
-			features: plan.features.join('\n'),
+			featureKeys: plan.featureKeys || (plan.features?.some((feature) => /pdf editing|edited pdf/i.test(feature)) ? ['pdf_editor'] : []),
 			isActive: plan.isActive,
 		})
 		setIsFormOpen(true)
@@ -71,7 +72,8 @@ function PricingPlans() {
 			...form,
 			priceRupees: Number(form.priceRupees),
 			durationValue: Number(form.durationValue),
-			features: form.features.split('\n').map((feature) => feature.trim()).filter(Boolean),
+			featureKeys: form.featureKeys,
+			features: getPlanFeatureLabels(form.featureKeys),
 		}
 		try {
 			if (editingId) await updateAdminPlan(editingId, planData)
@@ -120,7 +122,7 @@ function PricingPlans() {
 								<label>Price (₹)<input required type="number" min="1" max="1000000" step="0.01" value={form.priceRupees} onChange={(event) => setForm({ ...form, priceRupees: event.target.value })} placeholder="10.00" /></label>
 								<label>Duration<input required type="number" min="1" max="3650" step="1" value={form.durationValue} onChange={(event) => setForm({ ...form, durationValue: event.target.value })} /></label>
 								<label>Duration unit<select value={form.durationUnit} onChange={(event) => setForm({ ...form, durationUnit: event.target.value })}><option value="hour">Hour(s)</option><option value="day">Day(s)</option><option value="week">Week(s)</option><option value="month">Month(s)</option><option value="year">Year(s)</option></select></label>
-								<label className="plan-form-wide">Features<textarea required rows="3" value={form.features} onChange={(event) => setForm({ ...form, features: event.target.value })} placeholder={'PDF editing tools\nEdited PDF downloads'} /></label>
+								<fieldset className="plan-form-wide plan-feature-picker"><legend>Enabled features</legend>{PLAN_FEATURE_OPTIONS.map((feature) => <label key={feature.key}><input type="checkbox" checked={form.featureKeys.includes(feature.key)} onChange={(event) => setForm((current) => ({ ...current, featureKeys: event.target.checked ? [...current.featureKeys, feature.key] : current.featureKeys.filter((key) => key !== feature.key) }))} /><span>{feature.label}</span></label>)}</fieldset>
 								<label>Status<select value={form.isActive ? 'active' : 'draft'} onChange={(event) => setForm({ ...form, isActive: event.target.value === 'active' })}><option value="active">Active</option><option value="draft">Draft</option></select></label>
 							</div>
 							<div className="plan-editor-actions"><button className="admin-secondary-button" type="button" onClick={() => setIsFormOpen(false)}>Cancel</button><button className="admin-primary-button" type="submit">{editingId ? 'Save plan' : 'Create plan'}</button></div>
@@ -135,10 +137,10 @@ function PricingPlans() {
 								<tbody>
 									{plans.map((plan) => (
 										<tr key={plan.id}>
-											<td><strong>{plan.name}</strong></td>
-											<td><strong>₹{Number(plan.priceRupees).toLocaleString('en-IN')}</strong></td>
-											<td>{plan.durationValue} {plan.durationUnit}{plan.durationValue === 1 ? '' : 's'}</td>
-											<td className="plan-features">{plan.features.join(', ')}</td>
+											<td><div className="plan-name-cell"><span className="plan-row-mark" aria-hidden="true">✦</span><strong>{plan.name}</strong></div></td>
+											<td><span className="plan-price">₹{Number(plan.priceRupees).toLocaleString('en-IN')}</span></td>
+											<td><span className="plan-duration">{plan.durationValue} {plan.durationUnit}{plan.durationValue === 1 ? '' : 's'}</span></td>
+											<td className="plan-features"><div className="plan-feature-list">{plan.features.map((feature) => <span key={feature}>{feature}</span>)}{plan.features.length === 0 && <span className="plan-no-features">No features enabled</span>}</div></td>
 											<td><span className={`user-status ${plan.isArchived ? 'inactive' : plan.isActive ? 'active' : 'pending'}`}><span />{plan.isArchived ? 'Archived' : plan.isActive ? 'Active' : 'Draft'}</span></td>
 											<td className="plan-actions-cell"><button className="edit-plan-button" type="button" onClick={() => editPlan(plan)}>Edit</button><button className="delete-plan-button" type="button" onClick={() => removePlan(plan)}>Delete</button></td>
 										</tr>

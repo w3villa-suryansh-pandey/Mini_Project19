@@ -26,8 +26,34 @@ const defaultProfile = {
 	photo: '',
 }
 
+const PHONE_COUNTRY_CODES = [
+	{ code: '+91', country: 'India', maxDigits: 10 },
+	{ code: '+1', country: 'US / Canada', maxDigits: 10 },
+	{ code: '+44', country: 'UK', maxDigits: 10 },
+	{ code: '+61', country: 'Australia', maxDigits: 9 },
+	{ code: '+64', country: 'New Zealand', maxDigits: 10 },
+	{ code: '+971', country: 'UAE', maxDigits: 9 },
+	{ code: '+65', country: 'Singapore', maxDigits: 8 },
+	{ code: '+49', country: 'Germany', maxDigits: 11 },
+	{ code: '+33', country: 'France', maxDigits: 9 },
+	{ code: '+81', country: 'Japan', maxDigits: 10 },
+	{ code: '+86', country: 'China', maxDigits: 11 },
+	{ code: '+27', country: 'South Africa', maxDigits: 9 },
+]
+
+function splitPhoneCountryCode(value) {
+	const raw = String(value || '').trim()
+	const digits = raw.replace(/\D/g, '')
+	if (raw.startsWith('+')) {
+		const match = [...PHONE_COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length).find(({ code }) => digits.startsWith(code.slice(1)))
+		if (match) return { countryCode: match.code, number: digits.slice(match.code.length - 1) }
+	}
+	return { countryCode: '+91', number: digits }
+}
+
 function UserProfile() {
 	const [profile, setProfile] = useState(defaultProfile)
+	const [countryCode, setCountryCode] = useState('+91')
 	const [notice, setNotice] = useState(() => {
 		const params = new URLSearchParams(window.location.search)
 		if (params.get('googleLinked') === 'true') return 'Google sign-in is connected to your account.'
@@ -55,12 +81,14 @@ function UserProfile() {
 		getUserProfile()
 			.then(({ profile: savedProfile }) => {
 				if (isCurrent) {
+					const savedPhone = splitPhoneCountryCode(savedProfile.phone)
 					setGoogleLinked(savedProfile.googleLinked)
 					setFacebookLinked(savedProfile.facebookLinked)
+					setCountryCode(savedPhone.countryCode)
 					setProfile({
 						fullName: savedProfile.name || '',
 						email: savedProfile.email || '',
-						phone: savedProfile.phone || '',
+						phone: savedPhone.number,
 						address: savedProfile.address || '',
 						company: savedProfile.company || '',
 						jobTitle: savedProfile.jobTitle || '',
@@ -220,22 +248,28 @@ async function fillAddressFromCurrentLocation() {
 
 	async function saveProfile(event) {
 		event.preventDefault()
+		if (phoneError) {
+			document.getElementById('profile-phone')?.focus()
+			return
+		}
 		setIsSaving(true)
 		try {
 			const { profile: savedProfile } = await updateUserProfile({
 				name: profile.fullName,
 				email: profile.email,
-				phone: profile.phone,
+				phone: profile.phone ? `${countryCode}${profile.phone}` : '',
 				address: profile.address,
 				company: profile.company,
 				jobTitle: profile.jobTitle,
 				bio: profile.bio,
 				profilePicture: profile.photo,
 			})
+			const savedPhone = splitPhoneCountryCode(savedProfile.phone)
+			setCountryCode(savedPhone.countryCode)
 			setProfile({
 				fullName: savedProfile.name,
 				email: savedProfile.email,
-				phone: savedProfile.phone,
+				phone: savedPhone.number,
 				address: savedProfile.address || '',
 				company: savedProfile.company,
 				jobTitle: savedProfile.jobTitle,
@@ -280,6 +314,13 @@ async function fillAddressFromCurrentLocation() {
 		.toUpperCase()
 	const completionFields = [profile.fullName, profile.email, profile.phone, profile.address, profile.company, profile.jobTitle, profile.bio, profile.photo]
 	const profileCompletion = Math.round((completionFields.filter((value) => String(value || '').trim()).length / completionFields.length) * 100)
+	const phoneValue = String(profile.phone || '')
+	const selectedCountry = PHONE_COUNTRY_CODES.find(({ code }) => code === countryCode) || PHONE_COUNTRY_CODES[0]
+	const phoneError = /\D/.test(phoneValue)
+		? 'Enter digits only.'
+		: phoneValue.length > selectedCountry.maxDigits
+			? `${selectedCountry.country} phone numbers can have up to ${selectedCountry.maxDigits} digits.`
+			: ''
 
 	return (
 		<div className="dashboard-layout profile-layout">
@@ -429,18 +470,28 @@ async function fillAddressFromCurrentLocation() {
 								required
 							/>
 						</label>
-						<label className="profile-field" htmlFor="profile-phone">
-							Phone number
-							<input
-								id="profile-phone"
-								name="phone"
-								type="tel"
-								autoComplete="tel"
-								placeholder="+1 (555) 000-0000"
-								value={profile.phone}
-								onChange={updateField}
-							/>
-						</label>
+						<div className="profile-field profile-phone-field">
+							<label htmlFor="profile-phone">Phone number</label>
+							<div className="profile-phone-input-row">
+								<select aria-label="Country calling code" value={countryCode} onChange={(event) => setCountryCode(event.target.value)}>
+									{PHONE_COUNTRY_CODES.map(({ code, country }) => <option key={code} value={code}>{country} ({code})</option>)}
+								</select>
+								<input
+									id="profile-phone"
+									name="phone"
+									type="tel"
+									inputMode="numeric"
+									autoComplete="tel-national"
+								pattern={`[0-9]{0,${selectedCountry.maxDigits}}`}
+									aria-invalid={Boolean(phoneError)}
+									aria-describedby={phoneError ? 'profile-phone-error' : undefined}
+								placeholder={`Up to ${selectedCountry.maxDigits} digits`}
+									value={profile.phone}
+									onChange={updateField}
+								/>
+							</div>
+							{phoneError && <span id="profile-phone-error" className="profile-phone-error" role="alert">{phoneError}</span>}
+						</div>
 						
                     <div className="profile-field profile-address-field">
                         <label htmlFor="profile-address">Address</label>

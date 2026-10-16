@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import JSZip from 'jszip'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
 
 const STORAGE_KEY = 'w3villa-presentation-deck'
 const LIBRARY_KEY = 'w3villa-presentation-library'
@@ -462,6 +463,7 @@ function downloadBlob(blob, filename) {
 }
 
 function PresentationStudio() {
+	const featureAccess = useFeatureAccess('presentation')
 	const importInputRef = useRef(null)
 	const canvasRef = useRef(null)
 	const dragStateRef = useRef(null)
@@ -684,6 +686,10 @@ function PresentationStudio() {
 	}
 
 	async function exportPowerPoint() {
+		if (!featureAccess.allowed) {
+			setNotice('An active plan with Presentation Studio exports enabled is required to download this deck.')
+			return
+		}
 		setIsWorking(true)
 		setNotice('Preparing your PowerPoint…')
 		try {
@@ -718,7 +724,7 @@ function PresentationStudio() {
 							<button className="presentation-secondary-button" type="button" onClick={startNewDeck}>＋ New deck</button>
 							<input ref={importInputRef} className="presentation-hidden-input" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" onChange={importPowerPoint} />
 							<button className="presentation-secondary-button" type="button" onClick={() => importInputRef.current?.click()} disabled={isWorking}>Open .pptx</button>
-							<button className="presentation-export-button" type="button" onClick={exportPowerPoint} disabled={isWorking}>{isWorking ? 'Working…' : 'Export .pptx'}</button>
+							<button className="presentation-export-button" type="button" onClick={exportPowerPoint} disabled={isWorking || !featureAccess.allowed}>{isWorking ? 'Working…' : 'Export .pptx'}</button>
 						</div>
 					</div>
 
@@ -730,6 +736,7 @@ function PresentationStudio() {
 					</div>
 
 					{notice && <p className="presentation-notice" role="status">{notice}</p>}
+					<FeatureAccessNotice access={featureAccess} featureName="Presentation Studio exports" />
 
 					<div className="presentation-editor">
 						<aside className="presentation-slide-list" aria-label="Slides">

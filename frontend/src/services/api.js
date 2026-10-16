@@ -185,8 +185,16 @@ export function getAdminUsers() {
 	return request('/api/admin/users')
 }
 
+export function getAdminUserDetails(userId) {
+	return request(`/api/admin/users/${encodeURIComponent(userId)}`)
+}
+
 export function getAdminActiveSubscriberCount() {
 	return request('/api/admin/subscriptions/active-count')
+}
+
+export function getAdminReport(period = 'month') {
+	return request(`/api/admin/reports?period=${encodeURIComponent(period)}`)
 }
 
 export function getPricingPlans() {
@@ -244,6 +252,17 @@ export function getUserProfile() {
 
 export function getCurrentUser() {
 	return request('/api/auth/me')
+}
+
+export function getAdminProfile() {
+	return request('/api/admin/profile')
+}
+
+export function updateAdminProfile(profile) {
+	return request('/api/admin/profile', {
+		method: 'PATCH',
+		body: JSON.stringify(profile),
+	})
 }
 
 export function updateUserProfile(profile) {

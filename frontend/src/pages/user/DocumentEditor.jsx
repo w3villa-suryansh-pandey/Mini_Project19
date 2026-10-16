@@ -26,7 +26,7 @@ function DocumentEditor() {
 		getUserSubscription({ refresh: true })
 			.then(({ subscription }) => {
 				if (!isCurrent) return
-				setSubscriptionStatus(subscription.active ? 'active' : 'inactive')
+				setSubscriptionStatus(subscription.active ? subscription.featureKeys?.includes('pdf_editor') ? 'active' : 'feature-locked' : 'inactive')
 				setSubscriptionExpiry(subscription.expiresAt || '')
 			})
 			.catch(() => {
@@ -234,7 +234,9 @@ function DocumentEditor() {
 								? `Pass active until ${new Date(subscriptionExpiry).toLocaleString()}. PDF download is enabled.`
 								: subscriptionStatus === 'checking'
 									? 'Checking your pass. PDF downloads remain locked until access is confirmed.'
-									: 'An active pass is required to download edited PDFs.'
+					: subscriptionStatus === 'feature-locked'
+						? 'Your active plan does not include PDF editor downloads.'
+						: 'An active pass with PDF editor downloads enabled is required.'
 							: viewerStatus === 'loading'
 								? 'Loading Apryse WebViewer…'
 								: 'Set VITE_APRYSE_LICENSE_KEY in frontend/.env.local to enable editing.')}</p>

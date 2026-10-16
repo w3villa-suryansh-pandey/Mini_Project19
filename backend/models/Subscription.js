@@ -21,6 +21,10 @@ const subscriptionSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		featureKeys: {
+			type: [String],
+			default: [],
+		},
 		durationValue: {
 			type: Number,
 			required: true,

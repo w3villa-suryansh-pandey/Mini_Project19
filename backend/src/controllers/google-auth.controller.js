@@ -193,12 +193,15 @@ function validateGoogleState(req, res, next) {
 	return next()
 }
 
-function completeGoogleAuth(error, user, info, req, res) {
+async function completeGoogleAuth(error, user, info, req, res) {
 	if (error) {
 		console.error('Google OAuth callback failed:', error.name, error.code || '', error.message)
 		return redirectWithError(res, 'google_provider_error')
 	}
 	if (!user) return redirectWithError(res, info?.code || 'google_auth_failed')
+	if (!req.googleOAuthState?.linkUserId) {
+		await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } })
+	}
 
 	const sessionToken = jwt.sign({ sub: user._id.toString() }, authTokenSecret, {
 		algorithm: 'HS256',

@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
 
 
 const STICKERS = ['⭐', '✅', '📌', '💡', '🎉', '❤️', '📎', '🌱']
 
 function WritingPad() {
+	const featureAccess = useFeatureAccess('writing_pad')
 	const editorRef = useRef(null)
 	const imageInputRef = useRef(null)
 	const signatureCanvasRef = useRef(null)
@@ -178,6 +180,7 @@ function WritingPad() {
 	}
 
 	function downloadWriting() {
+		if (!featureAccess.allowed) return
 		const content = editorRef.current?.innerHTML
 		const hasContent = Boolean(editorRef.current?.innerText.trim() || editorRef.current?.querySelector('img'))
 		if (!content || !hasContent) {
@@ -195,6 +198,7 @@ function WritingPad() {
 	}
 
 	function printWriting() {
+		if (!featureAccess.allowed) return
 		const hasContent = Boolean(editorRef.current?.innerText.trim() || editorRef.current?.querySelector('img'))
 		if (!hasContent) {
 			setNotice('Add some content before printing or saving as PDF.')
@@ -291,10 +295,11 @@ function WritingPad() {
 						<footer className="writing-pad-footer">
 							<p aria-live="polite">{notice || 'Format your text, add images or stickers, and insert a signature. Your work stays in this browser.'}</p>
 							<div>
-								<button type="button" className="editor-open-button" onClick={printWriting}>Print / Save as PDF</button>
-								<button type="button" className="editor-open-button editor-save-button" onClick={downloadWriting}>Download document</button>
+								<button type="button" className="editor-open-button" onClick={printWriting} disabled={!featureAccess.allowed}>Print / Save as PDF</button>
+								<button type="button" className="editor-open-button editor-save-button" onClick={downloadWriting} disabled={!featureAccess.allowed}>Download document</button>
 							</div>
 						</footer>
+						<FeatureAccessNotice access={featureAccess} featureName="Writing Pad downloads" />
 					</section>
 				</div>
 			</section>

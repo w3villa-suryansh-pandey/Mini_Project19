@@ -170,12 +170,15 @@ function validateFacebookState(req, res, next) {
 	return next()
 }
 
-function completeFacebookAuth(error, user, info, req, res) {
+async function completeFacebookAuth(error, user, info, req, res) {
 	if (error) {
 		console.error('Facebook OAuth callback failed:', error.name, error.code || '', error.message)
 		return redirectWithError(res, 'facebook_provider_error')
 	}
 	if (!user) return redirectWithError(res, info?.code || 'facebook_auth_failed')
+	if (!req.facebookOAuthState?.linkUserId) {
+		await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } })
+	}
 
 	const sessionToken = jwt.sign({ sub: user._id.toString() }, authTokenSecret, {
 		algorithm: 'HS256',

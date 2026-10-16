@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { createWorker } from 'tesseract.js'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
 
 
 const toolOptions = [
@@ -193,6 +194,7 @@ function createBackgroundRemovedImage(sourceImage) {
 }
 
 function ImageTools() {
+  const featureAccess = useFeatureAccess('image_tools')
   const [selectedTool, setSelectedTool] = useState(toolOptions[0].id)
   const [selectedFile, setSelectedFile] = useState(null)
   const [sourcePreview, setSourcePreview] = useState('')
@@ -283,6 +285,7 @@ function ImageTools() {
   }
 
   function handleDownload() {
+    if (!featureAccess.allowed) return
     if (selectedTool === 'text-extractor' && extractedText) {
       const fileUrl = URL.createObjectURL(new Blob([extractedText], { type: 'text/plain;charset=utf-8' }))
       const link = document.createElement('a')
@@ -370,10 +373,12 @@ function ImageTools() {
                   Copy text
                 </button>
               )}
-              <button type="button" className="image-tool-secondary" onClick={handleDownload} disabled={!hasDownloadableResult || isProcessing}>
+              <button type="button" className="image-tool-secondary" onClick={handleDownload} disabled={!hasDownloadableResult || isProcessing || !featureAccess.allowed}>
                 {selectedTool === 'text-extractor' ? 'Download .txt' : 'Download result'}
               </button>
             </div>
+
+            <FeatureAccessNotice access={featureAccess} featureName="image tool downloads" />
 
             {notice && <p className="image-tool-notice">{notice}</p>}
 
