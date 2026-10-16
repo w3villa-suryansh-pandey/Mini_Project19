@@ -4,6 +4,7 @@ import AccountBadge from '../../components/AccountBadge.jsx'
 import AdminSidebar from '../../components/AdminSidebar.jsx'
 import { getAdminUserDetails } from '../../services/api.js'
 import { getPlanFeatureLabels } from '../../utils/planFeatures.js'
+import { downloadAdminUserReport } from '../../utils/userReportPdf.js'
 
 function formatDate(value, includeTime = false) {
   if (!value || Number.isNaN(new Date(value).getTime())) return '—'
@@ -12,12 +13,6 @@ function formatDate(value, includeTime = false) {
 
 function formatCurrency(amountInPaise) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format((amountInPaise || 0) / 100)
-}
-
-function csvCell(value) {
-  const text = String(value ?? '')
-  const safe = /^[\s]*[=+\-@\t\r]/.test(text) ? `'${text}` : text
-  return `"${safe.replaceAll('"', '""')}"`
 }
 
 function UserDetails() {
@@ -38,36 +33,9 @@ function UserDetails() {
   }, [userId])
 
   function downloadHistory() {
-    if (!details) return
-    const { user, purchases = [] } = details
-    const rows = [
-      ['S19 user report', ''],
-      ['Name', user.name], ['Email', user.email], ['Status', user.status],
-      ['Joined', formatDate(user.createdAt)], ['Last login', user.lastLoginAt ? formatDate(user.lastLoginAt, true) : 'No login recorded'],
-      ['Phone', user.phone || 'Not provided'], ['Address', user.address || 'Not provided'],
-      ['Company', user.company || 'Not provided'], ['Job title', user.jobTitle || 'Not provided'],
-      ['About', user.bio || 'Not provided'], ['Profile photo', user.profilePicture || 'Not set'],
-      ['Google sign-in', user.googleLinked ? 'Connected' : 'Not connected'], ['Facebook sign-in', user.facebookLinked ? 'Connected' : 'Not connected'],
-      [], ['Purchase history', ''],
-      ['Plan', 'Purchase date', 'Price', 'Duration', 'Status', 'Features', 'Starts', 'Expires'],
-      ...purchases.map((purchase) => [
-        purchase.planName,
-        formatDate(purchase.purchasedAt, true),
-        formatCurrency(purchase.amountInPaise),
-        `${purchase.durationValue} ${purchase.durationUnit}${purchase.durationValue === 1 ? '' : 's'}`,
-        purchase.status,
-        getPlanFeatureLabels(purchase.featureKeys).join('; '),
-        formatDate(purchase.startsAt, true),
-        formatDate(purchase.expiresAt, true),
-      ]),
-    ]
-    const content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}`
-    const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `s19-user-history-${user.email.replace(/[^a-z0-9]+/gi, '-')}.csv`
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 0)
+    downloadAdminUserReport(details).catch((downloadError) => {
+      window.alert(downloadError.message || 'Could not create the user PDF.')
+    })
   }
 
   const user = details?.user
@@ -87,7 +55,7 @@ function UserDetails() {
         <div className="admin-content admin-user-full-content">
           <div className="admin-page-heading">
             <div><p className="admin-eyebrow">ACCOUNT MANAGEMENT</p><h1>User details</h1><p>Full profile and subscription purchase history.</p></div>
-            <div className="admin-user-full-actions"><Link className="admin-secondary-button" to="/admin/users">← Back to users</Link><button className="admin-primary-button" type="button" onClick={downloadHistory} disabled={!details}>↓ Download report</button></div>
+            <div className="admin-user-full-actions"><Link className="admin-secondary-button" to="/admin/users">← Back to users</Link><button className="admin-primary-button" type="button" onClick={downloadHistory} disabled={!details}>↓ Download PDF</button></div>
           </div>
           {isLoading && <div className="admin-panel admin-user-full-state" role="status">Loading user information…</div>}
           {!isLoading && error && <div className="admin-panel admin-user-full-state is-error" role="alert">{error}<p><Link to="/admin/users">Return to user listing</Link></p></div>}

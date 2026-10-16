@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import AdminSidebar from '../../components/AdminSidebar.jsx'
 import { getAdminUserDetails, getAdminUsers } from '../../services/api.js'
+import { downloadAdminUserReport } from '../../utils/userReportPdf.js'
 
 const PAGE_SIZE = 5
 
@@ -100,81 +101,10 @@ function Users() {
 		setDetailsError('')
 	}
 
-	async function downloadUserDetails() {
-		const detail = selectedUserDetails
-		if (!detail) return
-		const { user, lastPurchase } = detail
-		const sections = [
-			['Profile information', [
-				['Name', user.name], ['Email', user.email], ['Status', user.status],
-				['Phone', user.phone || 'Not provided'], ['Address', user.address || 'Not provided'],
-				['Company', user.company || 'Not provided'], ['Job title', user.jobTitle || 'Not provided'],
-				['About', user.bio || 'Not provided'], ['Profile photo', user.profilePicture || 'Not set'],
-			]],
-			['Account information', [
-				['Joined', formatDate(user.createdAt)],
-				['Last login', user.lastLoginAt ? formatDate(user.lastLoginAt, true) : 'No login recorded'],
-				['Google sign-in', user.googleLinked ? 'Connected' : 'Not connected'],
-				['Facebook sign-in', user.facebookLinked ? 'Connected' : 'Not connected'],
-			]],
-			['Subscription', [
-				['Last purchased plan', lastPurchase?.planName || 'No purchase recorded'],
-				['Purchase date', lastPurchase?.purchasedAt ? formatDate(lastPurchase.purchasedAt, true) : 'Not recorded'],
-				['Purchase value', lastPurchase ? formatCurrency(lastPurchase.amountInPaise) : 'Not recorded'],
-			]],
-		]
-		const report = document.createElement('div')
-		Object.assign(report.style, { position: 'fixed', left: '-10000px', top: '0', width: '720px', padding: '36px', color: '#172033', background: '#ffffff', fontFamily: 'Arial, sans-serif' })
-		const title = document.createElement('h1')
-		title.textContent = 'S19 · User information'
-		Object.assign(title.style, { margin: '0 0 6px', color: '#2546a8', fontSize: '24px' })
-		report.append(title)
-		const subtitle = document.createElement('p')
-		subtitle.textContent = `Account report for ${user.name}`
-		Object.assign(subtitle.style, { margin: '0 0 24px', color: '#64748b', fontSize: '13px' })
-		report.append(subtitle)
-		sections.forEach(([heading, rows]) => {
-			const section = document.createElement('section')
-			Object.assign(section.style, { marginBottom: '20px', breakInside: 'avoid' })
-			const sectionTitle = document.createElement('h2')
-			sectionTitle.textContent = heading
-			Object.assign(sectionTitle.style, { margin: '0 0 8px', paddingBottom: '7px', color: '#3154b5', borderBottom: '1px solid #dbe4f5', fontSize: '15px' })
-			section.append(sectionTitle)
-			rows.forEach(([label, value]) => {
-				const row = document.createElement('div')
-				Object.assign(row.style, { display: 'flex', gap: '18px', padding: '7px 0', borderBottom: '1px solid #eef2f8', fontSize: '12px', lineHeight: '1.5', breakInside: 'avoid' })
-				const key = document.createElement('strong')
-				key.textContent = label
-				Object.assign(key.style, { width: '165px', flexShrink: '0', color: '#526078' })
-				const content = document.createElement('span')
-				content.textContent = String(value ?? 'Not provided')
-				Object.assign(content.style, { color: '#172033', overflowWrap: 'anywhere' })
-				row.append(key, content)
-				section.append(row)
-			})
-			report.append(section)
+	function downloadUserDetails() {
+		downloadAdminUserReport(selectedUserDetails).catch((error) => {
+			window.alert(error.message || 'Could not create the user PDF.')
 		})
-		document.body.append(report)
-		try {
-			const html2pdfModule = await import('html2pdf.js')
-			const html2pdf = html2pdfModule.default || html2pdfModule
-			const blob = await html2pdf().set({
-				margin: [32, 36, 32, 36],
-				image: { type: 'jpeg', quality: 0.96 },
-				enableLinks: false,
-				pagebreak: { mode: ['css', 'legacy'] },
-				html2canvas: { scale: 2, backgroundColor: '#ffffff', logging: false },
-				jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-			}).from(report).outputPdf('blob')
-			const url = URL.createObjectURL(blob)
-			const link = document.createElement('a')
-			link.href = url
-			link.download = `s19-user-${user.email.replace(/[^a-z0-9]+/gi, '-')}.pdf`
-			link.click()
-			setTimeout(() => URL.revokeObjectURL(url), 1000)
-		} finally {
-			report.remove()
-		}
 	}
 
 	function handleUserRowKeyDown(event, userId) {
