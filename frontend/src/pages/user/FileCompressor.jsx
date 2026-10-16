@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
-import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
 
 
 const ACCEPTED_FILE_TYPES = '.jpg,.jpeg,.png,.webp,.bmp,.pdf'

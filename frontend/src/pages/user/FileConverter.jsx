@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { convertDocxToPdf } from '../../utils/docxToPdf.js'
-import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
 
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024

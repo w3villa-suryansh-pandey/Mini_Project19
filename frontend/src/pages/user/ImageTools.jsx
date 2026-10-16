@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { createWorker } from 'tesseract.js'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
-import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
 
 
 const toolOptions = [

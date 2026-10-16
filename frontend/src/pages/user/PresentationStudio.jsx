@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import JSZip from 'jszip'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
-import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.js'
+import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
 
 const STORAGE_KEY = 'w3villa-presentation-deck'
 const LIBRARY_KEY = 'w3villa-presentation-library'
