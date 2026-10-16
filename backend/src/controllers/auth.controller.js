@@ -127,7 +127,7 @@ async function verifyEmail(req, res) {
 			$set: { emailVerifiedAt: new Date() },
 			$unset: { emailVerificationTokenHash: 1, emailVerificationExpiresAt: 1 },
 		},
-		{ new: true },
+		{ returnDocument: 'after' },
 	)
 	if (!user) {
 		return respondWithError(res, 400, 'INVALID_TOKEN', 'This verification link is invalid or expired.')
@@ -273,7 +273,7 @@ async function resetPassword(req, res) {
         passwordResetExpiresAt: 1,
       },
     },
-    { new: true }
+    { returnDocument: 'after' }
   )
 
   if (!user) {
@@ -316,7 +316,10 @@ async function login(req, res) {
 		return respondWithError(res, 403, 'ROLE_MISMATCH', `This account is registered as ${user.role}. Choose that account type to sign in.`)
 	}
 	user.lastLoginAt = new Date()
-	await user.save()
+	// Update only the login timestamp. Saving the full document can fail for
+	// older accounts whose address was stored as a string before the profile
+	// schema changed to a structured address.
+	await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: user.lastLoginAt } })
 	const sessionToken = jwt.sign({ sub: user._id.toString() }, authTokenSecret, {
 		algorithm: 'HS256',
 		expiresIn: SESSION_WINDOW,
