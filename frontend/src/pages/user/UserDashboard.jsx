@@ -19,6 +19,7 @@ function UserDashboard() {
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState('')
 	const [subscription, setSubscription] = useState(null)
+	const [lastPurchasedPlan, setLastPurchasedPlan] = useState(null)
 	const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true)
 	const [subscriptionError, setSubscriptionError] = useState('')
 	const [dashboardFile, setDashboardFile] = useState(null)
@@ -72,8 +73,11 @@ function UserDashboard() {
 	useEffect(() => {
 		let isCurrent = true
 		getUserSubscription({ refresh: true })
-			.then(({ subscription: currentSubscription }) => {
-				if (isCurrent) setSubscription(currentSubscription)
+			.then(({ subscription: currentSubscription, lastPurchasedPlan: latestPlan }) => {
+				if (isCurrent) {
+					setSubscription(currentSubscription)
+					setLastPurchasedPlan(latestPlan || null)
+				}
 			})
 			.catch((exception) => {
 				if (isCurrent) setSubscriptionError(exception.message || 'Subscription details could not be loaded.')
@@ -98,6 +102,10 @@ function UserDashboard() {
 	}
 	const planFeatures = (subscription?.featureKeys || []).map((feature) => featureLabels[feature] || feature.replaceAll('_', ' '))
 	const subscriptionExpiry = subscription?.expiresAt ? new Date(subscription.expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
+	const lastPurchasedName = lastPurchasedPlan?.planName || (subscription?.active ? subscription.planName : '')
+	const repeatPlanId = lastPurchasedPlan?.planId || (subscription?.active ? subscription.planId : '')
+	const lastPurchasedAt = lastPurchasedPlan?.purchasedAt || (subscription?.active ? subscription.startsAt : null)
+	const lastPurchasedDate = lastPurchasedAt ? new Date(lastPurchasedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
 
 	return (
 		<main className="dashboard-layout">
@@ -118,6 +126,17 @@ function UserDashboard() {
 						</div>
 						<div className={`dashboard-subscription-status${subscription?.active ? ' is-active' : ''}`}>{isSubscriptionLoading ? 'CHECKING' : subscriptionError ? 'UNAVAILABLE' : subscription?.active ? 'ACTIVE' : 'INACTIVE'}</div>
 						<Link className="dashboard-subscription-link" to={subscription?.active ? '/profile' : '/pricing'}>{subscription?.active ? 'View account' : 'Browse plans'} <span aria-hidden="true">→</span></Link>
+					</section>
+					<section className="dashboard-last-purchase-card" aria-labelledby="dashboard-last-purchase-title">
+						<div className="dashboard-last-purchase-icon" aria-hidden="true">↻</div>
+						<div className="dashboard-last-purchase-copy">
+							<p className="dashboard-eyebrow">RECENT PURCHASE</p>
+							<h2 id="dashboard-last-purchase-title">{isSubscriptionLoading ? 'Checking purchase history…' : lastPurchasedName || (subscriptionError ? 'Purchase history unavailable' : 'No plan purchased yet')}</h2>
+							<p>{isSubscriptionLoading ? 'Loading your latest plan details.' : lastPurchasedDate ? `Purchased on ${lastPurchasedDate}` : lastPurchasedName ? 'Your most recently purchased plan.' : subscriptionError ? subscriptionError : 'Your purchased plans will appear here.'}</p>
+						</div>
+						{repeatPlanId
+							? <Link className="dashboard-repeat-plan-button" to={`/payment?plan=${encodeURIComponent(repeatPlanId)}`}>Repeat plan <span aria-hidden="true">↗</span></Link>
+							: <span className="dashboard-last-purchase-badge">LAST PLAN</span>}
 					</section>
 
 					<section className="dashboard-quick-start" aria-labelledby="dashboard-quick-start-title">

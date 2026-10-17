@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { getUserProfile } from '../../services/api.js'
-import pdfWorkspaceImage from '../../assets/Modern PDF Editing Workspace.png'
 
 const destinations = [
 	{ title: 'Dashboard', description: 'See your workspace at a glance and jump back into your recent tools.', href: '/dashboard', icon: 'dashboard', label: 'Open dashboard', tone: 'violet' },
@@ -51,6 +50,10 @@ function WorkflowIcon({ name }) {
 function WorkspaceHome() {
 	const [firstName, setFirstName] = useState('there')
 	const [isReturningUser, setIsReturningUser] = useState(false)
+	const [welcomeReady, setWelcomeReady] = useState(false)
+	const [welcomeVisitKey, setWelcomeVisitKey] = useState('')
+	const [typedHeading, setTypedHeading] = useState('')
+	const [typedMessage, setTypedMessage] = useState('')
 
 	useEffect(() => {
 		let isCurrent = true
@@ -62,17 +65,54 @@ function WorkspaceHome() {
 				if (profile?.id) {
 					const visitedKey = `s19-workspace-home-seen-${profile.id}`
 					try {
-						const hasVisited = window.localStorage.getItem(visitedKey) === 'true'
+						const hasVisited = window.sessionStorage.getItem(visitedKey) === 'true'
 						setIsReturningUser(hasVisited)
-						window.localStorage.setItem(visitedKey, 'true')
+						if (!hasVisited) setWelcomeVisitKey(visitedKey)
 					} catch {
 						setIsReturningUser(false)
 					}
 				}
+				setWelcomeReady(true)
 			})
-			.catch(() => undefined)
+			.catch(() => {
+				if (isCurrent) setWelcomeReady(true)
+			})
 		return () => { isCurrent = false }
 	}, [])
+
+	const welcomeHeading = `${isReturningUser ? 'Welcome back' : 'Welcome'}, ${firstName}`
+	const welcomeMessage = isReturningUser
+		? 'Pick up where you left off and make your documents work harder with all your tools in one place.'
+		: 'Your workspace is ready. Explore the tools to edit PDFs, organize files, and create polished work.'
+
+	useEffect(() => {
+		if (!welcomeReady) return
+		const rememberVisit = () => {
+			if (welcomeVisitKey) {
+				try { window.sessionStorage.setItem(welcomeVisitKey, 'true') } catch { /* storage may be disabled */ }
+			}
+		}
+		if (isReturningUser || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			setTypedHeading(welcomeHeading)
+			setTypedMessage(welcomeMessage)
+			rememberVisit()
+			return
+		}
+
+		let position = 0
+		const interval = window.setInterval(() => {
+			position += 1
+			setTypedHeading(welcomeHeading.slice(0, position))
+			if (position > welcomeHeading.length) {
+				setTypedMessage(welcomeMessage.slice(0, position - welcomeHeading.length))
+			}
+			if (position >= welcomeHeading.length + welcomeMessage.length) {
+				window.clearInterval(interval)
+				rememberVisit()
+			}
+		}, 28)
+		return () => window.clearInterval(interval)
+	}, [welcomeReady, isReturningUser, welcomeVisitKey, welcomeHeading, welcomeMessage])
 
 	return (
 		<main className="dashboard-layout workspace-home-layout">
@@ -82,14 +122,23 @@ function WorkspaceHome() {
 					<section className="workspace-home-intro dashboard-welcome" aria-labelledby="workspace-home-title">
 						<div className="workspace-home-intro-copy">
 							<p className="dashboard-eyebrow">YOUR S19 WORKSPACE</p>
-							<h1 id="workspace-home-title">{isReturningUser ? `Welcome back, ${firstName}` : `Welcome, ${firstName}`}</h1>
-							<p>{isReturningUser ? 'Pick up where you left off and make your documents work harder with all your tools in one place.' : 'Your workspace is ready. Explore the tools to edit PDFs, organize files, and create polished work.'}</p>
+							<h1 id="workspace-home-title" aria-label={welcomeHeading}>{typedHeading}{welcomeReady && !isReturningUser && typedMessage.length < welcomeMessage.length && <span className="workspace-welcome-caret" aria-hidden="true" />}</h1>
+							<p aria-label={welcomeMessage}>{typedMessage}</p>
 						</div>
 					</section>
 
 					<section className="workspace-home-showcase" aria-label="PDF editing workspace preview">
-						<div className="workspace-home-visual">
-							<img src={pdfWorkspaceImage} alt="A modern PDF editing workspace with tools for editing text, adding images, erasing content, and signing" />
+						<div className="workspace-home-visual" aria-hidden="true">
+							<div className="home-editor-window">
+								<div className="home-editor-topbar"><span className="home-editor-dots"><i /><i /><i /></span><span className="home-editor-file">Quarterly-report.pdf</span><span className="home-editor-status"><b /> All changes saved</span></div>
+								<div className="home-editor-toolbar"><span className="home-toolbar-brand">S19 <small>PDF Editor</small></span><span className="home-tool-active">↖ <small>Select</small></span><span>▤ <small>Text</small></span><span>✎ <small>Annotate</small></span><span>▧ <small>Image</small></span><span>⇩ <small>Export</small></span><button type="button" tabIndex="-1">Share ↗</button></div>
+								<div className="home-editor-body">
+									<aside className="home-editor-sidebar"><span className="home-sidebar-heading">PAGES <b>＋</b></span><div className="home-page-thumb selected"><span>01</span><i /><i /><i /><b>01</b></div><div className="home-page-thumb"><span>02</span><i /><i /><i /><b>02</b></div><div className="home-page-thumb"><span>03</span><i /><i /><i /><b>03</b></div></aside>
+									<div className="home-editor-canvas"><div className="home-document"><span className="home-document-label">S19  /  BUSINESS REPORT</span><h3>Building better<br />workflows.</h3><p className="home-document-subtitle">Quarterly progress &amp; what comes next</p><div className="home-document-rule" /><div className="home-document-columns"><div><b>01</b><strong>Less busywork</strong><p>Simple tools help teams focus on the work that matters.</p></div><div><b>02</b><strong>More momentum</strong><p>Turn everyday documents into clear next steps.</p></div></div><div className="home-document-chart"><span>YOUR QUARTER AT A GLANCE</span><div><i /><i /><i /><i /><i /><i /><i /><i /></div></div><small className="home-document-footer">S19 WORKSPACE <span>01</span></small></div></div>
+									</div>
+								</div>
+							<div className="home-editor-float home-float-left"><span>✦</span><div><b>Ready when you are</b><small>Your tools, all in one place</small></div></div>
+							<div className="home-editor-float home-float-right"><span>✓</span><div><b>Private by design</b><small>Your files stay yours</small></div></div>
 						</div>
 					</section>
 
@@ -108,6 +157,28 @@ function WorkspaceHome() {
 									<p>{step.description}</p>
 								</article>
 							))}
+						</div>
+					</section>
+
+					<section className="workspace-home-file-tools" aria-labelledby="workspace-file-tools-title">
+						<div className="workspace-home-file-tools-heading">
+							<p className="dashboard-eyebrow">CONVERT &amp; COMPRESS</p>
+							<h2 id="workspace-file-tools-title">Make every file work better.</h2>
+							<p>Change formats in a few clicks or shrink large files for easier sharing.</p>
+						</div>
+						<div className="workspace-home-file-tools-grid">
+							<article className="home-file-tool-card home-convert-card" aria-label="File format conversion preview">
+								<div className="home-file-tool-card-heading"><span className="home-file-tool-icon">⇄</span><div><small>FILE CONVERTER</small><strong>Switch formats</strong></div><span className="home-file-tool-menu">···</span></div>
+								<div className="home-convert-flow"><div className="home-convert-file"><span className="home-format-icon format-docx">W</span><span><b>Project brief</b><small>Word document</small></span><strong>.DOCX</strong></div><span className="home-convert-arrow" aria-hidden="true">→</span><div className="home-convert-file result"><span className="home-format-icon format-pdf">PDF</span><span><b>Project brief</b><small>Ready to share</small></span><strong>.PDF</strong></div></div>
+								<div className="home-file-tool-footer"><span><i /> Conversion complete</span><b>Download file ↓</b></div>
+							</article>
+							<article className="home-file-tool-card home-compress-card" aria-label="File compression preview">
+								<div className="home-file-tool-card-heading"><span className="home-file-tool-icon compress-icon">⌁</span><div><small>FILE COMPRESSOR</small><strong>Keep files lightweight</strong></div><span className="home-file-tool-menu">···</span></div>
+								<div className="home-compress-file"><span className="home-format-icon format-zip">▣</span><span><b>Project-assets.zip</b><small>Optimized for sharing</small></span><span className="home-compress-saved">−64%</span></div>
+								<div className="home-compress-sizes"><span><small>ORIGINAL</small><b>24.8 <i>MB</i></b></span><span className="home-size-arrow" aria-hidden="true">→</span><span><small>COMPRESSED</small><b>8.9 <i>MB</i></b></span></div>
+								<div className="home-compress-meter"><span /></div>
+								<div className="home-file-tool-footer"><span><i /> Quality preserved</span><b>Save space ✦</b></div>
+							</article>
 						</div>
 					</section>
 

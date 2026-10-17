@@ -71,6 +71,11 @@ function WorkspaceHeader() {
 
 	async function handleSignOut() {
 		await signOut().catch(() => undefined)
+		try {
+			for (const key of Object.keys(window.sessionStorage)) {
+				if (key.startsWith('s19-workspace-home-seen-')) window.sessionStorage.removeItem(key)
+			}
+		} catch { /* storage may be disabled */ }
 		window.location.assign('/')
 	}
 

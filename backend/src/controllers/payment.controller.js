@@ -205,7 +205,21 @@ async function confirmRazorpayPayment(req, res) {
 }
 
 async function getSubscription(req, res) {
-	return res.json({ subscription: subscriptionDetails(await findActiveSubscription(req.user._id)) })
+	const [activeSubscription, latestPurchase] = await Promise.all([
+		findActiveSubscription(req.user._id),
+		Subscription.findOne({ userId: req.user._id })
+			.sort({ createdAt: -1 })
+			.select('planId planName createdAt')
+			.lean(),
+	])
+	return res.json({
+		subscription: subscriptionDetails(activeSubscription),
+		lastPurchasedPlan: latestPurchase ? {
+			planId: latestPurchase.planId,
+			planName: latestPurchase.planName,
+			purchasedAt: latestPurchase.createdAt,
+		} : null,
+	})
 }
 
 async function handleRazorpayWebhook(req, res) {
