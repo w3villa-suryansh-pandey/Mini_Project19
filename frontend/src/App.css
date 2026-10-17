@@ -11164,15 +11164,21 @@ body {
 	width: calc(100% - 56px);
 	max-width: none;
 }
+.workspace-home-layout .s19-topnav-inner {
+	width: calc(100% - 56px);
+	max-width: none;
+}
 
 @media (max-width: 1050px) {
 	.landing-page { --landing-container-gutter: 20px; }
 	.dashboard-content > .workspace-home-main { width: calc(100% - 40px); }
+	.workspace-home-layout .s19-topnav-inner { width: calc(100% - 40px); }
 }
 
 @media (max-width: 760px) {
 	.landing-page { --landing-container-gutter: 18px; }
 	.dashboard-content > .workspace-home-main { width: calc(100% - 36px); }
+	.workspace-home-layout .s19-topnav-inner { width: calc(100% - 36px); }
 }
 
 :root:not([data-theme='dark']) .landing-page {
