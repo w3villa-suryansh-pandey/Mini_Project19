@@ -13888,6 +13888,27 @@ body {
 @media (max-width: 680px) {
   .landing-page { --landing-section-gap: 36px; }
 }
+
+/* Keep every signed-in page body aligned to the shared workspace header. */
+.dashboard-layout { --s19-content-width: calc(100% - 56px); }
+.dashboard-layout .s19-topnav-inner,
+.dashboard-layout .dashboard-content > .dashboard-main,
+.dashboard-layout .dashboard-content > .document-editor-main,
+.dashboard-layout .dashboard-content > .presentation-studio-main,
+.dashboard-layout .dashboard-content > .workspace-home-main,
+.dashboard-layout .profile-page > .profile-main {
+  box-sizing: border-box;
+  width: var(--s19-content-width);
+  max-width: none;
+  margin-right: auto;
+  margin-left: auto;
+}
+@media (max-width: 1050px) {
+  .dashboard-layout { --s19-content-width: calc(100% - 40px); }
+}
+@media (max-width: 760px) {
+  .dashboard-layout { --s19-content-width: calc(100% - 36px); }
+}
 @media (prefers-reduced-motion: reduce) {
   .landing-welcome-caret { animation: none; }
 }
