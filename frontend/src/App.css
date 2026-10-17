@@ -13909,6 +13909,30 @@ body {
 @media (max-width: 760px) {
   .dashboard-layout { --s19-content-width: calc(100% - 36px); }
 }
+
+/* Let the user home welcome copy sit directly on the page background. */
+.workspace-home-layout .workspace-home-intro {
+  min-height: 0;
+  margin: 0 0 52px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.workspace-home-layout .workspace-home-intro .dashboard-eyebrow { color: #5b58c9; }
+.workspace-home-layout .workspace-home-intro h1 { color: #202943; }
+.workspace-home-layout .workspace-home-intro > .workspace-home-intro-copy > p:not(.dashboard-eyebrow) { color: #6d7890; font-size: 14px; }
+.workspace-home-layout .workspace-home-showcase { margin: 0 auto 40px; }
+:root[data-theme='dark'] .workspace-home-layout .workspace-home-intro {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+:root[data-theme='dark'] .workspace-home-layout .workspace-home-intro .dashboard-eyebrow { color: #bcb7ff; }
+:root[data-theme='dark'] .workspace-home-layout .workspace-home-intro h1 { color: #edf2fb; }
+:root[data-theme='dark'] .workspace-home-layout .workspace-home-intro > .workspace-home-intro-copy > p:not(.dashboard-eyebrow) { color: #cbd5e1; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) {
   .landing-welcome-caret { animation: none; }
 }
