@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import logo from '../assets/logo.png'
 import '../styles/aurora.css'
-import ThemeToggle from '../components/ThemeToggle.jsx'
 import { getPricingPlans } from '../services/api.js'
 import { Link } from 'react-router-dom'
 
@@ -97,12 +96,27 @@ const defaultPlans = [
 	},
 ]
 
+const landingWelcomeTitle = 'Your Documents. Your Creativity. One Workspace.'
+const landingWelcomePrefix = 'Your Documents. Your Creativity. '
+const landingWelcomeAccent = 'One Workspace.'
+const landingWelcomeDescription = 'Edit, convert, compress, and organize your documents with powerful tools designed to make everyday work effortless.'
+const landingWelcomeVisitKey = 's19-landing-welcome-seen'
+
 function LandingPage({ notice = '' }) {
 	const [plans, setPlans] = useState(defaultPlans)
 	const [plansLoading, setPlansLoading] = useState(true)
 	const [plansError, setPlansError] = useState(false)
 	const [headerScrolled, setHeaderScrolled] = useState(() => window.scrollY > 24)
 	const [logoSpinKey, setLogoSpinKey] = useState(0)
+	const [typedWelcomeLength, setTypedWelcomeLength] = useState(() => {
+		try {
+			return window.sessionStorage.getItem(landingWelcomeVisitKey) === 'true'
+				? landingWelcomeTitle.length + landingWelcomeDescription.length
+				: 0
+		} catch {
+			return 0
+		}
+	})
 
 	function handleLandingLogoClick() {
 		setLogoSpinKey((key) => key + 1)
@@ -116,6 +130,28 @@ function LandingPage({ notice = '' }) {
 		updateHeader()
 		return () => window.removeEventListener('scroll', updateHeader)
 	}, [])
+
+	useEffect(() => {
+		const totalLength = landingWelcomeTitle.length + landingWelcomeDescription.length
+		if (typedWelcomeLength >= totalLength) return
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			setTypedWelcomeLength(totalLength)
+			try { window.sessionStorage.setItem(landingWelcomeVisitKey, 'true') } catch { /* storage may be disabled */ }
+			return
+		}
+
+		const interval = window.setInterval(() => {
+			setTypedWelcomeLength((length) => {
+				const nextLength = Math.min(length + 1, totalLength)
+				if (nextLength === totalLength) {
+					window.clearInterval(interval)
+					try { window.sessionStorage.setItem(landingWelcomeVisitKey, 'true') } catch { /* storage may be disabled */ }
+				}
+				return nextLength
+			})
+		}, 26)
+		return () => window.clearInterval(interval)
+	}, [typedWelcomeLength])
 
 	useEffect(() => {
 		let isCurrent = true
@@ -164,7 +200,6 @@ function LandingPage({ notice = '' }) {
                          Sign up
                         </Link>
 
-						 <ThemeToggle />
                    </div>
 
                   </div>
@@ -181,9 +216,20 @@ function LandingPage({ notice = '' }) {
 						<small><h2>WORKSPACE</h2></small>
 					</div>
 					
-					<h1 id="landing-hero-title">Your Documents. Your Creativity. <span>One Workspace.</span></h1>
-					<p className="landing-hero-description">
-						Edit, convert, compress, and organize your documents with powerful tools designed to make everyday work effortless.
+					<h1 id="landing-hero-title" aria-label={landingWelcomeTitle}>
+						<span className="landing-welcome-reserve" aria-hidden="true">{landingWelcomePrefix}<span>{landingWelcomeAccent}</span></span>
+						<span className="landing-welcome-typed" aria-hidden="true">
+							{landingWelcomePrefix.slice(0, Math.min(typedWelcomeLength, landingWelcomePrefix.length))}
+							{typedWelcomeLength > landingWelcomePrefix.length && <span>{landingWelcomeAccent.slice(0, typedWelcomeLength - landingWelcomePrefix.length)}</span>}
+							{typedWelcomeLength < landingWelcomeTitle.length && <span className="landing-welcome-caret" />}
+						</span>
+					</h1>
+					<p className="landing-hero-description" aria-label={landingWelcomeDescription}>
+						<span className="landing-welcome-reserve" aria-hidden="true">{landingWelcomeDescription}</span>
+						<span className="landing-welcome-typed" aria-hidden="true">
+							{landingWelcomeDescription.slice(0, Math.max(0, typedWelcomeLength - landingWelcomeTitle.length))}
+							{typedWelcomeLength > landingWelcomeTitle.length && typedWelcomeLength < landingWelcomeTitle.length + landingWelcomeDescription.length && <span className="landing-welcome-caret" />}
+						</span>
 					</p>
 					<div className="landing-hero-actions">
 						<Link className="landing-primary-button" to="/signup">Start Creating <span aria-hidden="true">→</span></Link>
@@ -248,7 +294,6 @@ function LandingPage({ notice = '' }) {
 							</div>
 							<h3>{feature.title}</h3>
 							<p>{feature.description}</p>
-							<Link to="/login" className="landing-feature-link">Explore tool <span aria-hidden="true">→</span></Link>
 						</article>
 					))}
 				</div>
@@ -269,6 +314,28 @@ function LandingPage({ notice = '' }) {
 							<p>{step.description}</p>
 						</div>
 					))}
+				</div>
+			</section>
+
+			<section className="landing-file-tools-preview workspace-home-file-tools landing-container" aria-labelledby="landing-file-tools-title">
+				<div className="workspace-home-file-tools-heading">
+					<p className="dashboard-eyebrow">CONVERT &amp; COMPRESS</p>
+					<h2 id="landing-file-tools-title">Make every file work better.</h2>
+					<p>Switch formats or shrink large files with simple, focused tools.</p>
+				</div>
+				<div className="workspace-home-file-tools-grid">
+					<article className="home-file-tool-card home-convert-card" aria-label="File conversion preview">
+						<div className="home-file-tool-card-heading"><span className="home-file-tool-icon" aria-hidden="true">⇄</span><div><small>FILE CONVERTER</small><strong>Switch formats</strong></div><span className="home-file-tool-menu" aria-hidden="true">···</span></div>
+						<div className="home-convert-flow"><div className="home-convert-file"><span className="home-format-icon format-docx">W</span><span><b>Project brief</b><small>Word document</small></span><strong>.DOCX</strong></div><span className="home-convert-arrow" aria-hidden="true">→</span><div className="home-convert-file result"><span className="home-format-icon format-pdf">PDF</span><span><b>Project brief</b><small>Ready to share</small></span><strong>.PDF</strong></div></div>
+						<div className="home-file-tool-footer"><span><i /> Conversion preview</span><Link className="landing-preview-link" to="/signup">Try converter <span aria-hidden="true">↗</span></Link></div>
+					</article>
+					<article className="home-file-tool-card home-compress-card" aria-label="File compression preview">
+						<div className="home-file-tool-card-heading"><span className="home-file-tool-icon compress-icon" aria-hidden="true">⌁</span><div><small>FILE COMPRESSOR</small><strong>Keep files lightweight</strong></div><span className="home-file-tool-menu" aria-hidden="true">···</span></div>
+						<div className="home-compress-file"><span className="home-format-icon format-zip">▣</span><span><b>Project-assets.zip</b><small>Optimized for sharing</small></span><span className="home-compress-saved">−64%</span></div>
+						<div className="home-compress-sizes"><span><small>ORIGINAL</small><b>24.8 <i>MB</i></b></span><span className="home-size-arrow" aria-hidden="true">→</span><span><small>COMPRESSED</small><b>8.9 <i>MB</i></b></span></div>
+						<div className="home-compress-meter"><span /></div>
+						<div className="home-file-tool-footer"><span><i /> Compression preview</span><Link className="landing-preview-link" to="/signup">Try compressor <span aria-hidden="true">↗</span></Link></div>
+					</article>
 				</div>
 			</section>
 
@@ -307,7 +374,7 @@ function LandingPage({ notice = '' }) {
 							<ul>
 								{plan.features.map((feature) => <li key={feature}>{feature}</li>)}
 							</ul>
-							<Link to="/pricing">Choose plan</Link>
+							<Link to="/signup">Choose plan</Link>
 						</div>
 					))}
 				</div>

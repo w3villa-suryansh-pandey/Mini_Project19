@@ -3544,7 +3544,7 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   height: 190px;
   border: 1px dashed #c7d3cb;
   border-radius: 4px;
-  background-color: #fff;
+  background: #fff;
   background-image: linear-gradient(#fff 39px, #edf1ee 40px);
   background-size: 100% 40px;
   cursor: crosshair;
@@ -8538,7 +8538,7 @@ body {
 }
 
 .image-preview-transparent {
-  background-color: #fff;
+  background: #fff;
   background-image: conic-gradient(#e5e7eb 25%, transparent 0 50%, #e5e7eb 0 75%, transparent 0);
   background-size: 20px 20px;
 }
@@ -11164,7 +11164,7 @@ body {
 	width: calc(100% - 56px);
 	max-width: none;
 }
-.workspace-home-layout .s19-topnav-inner {
+.dashboard-layout .s19-topnav-inner {
 	width: calc(100% - 56px);
 	max-width: none;
 }
@@ -11172,13 +11172,13 @@ body {
 @media (max-width: 1050px) {
 	.landing-page { --landing-container-gutter: 20px; }
 	.dashboard-content > .workspace-home-main { width: calc(100% - 40px); }
-	.workspace-home-layout .s19-topnav-inner { width: calc(100% - 40px); }
+	.dashboard-layout .s19-topnav-inner { width: calc(100% - 40px); }
 }
 
 @media (max-width: 760px) {
 	.landing-page { --landing-container-gutter: 18px; }
 	.dashboard-content > .workspace-home-main { width: calc(100% - 36px); }
-	.workspace-home-layout .s19-topnav-inner { width: calc(100% - 36px); }
+	.dashboard-layout .s19-topnav-inner { width: calc(100% - 36px); }
 }
 
 :root:not([data-theme='dark']) .landing-page {
@@ -13178,4 +13178,716 @@ body {
   .dashboard-last-purchase-card { grid-template-columns: auto minmax(0, 1fr); gap: 11px; padding: 14px; }
   .dashboard-last-purchase-icon { width: 36px; height: 36px; }
   .dashboard-last-purchase-badge { grid-column: 2; justify-self: start; }
+}
+
+/* Landing page violet-to-blue palette with clear white content cards. */
+.landing-page {
+  color: #fff;
+  background: linear-gradient(128deg, #7047d8 0%, #5658d9 48%, #3183d7 100%);
+}
+.landing-page > .landing-header {
+  border: 1px solid rgba(255,255,255,.56);
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 12px 34px rgba(29,29,98,.18);
+}
+.landing-page .landing-brand,
+.landing-page .landing-nav a,
+.landing-page .landing-login-link { color: #33405b; }
+.landing-page .landing-nav a:hover,
+.landing-page .landing-login-link:hover { color: #6048c9; }
+.landing-page .landing-hero-brand,
+.landing-page .landing-hero h1,
+.landing-page .landing-hero-description,
+.landing-page .landing-trust-note,
+.landing-page .landing-benefits-copy h2,
+.landing-page .landing-benefits-copy > p:last-child,
+.landing-page .landing-section-heading h2,
+.landing-page .landing-section-heading > p,
+.landing-page .landing-eyebrow { color: #fff; }
+.landing-page .landing-hero-brand small { color: rgba(255,255,255,.76); }
+.landing-page .landing-hero h1 span { color: #d7d0ff; }
+.landing-page .landing-hero-description,
+.landing-page .landing-section-heading > p,
+.landing-page .landing-benefits-copy > p:last-child { color: rgba(255,255,255,.84); }
+.landing-page .landing-eyebrow > span { background: #a5f3e1; box-shadow: 0 0 0 4px rgba(165,243,225,.18); }
+.landing-page .landing-secondary-button { border-color: rgba(255,255,255,.72); color: #4c4692; background: #fff; }
+.landing-page .landing-primary-button { color: #fff; background: linear-gradient(115deg, #543cc5, #356fd0); box-shadow: 0 9px 22px rgba(29,31,108,.25); }
+.landing-page .landing-primary-button:hover { background: linear-gradient(115deg, #4932b8, #285fbe); }
+.landing-page .landing-tools-strip { min-height: 82px; padding: 0 22px; border: 1px solid rgba(255,255,255,.75); border-radius: 16px; background: rgba(255,255,255,.96); box-shadow: 0 12px 30px rgba(32,38,101,.13); }
+.landing-page .landing-tools-strip > span { color: #6e78a0; }
+.landing-page .landing-tools-strip strong { color: #35415e; }
+.landing-page .landing-tools-strip i { background: #9995d2; }
+.landing-page :is(.landing-feature-card, .landing-workflow-step, .landing-benefit-card, .landing-price-card, .landing-about, .landing-cta) {
+  border: 1px solid rgba(255,255,255,.88);
+  color: #35415b;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(31,35,101,.14);
+}
+.landing-page .landing-feature-card:hover,
+.landing-page .landing-workflow-step:hover,
+.landing-page .landing-benefit-card:hover,
+.landing-page .landing-price-card:hover { border-color: #d9d3ff; box-shadow: 0 18px 38px rgba(30,34,100,.2); }
+.landing-page .landing-feature-card h3,
+.landing-page .landing-workflow-step h3,
+.landing-page .landing-benefit-card h3,
+.landing-page .landing-price-card .landing-price-name,
+.landing-page .landing-price-card .landing-price,
+.landing-page .landing-about h2,
+.landing-page .landing-cta h2 { color: #293550; }
+.landing-page .landing-feature-card p,
+.landing-page .landing-workflow-step p,
+.landing-page .landing-benefit-card p,
+.landing-page .landing-price-card .landing-price-detail,
+.landing-page .landing-price-card ul,
+.landing-page .landing-about-copy > p:last-child,
+.landing-page .landing-about-aside p,
+.landing-page .landing-cta > div > p:last-child { color: #68758d; }
+.landing-page .landing-feature-number { color: #8d91ac; }
+.landing-page .landing-feature-link { color: #5748be; }
+.landing-page .landing-step-badge { border-color: #dedaff; color: #5145af; background: #f2efff; }
+.landing-page .landing-benefit-icon { color: #5a4ac2; background: #f0edff; }
+.landing-page .landing-price-card li::marker { color: #6253ca; }
+.landing-page .landing-price-card > a { color: #fff; background: linear-gradient(115deg, #6047cf, #3974d1); }
+.landing-page .landing-about-mark,
+.landing-page .landing-about-aside { border-color: #e4e2f7; color: #574bb8; background: #f6f5ff; }
+.landing-page .landing-about-copy .landing-eyebrow,
+.landing-page .landing-about-aside span,
+.landing-page .landing-cta .landing-eyebrow { color: #5d4bc1; }
+.landing-page .landing-cta .landing-primary-button { color: #fff; }
+.landing-page .landing-footer { border-color: rgba(255,255,255,.34); }
+.landing-page .landing-footer .landing-brand,
+.landing-page .landing-footer > span,
+.landing-page .landing-footer > a:last-child { color: rgba(255,255,255,.9); }
+.landing-page .landing-footer > a:last-child span { color: #d7d0ff; }
+.landing-page a:focus-visible { outline-color: #d9d3ff; }
+:root[data-theme='dark'] .landing-page.aurora-background {
+  color: #fff;
+  background: linear-gradient(128deg, #7047d8 0%, #5658d9 48%, #3183d7 100%);
+}
+:root[data-theme='dark'] .landing-page > .landing-header {
+  border-color: rgba(255,255,255,.56);
+  background: rgba(255,255,255,.94);
+}
+:root[data-theme='dark'] .landing-page .landing-brand,
+:root[data-theme='dark'] .landing-page .landing-nav a,
+:root[data-theme='dark'] .landing-page .landing-login-link { color: #33405b; }
+:root[data-theme='dark'] .landing-page .landing-hero h1,
+:root[data-theme='dark'] .landing-page .landing-hero-description,
+:root[data-theme='dark'] .landing-page .landing-trust-note,
+:root[data-theme='dark'] .landing-page .landing-section-heading h2,
+:root[data-theme='dark'] .landing-page .landing-section-heading > p,
+:root[data-theme='dark'] .landing-page .landing-benefits-copy h2,
+:root[data-theme='dark'] .landing-page .landing-benefits-copy > p:last-child,
+:root[data-theme='dark'] .landing-page .landing-eyebrow { color: #fff; }
+:root[data-theme='dark'] .landing-page .landing-hero h1 span { color: #d7d0ff; }
+:root[data-theme='dark'] .landing-page .landing-tools-strip,
+:root[data-theme='dark'] .landing-page :is(.landing-feature-card, .landing-workflow-step, .landing-benefit-card, .landing-price-card, .landing-about, .landing-cta) {
+  border-color: rgba(255,255,255,.88);
+  color: #35415b;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(31,35,101,.14);
+}
+:root[data-theme='dark'] .landing-page .landing-tools-strip > span { color: #6e78a0; }
+:root[data-theme='dark'] .landing-page .landing-tools-strip strong { color: #35415e; }
+:root[data-theme='dark'] .landing-page .landing-feature-card h3,
+:root[data-theme='dark'] .landing-page .landing-workflow-step h3,
+:root[data-theme='dark'] .landing-page .landing-benefit-card h3,
+:root[data-theme='dark'] .landing-page .landing-price-card .landing-price-name,
+:root[data-theme='dark'] .landing-page .landing-price-card .landing-price,
+:root[data-theme='dark'] .landing-page .landing-about h2,
+:root[data-theme='dark'] .landing-page .landing-cta h2 { color: #293550; }
+:root[data-theme='dark'] .landing-page .landing-feature-card p,
+:root[data-theme='dark'] .landing-page .landing-workflow-step p,
+:root[data-theme='dark'] .landing-page .landing-benefit-card p,
+:root[data-theme='dark'] .landing-page .landing-price-card .landing-price-detail,
+:root[data-theme='dark'] .landing-page .landing-price-card ul,
+:root[data-theme='dark'] .landing-page .landing-about-copy > p:last-child,
+:root[data-theme='dark'] .landing-page .landing-about-aside p,
+:root[data-theme='dark'] .landing-page .landing-cta > div > p:last-child { color: #68758d; }
+:root[data-theme='dark'] .landing-page .landing-about-copy .landing-eyebrow,
+:root[data-theme='dark'] .landing-page .landing-cta .landing-eyebrow { color: #5d4bc1; }
+:root[data-theme='dark'] .landing-page .landing-footer { border-color: rgba(255,255,255,.34); }
+:root[data-theme='dark'] .landing-page .landing-footer .landing-brand,
+:root[data-theme='dark'] .landing-page .landing-footer > span,
+:root[data-theme='dark'] .landing-page .landing-footer > a:last-child { color: rgba(255,255,255,.9); }
+:root:not([data-theme='dark']) .landing-page.aurora-background,
+:root[data-theme='dark'] .landing-page.aurora-background {
+  background: linear-gradient(128deg, #7047d8 0%, #5658d9 48%, #3183d7 100%);
+}
+
+.landing-page .landing-feature-grid > .landing-feature-card,
+.landing-page .landing-workflow-grid > .landing-workflow-step,
+.landing-page .landing-benefit-grid > .landing-benefit-card,
+.landing-page .landing-pricing-grid > .landing-price-card {
+  border-color: #e4e5f1;
+  color: #35415b;
+  background: #fff;
+}
+.landing-page .landing-feature-grid > .landing-feature-card h3,
+.landing-page .landing-workflow-grid > .landing-workflow-step h3,
+.landing-page .landing-benefit-grid > .landing-benefit-card h3,
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price-name,
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price { color: #293550; }
+.landing-page .landing-feature-grid > .landing-feature-card p,
+.landing-page .landing-workflow-grid > .landing-workflow-step p,
+.landing-page .landing-benefit-grid > .landing-benefit-card p,
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price-detail,
+.landing-page .landing-pricing-grid > .landing-price-card ul { color: #68758d; }
+.landing-page .landing-pricing-grid > .landing-price-card > a { color: #fff; background: linear-gradient(115deg, #6047cf, #3974d1); }
+:root:not([data-theme='dark']) .landing-page .landing-about,
+:root:not([data-theme='dark']) .landing-page .landing-cta,
+:root[data-theme='dark'] .landing-page .landing-about,
+:root[data-theme='dark'] .landing-page .landing-cta {
+  border-color: #e4e5f1;
+  color: #35415b;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(31,35,101,.14);
+}
+:root:not([data-theme='dark']) .landing-page .landing-about h2,
+:root:not([data-theme='dark']) .landing-page .landing-cta h2,
+:root[data-theme='dark'] .landing-page .landing-about h2,
+:root[data-theme='dark'] .landing-page .landing-cta h2 { color: #293550; }
+:root:not([data-theme='dark']) .landing-page .landing-about-copy > p:last-child,
+:root:not([data-theme='dark']) .landing-page .landing-about-aside p,
+:root:not([data-theme='dark']) .landing-page .landing-cta > div > p:last-child,
+:root[data-theme='dark'] .landing-page .landing-about-copy > p:last-child,
+:root[data-theme='dark'] .landing-page .landing-about-aside p,
+:root[data-theme='dark'] .landing-page .landing-cta > div > p:last-child { color: #68758d; }
+:root:not([data-theme='dark']) .landing-page .landing-about-copy .landing-eyebrow,
+:root:not([data-theme='dark']) .landing-page .landing-about-aside span,
+:root:not([data-theme='dark']) .landing-page .landing-cta .landing-eyebrow,
+:root[data-theme='dark'] .landing-page .landing-about-copy .landing-eyebrow,
+:root[data-theme='dark'] .landing-page .landing-about-aside span,
+:root[data-theme='dark'] .landing-page .landing-cta .landing-eyebrow { color: #5d4bc1; }
+:root:not([data-theme='dark']) .landing-page .landing-about-mark,
+:root:not([data-theme='dark']) .landing-page .landing-about-aside,
+:root[data-theme='dark'] .landing-page .landing-about-mark,
+:root[data-theme='dark'] .landing-page .landing-about-aside {
+  border-color: #e4e2f7;
+  color: #574bb8;
+  background: #f6f5ff;
+}
+
+/* Consistent violet-blue edge glow for landing page panels and cards. */
+.landing-page .landing-tools-strip,
+.landing-page .landing-feature-grid > .landing-feature-card,
+.landing-page .landing-workflow-grid > .landing-workflow-step,
+.landing-page .landing-benefit-grid > .landing-benefit-card,
+.landing-page .landing-pricing-grid > .landing-price-card,
+.landing-page .landing-about,
+.landing-page .landing-cta,
+.landing-page .landing-document-card,
+.landing-page .landing-secondary-button,
+.landing-page .landing-about-mark,
+.landing-page .landing-about-aside,
+.landing-page .landing-float-note,
+.landing-page .landing-feature-icon,
+.landing-page .landing-benefit-icon,
+.landing-page .landing-step-badge {
+  border-color: #d8d0ff;
+  box-shadow: 0 0 0 1px rgba(179, 165, 255, .35), 0 12px 30px rgba(43, 42, 137, .16);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.landing-page .landing-feature-grid > .landing-feature-card:hover,
+.landing-page .landing-workflow-grid > .landing-workflow-step:hover,
+.landing-page .landing-benefit-grid > .landing-benefit-card:hover,
+.landing-page .landing-pricing-grid > .landing-price-card:hover {
+  transform: translateY(-5px);
+  border-color: #a99af3;
+  box-shadow: 0 0 0 2px rgba(179, 165, 255, .4), 0 18px 38px rgba(43, 42, 137, .23), 0 0 25px rgba(123, 101, 225, .2);
+}
+.landing-page .landing-pricing-grid > .landing-price-card {
+  position: relative;
+  isolation: isolate;
+  gap: 18px;
+  overflow: hidden;
+  padding: 30px 23px 23px;
+  border-radius: 22px;
+  background: linear-gradient(155deg, #fff 0%, #fff 62%, #f8f7ff 100%);
+}
+.landing-page .landing-pricing-grid > .landing-price-card::before {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #8b5ce8, #6054d7 52%, #3183d7);
+  content: '';
+}
+.landing-page .landing-pricing-grid > .landing-price-card::after {
+  position: absolute;
+  z-index: 0;
+  top: -66px;
+  right: -62px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(128, 104, 230, .14), transparent 70%);
+  content: '';
+  pointer-events: none;
+}
+.landing-page .landing-pricing-grid > .landing-price-card > * { position: relative; z-index: 1; }
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price-name {
+  margin-bottom: -8px;
+  color: #5d4fba;
+  font-size: 10px;
+  letter-spacing: .14em;
+}
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price-row {
+  gap: 11px;
+  align-items: baseline;
+  padding: 14px 15px;
+  border: 1px solid #e6e1ff;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #f4f0ff, #f0f6ff);
+}
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price {
+  color: #30265f;
+  font-size: clamp(34px, 3vw, 43px);
+  line-height: 1;
+}
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price-detail { color: #777b98; font-size: 11px; }
+.landing-page .landing-pricing-grid > .landing-price-card ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 3px 0 0;
+  list-style: none;
+  color: #59657d;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.landing-page .landing-pricing-grid > .landing-price-card li { position: relative; padding-left: 23px; }
+.landing-page .landing-pricing-grid > .landing-price-card li::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  width: 15px;
+  height: 15px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #7655d9, #3e80d5);
+  content: '✓';
+  font-size: 9px;
+  font-weight: 800;
+}
+.landing-page .landing-pricing-grid > .landing-price-card > a {
+  min-height: 45px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.34);
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(110deg, #6748d2, #3c78d2);
+  box-shadow: 0 8px 18px rgba(78, 63, 180, .22);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+.landing-page .landing-pricing-grid > .landing-price-card > a:hover { transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 12px 22px rgba(78, 63, 180, .3); }
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card {
+  border-color: #d8d0ff;
+  color: #35415b;
+  background: linear-gradient(155deg, #fff 0%, #fff 62%, #f8f7ff 100%);
+  box-shadow: 0 0 0 1px rgba(179, 165, 255, .35), 0 12px 30px rgba(19, 20, 74, .2);
+}
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card .landing-price-name { color: #5d4fba; }
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card .landing-price { color: #30265f; }
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card .landing-price-detail,
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card ul { color: #59657d; }
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card .landing-price-row { border-color: #e6e1ff; background: linear-gradient(120deg, #f4f0ff, #f0f6ff); }
+:root[data-theme='dark'] .landing-page .landing-tools-strip,
+:root[data-theme='dark'] .landing-page .landing-feature-grid > .landing-feature-card,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card,
+:root[data-theme='dark'] .landing-page .landing-about,
+:root[data-theme='dark'] .landing-page .landing-cta,
+:root[data-theme='dark'] .landing-page .landing-document-card,
+:root[data-theme='dark'] .landing-page .landing-secondary-button,
+:root[data-theme='dark'] .landing-page .landing-about-mark,
+:root[data-theme='dark'] .landing-page .landing-about-aside,
+:root[data-theme='dark'] .landing-page .landing-float-note,
+:root[data-theme='dark'] .landing-page .landing-feature-icon,
+:root[data-theme='dark'] .landing-page .landing-benefit-icon,
+:root[data-theme='dark'] .landing-page .landing-step-badge {
+  border-color: #d8d0ff;
+  box-shadow: 0 0 0 1px rgba(179, 165, 255, .35), 0 12px 30px rgba(19, 20, 74, .2);
+}
+:root:not([data-theme='dark']) .landing-page .landing-about,
+:root:not([data-theme='dark']) .landing-page .landing-cta,
+:root[data-theme='dark'] .landing-page .landing-about,
+:root[data-theme='dark'] .landing-page .landing-cta { box-shadow: 0 0 0 1px rgba(179,165,255,.35), 0 12px 30px rgba(43,42,137,.16); }
+:root[data-theme='dark'] .landing-page .landing-feature-grid > .landing-feature-card:hover,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step:hover,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card:hover,
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card:hover {
+  transform: translateY(-5px);
+  border-color: #a99af3;
+  box-shadow: 0 0 0 2px rgba(179,165,255,.4), 0 18px 38px rgba(19,20,74,.24), 0 0 25px rgba(123,101,225,.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .landing-tools-strip,
+  .landing-page .landing-feature-card,
+  .landing-page .landing-workflow-step,
+  .landing-page .landing-benefit-card,
+  .landing-page .landing-price-card,
+  .landing-page .landing-secondary-button { transition: none; }
+}
+
+/* Keep the S19 mark crisp against the saturated landing background. */
+.landing-page .landing-brand img,
+.landing-page .landing-hero-brand img,
+.landing-page .landing-about-mark img {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  padding: 5px;
+  border: 1px solid rgba(255,255,255,.94);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.34), 0 0 18px rgba(196,181,253,.62);
+  object-fit: contain;
+}
+.landing-page .landing-hero-brand img { padding: 7px; border-radius: 15px; }
+.landing-page .landing-about-mark img { border-color: #e4e2f7; box-shadow: 0 0 14px rgba(124,101,225,.2); }
+
+/* White cards always use dark readable copy, including in dark theme. */
+.landing-page .landing-feature-grid > .landing-feature-card h3,
+.landing-page .landing-workflow-grid > .landing-workflow-step h3,
+.landing-page .landing-benefit-grid > .landing-benefit-card h3,
+.landing-page .landing-pricing-grid > .landing-price-card h2 { color: #26334d; }
+.landing-page .landing-feature-grid > .landing-feature-card p,
+.landing-page .landing-workflow-grid > .landing-workflow-step p,
+.landing-page .landing-benefit-grid > .landing-benefit-card p,
+.landing-page .landing-pricing-grid > .landing-price-card li { color: #59667d; }
+:root[data-theme='dark'] .landing-page .landing-feature-grid > .landing-feature-card h3,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step h3,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card h3,
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card h2,
+:root[data-theme='dark'] .landing-page .landing-about h2,
+:root[data-theme='dark'] .landing-page .landing-cta h2 { color: #26334d; }
+:root[data-theme='dark'] .landing-page .landing-feature-grid > .landing-feature-card p,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step p,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card p,
+:root[data-theme='dark'] .landing-page .landing-about-copy > p:last-child,
+:root[data-theme='dark'] .landing-page .landing-about-aside p,
+:root[data-theme='dark'] .landing-page .landing-cta > div > p:last-child { color: #59667d; }
+:root[data-theme='dark'] .landing-page .landing-about .landing-eyebrow,
+:root[data-theme='dark'] .landing-page .landing-cta .landing-eyebrow,
+:root[data-theme='dark'] .landing-page .landing-about-aside span { color: #5b49bd; }
+
+/* Give each feature and benefit icon a bright, distinct halo. */
+.landing-page .landing-feature-icon,
+.landing-page .landing-benefit-icon {
+  border: 1px solid rgba(255,255,255,.82);
+  color: #fff;
+  background: linear-gradient(135deg, #9a5ee8, #5d5bdc 55%, #328bda);
+  box-shadow: 0 0 0 2px rgba(113,91,213,.12), 0 0 15px rgba(121,92,223,.38), inset 0 1px 0 rgba(255,255,255,.42);
+}
+.landing-page .landing-benefit-icon { background: linear-gradient(135deg, #c05cb6, #7a58d9 54%, #3c8fdb); }
+.landing-page .landing-step-badge {
+  border-color: #d9d0ff;
+  color: #5948b7;
+  background: linear-gradient(135deg, #f4eaff, #e8f2ff);
+  box-shadow: 0 0 12px rgba(160,139,255,.3);
+}
+:root[data-theme='dark'] .landing-page .landing-feature-icon,
+:root[data-theme='dark'] .landing-page .landing-benefit-icon {
+  border-color: rgba(255,255,255,.82);
+  color: #fff;
+  background: linear-gradient(135deg, #9a5ee8, #5d5bdc 55%, #328bda);
+  box-shadow: 0 0 0 2px rgba(113,91,213,.12), 0 0 17px rgba(121,92,223,.45), inset 0 1px 0 rgba(255,255,255,.42);
+}
+:root[data-theme='dark'] .landing-page .landing-benefit-icon { background: linear-gradient(135deg, #c05cb6, #7a58d9 54%, #3c8fdb); }
+:root[data-theme='dark'] .landing-page .landing-step-badge { border-color: #d9d0ff; color: #5948b7; background: linear-gradient(135deg, #f4eaff, #e8f2ff); }
+
+/* Dark mode: keep the landing header and every content panel clearly separated. */
+:root[data-theme='dark'] .landing-page > .landing-header,
+:root[data-theme='dark'] .landing-page > .landing-header.is-scrolled {
+  border: 1px solid rgba(255,255,255,.88);
+  color: #26334d;
+  background: rgba(255,255,255,.98);
+  box-shadow: 0 0 0 2px rgba(193,179,255,.42), 0 14px 38px rgba(21,19,74,.32);
+  backdrop-filter: blur(18px);
+}
+:root[data-theme='dark'] .landing-page > .landing-header .landing-brand,
+:root[data-theme='dark'] .landing-page > .landing-header .landing-nav a,
+:root[data-theme='dark'] .landing-page > .landing-header .landing-login-link {
+  color: #303b56;
+}
+:root[data-theme='dark'] .landing-page > .landing-header .landing-nav a:hover,
+:root[data-theme='dark'] .landing-page > .landing-header .landing-login-link:hover { color: #664bd2; }
+
+:root[data-theme='dark'] .landing-page .landing-tools-strip,
+:root[data-theme='dark'] .landing-page .landing-feature-grid > .landing-feature-card,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card,
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card,
+:root[data-theme='dark'] .landing-page .landing-about,
+:root[data-theme='dark'] .landing-page .landing-cta,
+:root[data-theme='dark'] .landing-page .landing-document-card {
+  border: 1px solid #c9bbff;
+  color: #35415b;
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(189,173,255,.42), 0 16px 38px rgba(13,17,62,.3), 0 0 26px rgba(139,113,255,.2);
+}
+:root[data-theme='dark'] .landing-page .landing-feature-grid > .landing-feature-card h3,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step h3,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card h3,
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card h2,
+:root[data-theme='dark'] .landing-page .landing-about h2,
+:root[data-theme='dark'] .landing-page .landing-cta h2 { color: #26334d; }
+:root[data-theme='dark'] .landing-page .landing-feature-grid > .landing-feature-card p,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step p,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card p,
+:root[data-theme='dark'] .landing-page .landing-about-copy > p:last-child,
+:root[data-theme='dark'] .landing-page .landing-about-aside p,
+:root[data-theme='dark'] .landing-page .landing-cta > div > p:last-child,
+:root[data-theme='dark'] .landing-page .landing-pricing-grid > .landing-price-card ul { color: #59667d; }
+
+/* Give the three numbered How it works markers clear, distinct colors. */
+.landing-page .landing-workflow-grid > .landing-workflow-step:nth-child(1) .landing-step-badge,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step:nth-child(1) .landing-step-badge {
+  border: 1px solid #a98af8;
+  color: #fff;
+  background: linear-gradient(135deg, #9b5de5, #6554d9);
+  box-shadow: 0 0 0 2px rgba(155,93,229,.18), 0 0 18px rgba(155,93,229,.4);
+}
+.landing-page .landing-workflow-grid > .landing-workflow-step:nth-child(2) .landing-step-badge,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step:nth-child(2) .landing-step-badge {
+  border: 1px solid #5dd8d0;
+  color: #fff;
+  background: linear-gradient(135deg, #18b8b0, #2784d4);
+  box-shadow: 0 0 0 2px rgba(24,184,176,.16), 0 0 18px rgba(24,184,176,.38);
+}
+.landing-page .landing-workflow-grid > .landing-workflow-step:nth-child(3) .landing-step-badge,
+:root[data-theme='dark'] .landing-page .landing-workflow-grid > .landing-workflow-step:nth-child(3) .landing-step-badge {
+  border: 1px solid #ffab83;
+  color: #fff;
+  background: linear-gradient(135deg, #f58a55, #df5d8e);
+  box-shadow: 0 0 0 2px rgba(245,138,85,.16), 0 0 18px rgba(245,138,85,.38);
+}
+
+/* Distinct color and glow for each Why S19 benefit icon. */
+.landing-page .landing-benefit-grid > .landing-benefit-card:nth-child(1) .landing-benefit-icon,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card:nth-child(1) .landing-benefit-icon {
+  border: 1px solid #c6a8ff;
+  color: #fff;
+  background: linear-gradient(135deg, #aa62ed, #6949d4);
+  box-shadow: 0 0 0 2px rgba(170,98,237,.18), 0 0 20px rgba(170,98,237,.45);
+}
+.landing-page .landing-benefit-grid > .landing-benefit-card:nth-child(2) .landing-benefit-icon,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card:nth-child(2) .landing-benefit-icon {
+  border: 1px solid #86e5dc;
+  color: #fff;
+  background: linear-gradient(135deg, #25c5b4, #2586d8);
+  box-shadow: 0 0 0 2px rgba(37,197,180,.16), 0 0 20px rgba(37,197,180,.4);
+}
+.landing-page .landing-benefit-grid > .landing-benefit-card:nth-child(3) .landing-benefit-icon,
+:root[data-theme='dark'] .landing-page .landing-benefit-grid > .landing-benefit-card:nth-child(3) .landing-benefit-icon {
+  border: 1px solid #ffc58a;
+  color: #fff;
+  background: linear-gradient(135deg, #ffad4f, #f06e62);
+  box-shadow: 0 0 0 2px rgba(255,173,79,.16), 0 0 20px rgba(255,173,79,.4);
+}
+
+/* Keep the logo badge crisp without a glow. */
+.landing-page .landing-brand img,
+.landing-page .landing-hero-brand img,
+.landing-page .landing-about-mark img { box-shadow: none; }
+.landing-page .landing-about-mark { box-shadow: none; }
+
+/* Add stronger hierarchy and individual color accents to landing pricing cards. */
+.landing-page .landing-pricing-grid > .landing-price-card {
+  --plan-accent: #7552dc;
+  --plan-accent-secondary: #4385dc;
+  --plan-tint: #f4f1ff;
+  position: relative;
+  padding: 34px 25px 25px;
+  border: 1px solid color-mix(in srgb, var(--plan-accent) 36%, white);
+  border-radius: 24px;
+  background: linear-gradient(155deg, #fff 45%, var(--plan-tint));
+  box-shadow: 0 16px 38px rgba(38,34,105,.18), inset 0 1px 0 #fff;
+}
+.landing-page .landing-pricing-grid > .landing-price-card:nth-child(2n) {
+  --plan-accent: #148eaa;
+  --plan-accent-secondary: #3972d5;
+  --plan-tint: #edfaff;
+}
+.landing-page .landing-pricing-grid > .landing-price-card:nth-child(3n) {
+  --plan-accent: #d36b3d;
+  --plan-accent-secondary: #c34779;
+  --plan-tint: #fff3ed;
+}
+.landing-page .landing-pricing-grid > .landing-price-card::before {
+  height: 7px;
+  background: linear-gradient(90deg, var(--plan-accent), var(--plan-accent-secondary));
+}
+.landing-page .landing-pricing-grid > .landing-price-card::after {
+  background: radial-gradient(circle, color-mix(in srgb, var(--plan-accent) 22%, transparent), transparent 70%);
+}
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price-name {
+  width: fit-content;
+  padding: 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--plan-accent) 27%, white);
+  border-radius: 999px;
+  color: var(--plan-accent);
+  background: color-mix(in srgb, var(--plan-accent) 8%, white);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price-row {
+  border-color: color-mix(in srgb, var(--plan-accent) 17%, white);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--plan-accent) 9%, white), #f3f7ff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.88);
+}
+.landing-page .landing-pricing-grid > .landing-price-card .landing-price { color: #282b50; }
+.landing-page .landing-pricing-grid > .landing-price-card li::before {
+  background: linear-gradient(135deg, var(--plan-accent), var(--plan-accent-secondary));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--plan-accent) 35%, transparent);
+}
+.landing-page .landing-pricing-grid > .landing-price-card > a {
+  border: 0;
+  background: linear-gradient(110deg, var(--plan-accent), var(--plan-accent-secondary));
+  box-shadow: 0 9px 20px color-mix(in srgb, var(--plan-accent) 28%, transparent);
+}
+.landing-page .landing-pricing-grid > .landing-price-card:hover {
+  transform: translateY(-7px);
+  border-color: var(--plan-accent);
+  box-shadow: 0 22px 46px rgba(38,34,105,.24), 0 0 24px color-mix(in srgb, var(--plan-accent) 22%, transparent);
+}
+.landing-page .landing-pricing-grid > .landing-price-card > a {
+  background-size: 170% 100%;
+  background-position: 0% 50%;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-position 260ms ease;
+}
+.landing-page .landing-pricing-grid > .landing-price-card > a:hover {
+  color: #fff;
+  background: linear-gradient(110deg, var(--plan-accent), var(--plan-accent-secondary));
+  background-size: 170% 100%;
+  background-position: 100% 50%;
+  transform: translateY(-3px) scale(1.02);
+  filter: none;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--plan-accent) 38%, transparent);
+}
+
+/* Landing preview for the converter and compressor tools. */
+.landing-page .landing-file-tools-preview {
+  margin: clamp(48px, 7vw, 96px) auto 0;
+  padding: clamp(24px, 3.5vw, 38px);
+  border: 1px solid rgba(255,255,255,.48);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 18px 45px rgba(29,31,108,.12);
+}
+.landing-page .landing-file-tools-preview .workspace-home-file-tools-heading { margin-bottom: 24px; }
+.landing-page .landing-file-tools-preview .workspace-home-file-tools-heading .dashboard-eyebrow { color: #e2ddff; }
+.landing-page .landing-file-tools-preview .workspace-home-file-tools-heading h2 { color: #fff; }
+.landing-page .landing-file-tools-preview .workspace-home-file-tools-heading > p:last-child { color: rgba(255,255,255,.82); }
+.landing-page .landing-file-tools-preview .home-file-tool-card {
+  border-color: rgba(255,255,255,.9);
+  background: linear-gradient(145deg, #fff, #f7f8ff 68%, #f1f7ff);
+  box-shadow: 0 16px 34px rgba(27,31,94,.2), 0 0 0 1px rgba(255,255,255,.24);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.landing-page .landing-file-tools-preview .home-file-tool-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 22px 42px rgba(27,31,94,.27), 0 0 22px rgba(191,178,255,.35);
+}
+.landing-page .landing-file-tools-preview .home-file-tool-card-heading strong { color: #2e3951; }
+.landing-page .landing-file-tools-preview .home-file-tool-footer > span { color: #68758d; }
+.landing-page .landing-file-tools-preview .landing-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #5f50c9;
+  font-size: 10px;
+  font-weight: 850;
+  text-decoration: none;
+  transition: gap 160ms ease, color 160ms ease;
+}
+.landing-page .landing-file-tools-preview .landing-preview-link:hover { gap: 10px; color: #2875cc; }
+.landing-welcome-caret {
+  display: inline-block;
+  width: 2px;
+  height: .82em;
+  margin-left: 4px;
+  vertical-align: -.04em;
+  background: currentColor;
+  animation: landing-welcome-blink 850ms steps(2, start) infinite;
+}
+.landing-hero #landing-hero-title,
+.landing-hero .landing-hero-description { position: relative; }
+.landing-hero .landing-welcome-reserve { display: block; visibility: hidden; }
+.landing-hero .landing-welcome-typed { position: absolute; inset: 0 auto auto 0; display: block; width: 100%; }
+.landing-page .landing-hero h1 > .landing-welcome-typed { color: #fff; }
+.landing-page .landing-hero h1 > .landing-welcome-reserve > span,
+.landing-page .landing-hero h1 > .landing-welcome-typed > span:not(.landing-welcome-caret) { color: #d7d0ff; }
+:root[data-theme='dark'] .landing-page .landing-hero h1 > .landing-welcome-typed { color: #fff; }
+@keyframes landing-welcome-blink { to { visibility: hidden; } }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .workspace-home-file-tools-heading h2 { color: #fff; }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .workspace-home-file-tools-heading > p:last-child { color: rgba(255,255,255,.82); }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-file-tool-card {
+  border-color: rgba(255,255,255,.9);
+  color: #35415b;
+  background: linear-gradient(145deg, #fff, #f7f8ff 68%, #f1f7ff);
+}
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-file-tool-card-heading strong { color: #2e3951; }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-file-tool-footer > span { color: #68758d; }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-convert-file,
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-compress-file {
+  border-color: #e4e8f1;
+  background: rgba(255,255,255,.82);
+}
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-convert-file.result { border-color: #d8e9e2; background: #f7fffb; }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-convert-file b,
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-compress-file b,
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-compress-sizes b { color: #3a455d; }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-convert-file small,
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-compress-file small,
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-compress-sizes small { color: #8a94a7; }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-file-tool-footer { border-color: #e8eaf1; }
+:root[data-theme='dark'] .landing-page .landing-file-tools-preview .home-compress-meter { background: #e7ebf3; }
+@media (max-width: 680px) {
+  .landing-page .landing-file-tools-preview { margin-top: 48px; padding: 22px 16px; border-radius: 21px; }
+  .landing-page .landing-file-tools-preview .workspace-home-file-tools-grid { grid-template-columns: 1fr; }
+}
+
+/* Use one consistent vertical rhythm for every landing-page section. */
+.landing-page {
+  --landing-section-gap: clamp(42px, 5.5vw, 68px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--landing-section-gap);
+}
+.landing-page > .landing-header,
+.landing-page > .landing-auth-notice,
+.landing-page > .landing-hero,
+.landing-page > .landing-tools-strip,
+.landing-page > .landing-features,
+.landing-page > .landing-workflow,
+.landing-page > .landing-file-tools-preview,
+.landing-page > .landing-benefits,
+.landing-page > .landing-pricing,
+.landing-page > .landing-about,
+.landing-page > .landing-cta,
+.landing-page > .landing-footer {
+  margin-block: 0;
+  margin-inline: auto;
+}
+.landing-page > .landing-features,
+.landing-page > .landing-workflow,
+.landing-page > .landing-benefits,
+.landing-page > .landing-pricing { padding-block: 0; }
+
+@media (max-width: 680px) {
+  .landing-page { --landing-section-gap: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-welcome-caret { animation: none; }
 }
