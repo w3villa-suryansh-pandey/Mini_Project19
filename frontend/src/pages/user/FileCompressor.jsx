@@ -174,7 +174,7 @@ function FileCompressor() {
 	}
 
 	return (
-		<main className="dashboard-layout">
+		<main className="dashboard-layout file-compressor-page">
 			<WorkspaceHeader active="compressor" />
 			<section className="dashboard-content">
 

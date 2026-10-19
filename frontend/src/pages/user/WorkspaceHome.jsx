@@ -122,7 +122,7 @@ function WorkspaceHome() {
 					<section className="workspace-home-intro dashboard-welcome" aria-labelledby="workspace-home-title">
 						<div className="workspace-home-intro-copy">
 							<p className="dashboard-eyebrow">YOUR S19 WORKSPACE</p>
-							<h1 id="workspace-home-title" aria-label={welcomeHeading}>{typedHeading}{welcomeReady && !isReturningUser && typedMessage.length < welcomeMessage.length && <span className="workspace-welcome-caret" aria-hidden="true" />}</h1>
+							<h1 id="workspace-home-title" aria-label={welcomeHeading}>{typedHeading}{welcomeReady && !isReturningUser && typedMessage.length < welcomeMessage.length && <span className="workspace-welcome-caret" aria-hidden="true" />}{welcomeReady && typedHeading === welcomeHeading && <span className="workspace-welcome-edit-figure" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m14.5 5.5 4 4M4 20l4.2-.8L19 8.4a2.1 2.1 0 0 0-3-3L5.2 16.2 4 20Z" /><path d="M12 20h8" /></svg></span>}</h1>
 							<p aria-label={welcomeMessage}>{typedMessage}</p>
 						</div>
 					</section>

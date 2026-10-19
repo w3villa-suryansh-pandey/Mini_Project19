@@ -290,7 +290,7 @@ function FileConverter() {
 		: IMAGE_ACCEPT
 
 	return (
-		<main className="dashboard-layout">
+		<main className="dashboard-layout file-converter-page">
 			<WorkspaceHeader active="converter" />
 			<section className="dashboard-content">
 

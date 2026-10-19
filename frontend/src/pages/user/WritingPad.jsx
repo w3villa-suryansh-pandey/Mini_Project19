@@ -3,8 +3,6 @@ import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
 
 
-const STICKERS = ['⭐', '✅', '📌', '💡', '🎉', '❤️', '📎', '🌱']
-
 function WritingPad() {
 	const featureAccess = useFeatureAccess('writing_pad')
 	const editorRef = useRef(null)
@@ -95,11 +93,6 @@ function WritingPad() {
 		}
 		reader.onerror = () => setNotice('The selected image could not be read.')
 		reader.readAsDataURL(imageFile)
-	}
-
-	function insertSticker(sticker) {
-		runCommand('insertHTML', `<span aria-label="Sticker" style="font-size:30px;vertical-align:middle">${sticker}</span>&nbsp;`)
-		setNotice('Sticker added.')
 	}
 
 	function getCanvasPoint(event) {
@@ -208,7 +201,7 @@ function WritingPad() {
 	}
 
 	return (
-		<main className="dashboard-layout">
+		<main className="dashboard-layout writing-pad-page">
 			<WorkspaceHeader active="writing-pad" />
 			<section className="dashboard-content">
 
@@ -246,11 +239,24 @@ function WritingPad() {
 										<option value="40">40 px</option>
 									</select>
 								</label>
+								<label className="writing-pad-select-label">
+									<span className="writing-pad-visually-hidden">Font family</span>
+									<select defaultValue="Arial" aria-label="Font family" title="Font family" onChange={(event) => runCommand('fontName', event.target.value)} onMouseDown={captureSelection}>
+										<option value="Arial">Arial</option>
+										<option value="Georgia">Georgia</option>
+										<option value="'Times New Roman'">Times New Roman</option>
+										<option value="Verdana">Verdana</option>
+										<option value="'Trebuchet MS'">Trebuchet MS</option>
+										<option value="'Courier New'">Courier New</option>
+									</select>
+								</label>
 							</div>
 							<div className="writing-pad-tool-group" aria-label="Text style">
 								<button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand('bold')} aria-label="Bold" title="Bold"><strong>B</strong></button>
 								<button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand('italic')} aria-label="Italic" title="Italic"><em>I</em></button>
 								<button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand('underline')} aria-label="Underline" title="Underline"><u>U</u></button>
+								<button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand('strikeThrough')} aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+								<button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => runCommand('hiliteColor', '#fff2a8')} aria-label="Highlight text" title="Highlight text">▰</button>
 								<label className="writing-pad-color" title="Text color">
 									<span>A</span>
 									<input type="color" defaultValue="#262e3a" aria-label="Text color" onMouseDown={captureSelection} onChange={(event) => runCommand('foreColor', event.target.value)} />
@@ -267,15 +273,6 @@ function WritingPad() {
 								<button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => imageInputRef.current?.click()}>Image / logo</button>
 								<button type="button" onMouseDown={captureSelection} onClick={() => setIsSignatureOpen(true)}>Signature</button>
 							</div>
-						</div>
-
-						<div className="writing-pad-stickers" aria-label="Insert a sticker">
-							<span>Stickers</span>
-							{STICKERS.map((sticker) => (
-								<button key={sticker} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => insertSticker(sticker)} aria-label={`Insert ${sticker}`}>
-									{sticker}
-								</button>
-							))}
 						</div>
 
 						<div

@@ -1535,17 +1535,17 @@ function PrimePdfEditor() {
 		+ pageOrder.filter((pageIndex, index) => pageIndex !== index).length
 
 	return (
-		<main className="dashboard-layout">
+		<main className="dashboard-layout prime-pdf-editor-page">
 			<WorkspaceHeader active="editor" />
 			<section className="dashboard-content">
 
 				<div className="document-editor-main">
 					<div className="document-editor-heading">
 						<div>
-							<p className="dashboard-eyebrow">DOCUMENT WORKSPACE</p>
-							<h1>Prime PDF editor</h1>
+							<p className="dashboard-eyebrow">YOUR DOCUMENT STUDIO</p>
+							<h1>PDF editor</h1>
+							<p className="prime-pdf-heading-copy">A calmer space to refine, annotate, and organize your documents.</p>
 						</div>
-						<span className="editor-engine-status connected"><span />BROWSER PDF EDITOR</span>
 					</div>
 
 					<section className="document-editor-shell" aria-label="PDF text editing workspace">
@@ -1741,8 +1741,10 @@ function PrimePdfEditor() {
 								<div className="editor-empty-state">
 									<span className="editor-empty-icon" aria-hidden="true">PDF</span>
 									<h2>{hasPersistedDocument ? 'Restoring your PDF…' : 'Open a PDF to get started'}</h2>
-									<p>Drop a PDF or DOCX here, or choose one from your device. DOCX files are converted to visual PDFs in your browser.</p>
+									<p>Bring in a PDF or DOCX to start editing. Your file stays on this device while you work.</p>
 									<button className="editor-open-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={isRestoring}>Choose PDF</button>
+									<div className="prime-pdf-welcome-details"><span><b>01</b> Add your document</span><span><b>02</b> Make it yours</span><span><b>03</b> Save when ready</span></div>
+									<small className="prime-pdf-format-note">PDF and DOCX · up to 50 MB · processed in your browser</small>
 								</div>
 							)}
 						</div>
