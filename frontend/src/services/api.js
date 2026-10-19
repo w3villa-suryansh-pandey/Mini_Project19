@@ -1,8 +1,6 @@
 import { clearPdfEditorSessionId } from './pdfEditorSession.js'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV
-	? 'http://localhost:5000'
-	: 'https://mini-project19.onrender.com')
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://mini-project19.onrender.com'
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
 const ADMIN_SESSION_CACHE_KEY = 'w3villa-admin-session-verified'
 const USER_SUBSCRIPTION_CACHE_KEY = 'w3villa-user-subscription'
@@ -91,19 +89,31 @@ export function clearCachedUserSession() {
 }
 
 async function request(path, options = {}) {
-	const response = await fetch(`${API_BASE_URL}${path}`, {
-		credentials: 'include',
-		...options,
-		headers: {
-			...(options.body ? { 'Content-Type': 'application/json' } : {}),
-			...options.headers,
-		},
-	})
+	let response
+	try {
+		response = await fetch(`${API_BASE_URL}${path}`, {
+			credentials: 'include',
+			...options,
+			headers: {
+				...(options.body ? { 'Content-Type': 'application/json' } : {}),
+				...options.headers,
+			},
+		})
+	} catch (cause) {
+		if (cause.name === 'AbortError') throw cause
+		let apiOrigin = API_BASE_URL
+		try {
+			apiOrigin = new URL(API_BASE_URL, window.location.origin).origin
+		} catch {
+			// Keep the configured API URL in the message if it is malformed.
+		}
+		throw new Error(`Could not reach the API at ${apiOrigin}. Check that the backend is running and reachable.`, { cause })
+	}
 	const result = await response.json().catch(() => ({}))
 
 	if (!response.ok) {
 		if (response.status === 401) clearCachedUserSession()
-		const error = new Error(result.error?.message || 'The request could not be completed.')
+		const error = new Error(result.error?.message || `The API request failed (HTTP ${response.status}).`)
 		error.code = result.error?.code
 		error.status = response.status
 		throw error
