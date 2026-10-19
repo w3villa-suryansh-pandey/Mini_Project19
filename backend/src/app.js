@@ -24,6 +24,8 @@ app.use(cors({
 	credentials: true,
 }))
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleRazorpayWebhook)
+app.use('/api/pdf-editor', express.raw({ type: 'application/pdf', limit: '50mb' }))
+app.use('/api/pdf-editor', express.json({ limit: '15mb' }))
 app.use(express.json({ limit: '5mb' }))
 app.use(express.urlencoded({ extended: false, limit: '1mb' }))
 app.use(cookieParser())

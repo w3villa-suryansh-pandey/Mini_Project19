@@ -3,6 +3,7 @@ const adminRoutes = require('./admin.routes')
 const authRoutes = require('./auth.routes')
 const healthRoutes = require('./health.routes')
 const paymentRoutes = require('./payment.routes')
+const pdfEditorRoutes = require('./pdf-editor.routes')
 const planRoutes = require('./plan.routes')
 const userRoutes = require('./user.routes')
 
@@ -20,6 +21,7 @@ router.use('/plans', planRoutes)
 router.use('/auth', authRoutes)
 router.use('/users', userRoutes)
 router.use('/payments', paymentRoutes)
+router.use('/pdf-editor', pdfEditorRoutes)
 router.use('/admin', adminRoutes)
 
 module.exports = router

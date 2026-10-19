@@ -116,6 +116,7 @@ async function request(path, options = {}) {
 		const error = new Error(result.error?.message || `The API request failed (HTTP ${response.status}).`)
 		error.code = result.error?.code
 		error.status = response.status
+		error.warnings = result.warnings || []
 		throw error
 	}
 
@@ -297,6 +298,61 @@ export function getUserSubscription({ refresh = false } = {}) {
 		cacheUserSubscription(result.subscription)
 		return result
 	})
+}
+
+export function uploadPdfEditorDocument(file) {
+	return request(`/api/pdf-editor/documents?name=${encodeURIComponent(file.name)}`, {
+		method: 'POST',
+		body: file,
+		headers: { 'Content-Type': 'application/pdf' },
+	})
+}
+
+export function getPdfEditorDocument(documentId) {
+	return request(`/api/pdf-editor/documents/${encodeURIComponent(documentId)}`)
+}
+
+export function getPdfEditorText(documentId) {
+	return request(`/api/pdf-editor/documents/${encodeURIComponent(documentId)}/text`)
+}
+
+export function previewPdfEditorChanges(documentId, operations) {
+	return request(`/api/pdf-editor/documents/${encodeURIComponent(documentId)}/preview`, {
+		method: 'POST',
+		body: JSON.stringify(operations),
+	})
+}
+
+export function applyPdfEditorChanges(documentId, operations) {
+	return request(`/api/pdf-editor/documents/${encodeURIComponent(documentId)}/edits`, {
+		method: 'POST',
+		body: JSON.stringify(operations),
+	})
+}
+
+export function getPdfEditorVersions(documentId) {
+	return request(`/api/pdf-editor/documents/${encodeURIComponent(documentId)}/versions`)
+}
+
+export function restorePdfEditorVersion(documentId, version) {
+	return request(`/api/pdf-editor/documents/${encodeURIComponent(documentId)}/versions/${version}/restore`, {
+		method: 'POST',
+	})
+}
+
+export async function downloadPdfEditorVersion(documentId, version) {
+	const versionQuery = version === undefined ? '' : `?version=${encodeURIComponent(version)}`
+	const response = await fetch(`${API_BASE_URL}/api/pdf-editor/documents/${encodeURIComponent(documentId)}/download${versionQuery}`, {
+		credentials: 'include',
+	})
+	if (!response.ok) {
+		const result = await response.json().catch(() => ({}))
+		const error = new Error(result.error?.message || `The PDF download failed (HTTP ${response.status}).`)
+		error.status = response.status
+		error.code = result.error?.code
+		throw error
+	}
+	return response.blob()
 }
 
 export function createRazorpayOrder(planId) {

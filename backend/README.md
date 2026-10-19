@@ -48,10 +48,37 @@ Default day/month plans are inserted when the plans collection is empty. Admins 
 - `POST /api/payments/confirm` verifies the Razorpay payment signature and captured payment for the signed-in user.
 - `GET /api/payments/subscription` returns the signed-in user's current pass status.
 - `POST /api/payments/webhook` accepts Razorpay-signed `payment.captured` events.
+- `POST /api/pdf-editor/documents` uploads a private, authenticated PDF session.
+- `GET /api/pdf-editor/documents/:documentId` returns owner-checked page metadata and scan detection.
+- `GET /api/pdf-editor/documents/:documentId/text` extracts text and PDF-space bounds.
+- `POST /api/pdf-editor/documents/:documentId/preview` checks edits and reports overlapping text.
+- `POST /api/pdf-editor/documents/:documentId/edits` applies edits and creates a new version; PDF editing feature access is enforced server-side.
+- `GET /api/pdf-editor/documents/:documentId/versions` lists retained versions.
+- `POST /api/pdf-editor/documents/:documentId/versions/:version/restore` selects a retained version.
+- `GET /api/pdf-editor/documents/:documentId/download` downloads the selected/current version.
 
-Unknown routes and request errors return JSON error responses. JSON request bodies are limited to 1 MB, and CORS origins are configured through `CLIENT_URLS`.
+Unknown routes and request errors return JSON error responses. General JSON request bodies are limited to 5 MB; PDF editor JSON operations are limited to 15 MB and PDF uploads to 50 MB. CORS origins are configured through `CLIENT_URLS`.
 
 The subscription expiry worker runs every minute after backend startup. The admin can pause automatic status cleanup or run it manually; downloads are still gated by the saved expiry timestamp even while the cleanup job is paused.
+
+### PDF editor processing
+
+The editor uses PDF.js in React for page rendering and coordinate selection. Save and export operations are processed by the isolated PyMuPDF worker in `src/services/pdf-editor.worker.py`; this applies native text redaction, replacement text, images, marks, page reordering, deletion, and rotation. The original upload is kept unchanged. Server-side PDF sessions are private to the authenticated user, limited to 50 MB and 250 pages, retain up to 20 versions, and expire after 24 hours. The default storage folder is the OS temporary directory. Set `PDF_EDITOR_STORAGE_DIR` to a private persistent-volume directory if sessions must survive a service restart.
+
+Install the worker locally from this directory:
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+PDF_EDITOR_PYTHON=.venv/bin/python npm run dev
+```
+
+The deployed Node service must also install `requirements.txt` and make `python3` available, or set `PDF_EDITOR_PYTHON` to the Python executable that has PyMuPDF installed. Keep its storage directory private and mounted on persistent disk if restart recovery is needed. OCR runs in the browser with Tesseract.js; scanned-page OCR is approximate and needs user review. Unsupported/encrypted PDFs and embedded fonts that cannot be reused receive an error or a documented substitute-font fallback.
+
+PyMuPDF is dual-licensed under AGPL and a commercial license; review the [official licensing notes](https://pymupdf.readthedocs.io/en/latest/about.html) for the product's distribution model.
+
+Run PDF worker tests with `python -m unittest discover -s test -p 'pdf_editor_worker_test.py'` from the backend directory. The worker tests cover redaction persistence, neighboring-text warnings, page reordering, and preservation of the original source.
 
 ## Structure
 

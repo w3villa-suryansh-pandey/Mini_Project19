@@ -2,7 +2,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 
-import { getUserProfile, getUserSubscription } from '../../services/api.js'
+import {
+	applyPdfEditorChanges,
+	downloadPdfEditorVersion,
+	getPdfEditorDocument,
+	getPdfEditorVersions,
+	getUserProfile,
+	getUserSubscription,
+	previewPdfEditorChanges,
+	uploadPdfEditorDocument,
+} from '../../services/api.js'
 import {
 	getPdfEditorSessionId,
 	loadPdfEditorSession,
@@ -27,38 +36,6 @@ function loadPdfJs() {
 		})
 	}
 	return pdfjsLibraryPromise
-}
-
-function fontNameForFamily(fontFamily, StandardFonts) {
-	const name = fontFamily.toLowerCase()
-	const italic = name.includes('italic') || name.includes('oblique')
-	const weight = name.includes('bold') ? 'Bold' : ''
-	let family
-
-	if (/courier|mono/.test(name)) {
-		family = 'Courier'
-	} else if (/times|serif/.test(name)) {
-		family = 'Times'
-	} else {
-		family = 'Helvetica'
-	}
-
-	if (family === 'Times') {
-		if (weight && italic) return StandardFonts.TimesRomanBoldItalic
-		if (weight) return StandardFonts.TimesRomanBold
-		if (italic) return StandardFonts.TimesRomanItalic
-		return StandardFonts.TimesRoman
-	}
-	if (weight && italic) return StandardFonts[`${family}BoldOblique`]
-	if (weight) return StandardFonts[`${family}Bold`]
-	if (italic) return StandardFonts[`${family}Oblique`]
-	return StandardFonts[family]
-}
-
-function parseColor(color, rgb) {
-	const values = color.match(/[\d.]+/g)?.map(Number)
-	if (!values || values.length < 3) return rgb(0, 0, 0)
-	return rgb(values[0] / 255, values[1] / 255, values[2] / 255)
 }
 
 function parsePageRange(value, pageCount) {
@@ -98,6 +75,8 @@ function PdfPage({
 	onAnnotationDelete,
 	onImagePlace,
 	onPageRendered,
+	onScannedPage,
+	onTextSelect,
 	renderKey,
 }) {
 	const pageRef = useRef(null)
@@ -148,6 +127,22 @@ function PdfPage({
 			if (!isCurrent) return
 
 			const textContent = await page.getTextContent()
+			const hasSelectableText = textContent.items.some((item) => typeof item.str === 'string' && item.str.trim())
+			let hasPageImage = false
+			if (!hasSelectableText) {
+				try {
+					const operatorList = await page.getOperatorList()
+					const imageOps = new Set([
+						pdfjsLibrary.OPS.paintImageXObject,
+						pdfjsLibrary.OPS.paintInlineImageXObject,
+						pdfjsLibrary.OPS.paintJpegXObject,
+					])
+					hasPageImage = operatorList.fnArray.some((operation) => imageOps.has(operation))
+				} catch {
+					hasPageImage = false
+				}
+			}
+			onScannedPage(pageNumber, !hasSelectableText && hasPageImage)
 			textLayerRef.current.replaceChildren()
 			textLayer = new pdfjsLibrary.TextLayer({
 				textContentSource: textContent,
@@ -184,6 +179,10 @@ function PdfPage({
 				const topLeft = viewport.convertToPdfPoint(bounds.left - pageBounds.left, bounds.top - pageBounds.top)
 				const bottomRight = viewport.convertToPdfPoint(bounds.right - pageBounds.left, bounds.bottom - pageBounds.top)
 				const computedStyle = window.getComputedStyle(textDiv)
+				const colorValues = computedStyle.color.match(/[\d.]+/g)?.slice(0, 3).map(Number)
+				const textColor = colorValues?.length === 3
+					? `#${colorValues.map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0')).join('')}`
+					: '#000000'
 				const patch = {
 					x: Math.min(topLeft[0], bottomRight[0]),
 					y: Math.min(topLeft[1], bottomRight[1]),
@@ -191,7 +190,10 @@ function PdfPage({
 					height: Math.abs(bottomRight[1] - topLeft[1]),
 					fontSize: Number.parseFloat(computedStyle.fontSize) / viewport.scale,
 					fontFamily: computedStyle.fontFamily,
-					color: computedStyle.color,
+					fontWeight: computedStyle.fontWeight,
+					italic: computedStyle.fontStyle !== 'normal',
+					alignment: computedStyle.textAlign,
+					color: textColor,
 				}
 				textDiv.dataset.pdfPatch = JSON.stringify(patch)
 				return patch
@@ -199,7 +201,16 @@ function PdfPage({
 			const handleFocus = (event) => {
 				const textDiv = event.target.closest('[data-pdf-text-index]')
 				if (!textDiv || !pageElement) return
-				getTextPatch(textDiv)
+				const geometry = getTextPatch(textDiv)
+				const itemIndex = Number(textDiv.dataset.pdfTextIndex)
+				const currentEdit = editsRef.current[`${pageNumber}:${itemIndex}`]
+				onTextSelect({
+					...geometry,
+					...currentEdit,
+					pageNumber,
+					itemIndex,
+					originalText: textLayer.textContentItemsStr[itemIndex] || '',
+				})
 				textDiv.classList.add('prime-pdf-text-editing')
 			}
 			const handleInput = (event) => {
@@ -208,12 +219,15 @@ function PdfPage({
 				const originalText = textLayer.textContentItemsStr[Number(textDiv.dataset.pdfTextIndex)]
 				if (!originalText) return
 				const geometry = getTextPatch(textDiv)
+				const itemIndex = Number(textDiv.dataset.pdfTextIndex)
+				const currentEdit = editsRef.current[`${pageNumber}:${itemIndex}`]
 				textDiv.dataset.pdfEdited = 'true'
 				textDiv.classList.add('prime-pdf-text-edited')
 				onTextEdit({
 					...geometry,
+					...currentEdit,
 					pageNumber,
-					itemIndex: Number(textDiv.dataset.pdfTextIndex),
+					itemIndex,
 					originalText,
 					replacementText: textDiv.innerText.replace(/\r/g, ''),
 				})
@@ -235,7 +249,7 @@ function PdfPage({
 				textDiv.classList.remove('prime-pdf-text-editing')
 			}
 			const handlePageClick = (event) => {
-				if (!['text', 'comment', 'signature', 'image'].includes(activeToolRef.current)
+				if (!['text', 'comment', 'signature', 'image', 'rectangle', 'ellipse'].includes(activeToolRef.current)
 					|| event.target.closest('[data-pdf-text-index], [data-added-text]')) return
 				const bounds = pageElement.getBoundingClientRect()
 				const left = event.clientX - bounds.left
@@ -243,6 +257,18 @@ function PdfPage({
 				const [x, y] = viewport.convertToPdfPoint(left, top)
 				if (activeToolRef.current === 'image') {
 					onImagePlace({ pageNumber, x, y, left, top })
+					return
+				}
+				if (activeToolRef.current === 'rectangle' || activeToolRef.current === 'ellipse') {
+					const scale = PAGE_SCALE * zoom
+					onAnnotation({
+						type: activeToolRef.current,
+						pageNumber,
+						x,
+						y,
+						width: 110 / scale,
+						height: 72 / scale,
+					})
 					return
 				}
 				const text = activeToolRef.current === 'comment'
@@ -366,7 +392,7 @@ function PdfPage({
 			textLayer?.cancel()
 			cleanupTextEvents?.()
 		}
-	}, [document, editsEnabled, editsRef, onAnnotation, onImagePlace, onPageRendered, onTextCancel, onTextEdit, pageNumber, pdfjsLibrary, renderKey, rotation, zoom])
+	}, [document, editsEnabled, editsRef, onAnnotation, onImagePlace, onPageRendered, onScannedPage, onTextCancel, onTextEdit, onTextSelect, pageNumber, pdfjsLibrary, renderKey, rotation, zoom])
 
 	const viewport = pageViewport
 	const annotationRect = (annotation) => {
@@ -376,6 +402,13 @@ function PdfPage({
 		return { x: Math.min(left, right), y: Math.min(top, bottom), width: Math.abs(right - left), height: Math.abs(bottom - top) }
 	}
 	const renderDrawing = (drawing, preview = false) => {
+		if (drawing.type === 'rectangle' || drawing.type === 'ellipse') {
+			const rect = annotationRect(drawing)
+			if (drawing.type === 'rectangle') {
+				return <rect key={drawing.id || 'preview'} {...rect} fill="none" stroke="#4269c8" strokeWidth="2" />
+			}
+			return <ellipse key={drawing.id || 'preview'} cx={rect.x + rect.width / 2} cy={rect.y + rect.height / 2} rx={rect.width / 2} ry={rect.height / 2} fill="none" stroke="#4269c8" strokeWidth="2" />
+		}
 		if (drawing.type === 'highlight') {
 			const rect = annotationRect(drawing)
 			return <rect key={drawing.id || 'preview'} {...rect} fill="#ffdf6c" fillOpacity={preview ? 0.22 : 0.35} stroke={preview ? '#b38a12' : 'none'} />
@@ -474,7 +507,7 @@ function PdfPage({
 			<canvas ref={canvasRef} className="prime-pdf-canvas" />
 			<div className={`textLayer prime-pdf-text-layer ${editsEnabled ? 'is-editable' : ''}`} ref={textLayerRef} />
 			<svg ref={svgRef} className={`prime-pdf-annotation-layer${['draw', 'highlight'].includes(activeTool) ? ' is-active' : ''}`} viewBox={viewport ? `0 0 ${viewport.width} ${viewport.height}` : undefined} aria-label={`Annotations on page ${pageNumber}`}>
-				{viewport && annotations.filter((item) => item.pageNumber === pageNumber && ['highlight', 'draw'].includes(item.type)).map((item) => renderDrawing(item))}
+				{viewport && annotations.filter((item) => item.pageNumber === pageNumber && ['highlight', 'draw', 'rectangle', 'ellipse'].includes(item.type)).map((item) => renderDrawing(item))}
 				{viewport && annotations.filter((item) => item.pageNumber === pageNumber && item.type === 'image').map((item) => {
 					const image = imagePreview?.id === item.id ? imagePreview : item
 					const rect = imageRect(image)
@@ -566,6 +599,64 @@ function PdfPage({
 	)
 }
 
+function PdfThumbnail({ document, pageNumber, active, onSelect }) {
+	const buttonRef = useRef(null)
+	const canvasRef = useRef(null)
+
+	useEffect(() => {
+		let isCurrent = true
+		let renderTask
+		const renderThumbnail = async () => {
+			try {
+				const page = await document.getPage(pageNumber)
+				if (!isCurrent) return
+				const scale = Math.min(0.18, 86 / Math.max(page.view[2], page.view[3]))
+				const viewport = page.getViewport({ scale })
+				const canvas = canvasRef.current
+				const context = canvas?.getContext('2d', { alpha: false })
+				if (!canvas || !context) return
+				canvas.width = Math.ceil(viewport.width)
+				canvas.height = Math.ceil(viewport.height)
+				canvas.style.width = `${viewport.width}px`
+				canvas.style.height = `${viewport.height}px`
+				renderTask = page.render({ canvasContext: context, viewport })
+				await renderTask.promise
+			} catch {
+				// Keep the page number link usable if thumbnail rendering is unsupported.
+			}
+		}
+		const observer = typeof IntersectionObserver === 'undefined'
+			? null
+			: new IntersectionObserver((entries) => {
+				if (entries.some((entry) => entry.isIntersecting)) {
+					observer.disconnect()
+					renderThumbnail()
+				}
+			}, { rootMargin: '80px' })
+		if (observer && buttonRef.current) observer.observe(buttonRef.current)
+		else renderThumbnail()
+		return () => {
+			isCurrent = false
+			observer?.disconnect()
+			renderTask?.cancel()
+		}
+	}, [document, pageNumber])
+
+	return (
+		<button
+			ref={buttonRef}
+			className={`prime-pdf-thumbnail${active ? ' is-active' : ''}`}
+			type="button"
+			onClick={onSelect}
+			aria-label={`Go to page ${pageNumber}`}
+			aria-current={active ? 'page' : undefined}
+		>
+			<canvas ref={canvasRef} aria-hidden="true" />
+			<span>Page {pageNumber}</span>
+		</button>
+	)
+}
+
 function PrimePdfEditor() {
 	const location = useLocation()
 	const navigate = useNavigate()
@@ -576,12 +667,18 @@ function PrimePdfEditor() {
 	const [file, setFile] = useState(null)
 	const [ownerEmail, setOwnerEmail] = useState('')
 	const [editorSessionId, setEditorSessionId] = useState('')
+	const [serverDocumentId, setServerDocumentId] = useState('')
+	const [versionHistory, setVersionHistory] = useState([])
+	const [showVersionHistory, setShowVersionHistory] = useState(false)
 	const [isRestoring, setIsRestoring] = useState(true)
 	const [hasPersistedDocument, setHasPersistedDocument] = useState(false)
 	const [pdfjsLibrary, setPdfjsLibrary] = useState(null)
 	const [pdfDocument, setPdfDocument] = useState(null)
 	const [pdfBytes, setPdfBytes] = useState(null)
 	const [pageCount, setPageCount] = useState(0)
+	const [scannedPages, setScannedPages] = useState([])
+	const [selectedTextProperties, setSelectedTextProperties] = useState(null)
+	const [focusedPageNumber, setFocusedPageNumber] = useState(1)
 	const [edits, setEdits] = useState({})
 	const [addedTexts, setAddedTexts] = useState([])
 	const [annotations, setAnnotations] = useState([])
@@ -600,6 +697,7 @@ function PrimePdfEditor() {
 	const [subscriptionHasActivePlan, setSubscriptionHasActivePlan] = useState(false)
 	const [subscriptionChecked, setSubscriptionChecked] = useState(false)
 	const [subscriptionError, setSubscriptionError] = useState(false)
+	const [ocrPageInProgress, setOcrPageInProgress] = useState(0)
 	const [canUndo, setCanUndo] = useState(false)
 	const [canRedo, setCanRedo] = useState(false)
 	const [isSaved, setIsSaved] = useState(true)
@@ -619,9 +717,19 @@ function PrimePdfEditor() {
 	const workspaceScrollTopRef = useRef(0)
 	const scrollPersistTimerRef = useRef(null)
 	const persistStateRef = useRef(null)
+	const serverDocumentIdRef = useRef('')
 	const onPageRendered = useCallback((renderKey) => {
 		setRenderedPageKeys((current) => current.includes(renderKey) ? current : [...current, renderKey])
 	}, [])
+	const onScannedPage = useCallback((pageNumber, isScanned) => {
+		setScannedPages((current) => {
+			const includesPage = current.includes(pageNumber)
+			if (isScanned && !includesPage) return [...current, pageNumber]
+			if (!isScanned && includesPage) return current.filter((item) => item !== pageNumber)
+			return current
+		})
+	}, [])
+	const onTextSelect = useCallback((selection) => setSelectedTextProperties(selection), [])
 
 	useEffect(() => {
 		let isCurrent = true
@@ -761,9 +869,12 @@ function PrimePdfEditor() {
 				setPdfRenderGeneration((generation) => generation + 1)
 				setPdfBytes(bytes)
 				setPageCount(loadedDocument.numPages)
+				setScannedPages([])
 				const initialOrder = Array.from({ length: loadedDocument.numPages }, (_, index) => index)
 				const savedState = pendingRestoredStateRef.current
 				pendingRestoredStateRef.current = null
+				serverDocumentIdRef.current = savedState?.serverDocumentId || ''
+				setServerDocumentId(serverDocumentIdRef.current)
 				const restoredOrder = savedState?.pageOrder?.length === loadedDocument.numPages
 					? savedState.pageOrder
 					: initialOrder
@@ -848,6 +959,7 @@ function PrimePdfEditor() {
 			try {
 				await savePdfEditorState(editorSessionId, ownerEmail, {
 					name: file.name,
+					serverDocumentId,
 					edits: editsRef.current,
 					addedTexts: addedTextsRef.current,
 					annotations: annotationsRef.current,
@@ -867,7 +979,7 @@ function PrimePdfEditor() {
 				setNotice(`Could not preserve your PDF editing session: ${error.message}`)
 			}
 		}
-	}, [activeTool, editorSessionId, file, hasPersistedDocument, isSaved, mergeFiles, ownerEmail, pendingImage, pdfBytes, splitRange])
+	}, [activeTool, editorSessionId, file, hasPersistedDocument, isSaved, mergeFiles, ownerEmail, pendingImage, pdfBytes, serverDocumentId, splitRange])
 
 	useEffect(() => {
 		if (!file || !pdfBytes || !hasPersistedDocument || isLoading || isRestoring || !editorSessionId || !ownerEmail) return undefined
@@ -1009,6 +1121,29 @@ function PrimePdfEditor() {
 		setNotice('Image deleted.')
 	}, [recordChange])
 
+	function updateSelectedTextProperty(property, value) {
+		if (!selectedTextProperties) return
+		const key = `${selectedTextProperties.pageNumber}:${selectedTextProperties.itemIndex}`
+		const current = editsRef.current[key] || {
+			...selectedTextProperties,
+			replacementText: selectedTextProperties.originalText,
+		}
+		const updated = { ...current, [property]: value }
+		recordChange({ ...editsRef.current, [key]: updated }, addedTextsRef.current)
+		setSelectedTextProperties((selection) => ({ ...selection, [property]: value }))
+		const textElement = document.querySelector(`[data-pdf-text-key="${key}"]`)
+		if (textElement) {
+			if (property === 'fontSize') textElement.style.fontSize = `${value * PAGE_SCALE * zoom}px`
+			if (property === 'fontFamily') textElement.style.fontFamily = value
+			if (property === 'color') textElement.style.color = value
+			if (property === 'fontWeight') textElement.style.fontWeight = value
+			if (property === 'italic') textElement.style.fontStyle = value ? 'italic' : 'normal'
+			if (property === 'alignment') textElement.style.textAlign = value
+			const patch = textElement.dataset.pdfPatch ? JSON.parse(textElement.dataset.pdfPatch) : {}
+			textElement.dataset.pdfPatch = JSON.stringify({ ...patch, [property]: value })
+		}
+	}
+
 	const placeImage = useCallback(async (position) => {
 		if (!pendingImage || !pdfDocument) {
 			setNotice('Choose a PNG or JPEG image before placing it.')
@@ -1046,6 +1181,63 @@ function PrimePdfEditor() {
 			setNotice(error.message || 'The image could not be placed on this page.')
 		}
 	}, [pendingImage, pdfDocument, recordChange])
+
+	async function recognizeScannedPage(pageNumber) {
+		if (!pdfDocument || !subscriptionActive || isSaving) return
+		let worker
+		let canvas
+		setOcrPageInProgress(pageNumber)
+		setNotice(`Recognizing text on page ${pageNumber}…`)
+		try {
+			const page = await pdfDocument.getPage(pageNumber)
+			const scale = Math.min(2, 2400 / Math.max(page.view[2], page.view[3]))
+			const rotation = (page.rotate + (pageRotations[pageNumber - 1] || 0)) % 360
+			const viewport = page.getViewport({ scale, rotation })
+			canvas = document.createElement('canvas')
+			canvas.width = Math.ceil(viewport.width)
+			canvas.height = Math.ceil(viewport.height)
+			await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
+			const { createWorker } = await import('tesseract.js')
+			worker = await createWorker('eng')
+			const { data } = await worker.recognize(canvas)
+			const items = (data.lines || []).filter((line) => line.text?.trim() && line.confidence >= 25).slice(0, 500)
+			if (!items.length) throw new Error('OCR did not find readable text on this page.')
+			const recognized = items.map((line) => {
+				const topLeft = viewport.convertToPdfPoint(line.bbox.x0, line.bbox.y0)
+				const bottomRight = viewport.convertToPdfPoint(line.bbox.x1, line.bbox.y1)
+				const left = Math.min(topLeft[0], bottomRight[0])
+				const bottom = Math.min(topLeft[1], bottomRight[1])
+				const top = Math.max(topLeft[1], bottomRight[1])
+				const height = Math.max(top - bottom, 6)
+				return {
+					id: crypto.randomUUID(),
+					pageNumber,
+					x: left,
+					y: top,
+					width: Math.max(Math.abs(bottomRight[0] - topLeft[0]), 12),
+					height,
+					text: line.text.trim().slice(0, 1200),
+					fontSize: Math.max(6, Math.min(48, height * 0.7)),
+					fontFamily: 'Arial',
+					color: '#171c19',
+					annotationType: 'ocr',
+					isEditing: false,
+					ocrLine: true,
+				}
+			})
+			recordChange(editsRef.current, [...addedTextsRef.current, ...recognized])
+			setNotice(`Recognized ${recognized.length} text lines. Review and correct them before saving; OCR reconstruction is approximate.`)
+		} catch (error) {
+			setNotice(error.message || 'OCR could not read this page.')
+		} finally {
+			await worker?.terminate().catch(() => undefined)
+			if (canvas) {
+				canvas.width = 0
+				canvas.height = 0
+			}
+			setOcrPageInProgress(0)
+		}
+	}
 
 	const restoreHistory = useCallback((index) => {
 		if (index < 0 || index >= historyRef.current.length || index === historyIndexRef.current) return
@@ -1200,6 +1392,9 @@ function PrimePdfEditor() {
 		setCanRedo(false)
 		setIsSaved(true)
 		setActiveTool('')
+		serverDocumentIdRef.current = ''
+		setServerDocumentId('')
+		setVersionHistory([])
 		setHasPersistedDocument(false)
 		setRestoredScrollTop(null)
 		workspaceScrollTopRef.current = 0
@@ -1234,113 +1429,6 @@ function PrimePdfEditor() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, location.state, isRestoring, navigate])
 
-	async function createEditedPdfBytes() {
-		const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib')
-		const source = await PDFDocument.load(pdfBytes)
-		const visibleOrder = pageOrder.filter((pageIndex) => !deletedPages.includes(pageIndex))
-		if (!visibleOrder.length) throw new Error('A PDF must contain at least one page.')
-		const output = await PDFDocument.create()
-		const copiedPages = await output.copyPages(source, visibleOrder)
-		const outputPageBySource = new Map()
-
-		copiedPages.forEach((page, index) => {
-			const sourceIndex = visibleOrder[index]
-			const rotation = (pageRotations[sourceIndex] || 0) + page.getRotation().angle
-			page.setRotation(degrees(((rotation % 360) + 360) % 360))
-			output.addPage(page)
-			outputPageBySource.set(sourceIndex + 1, page)
-		})
-
-		const fonts = new Map()
-		for (const edit of Object.values(edits)) {
-			const page = outputPageBySource.get(edit.pageNumber)
-			if (!page) continue
-			const fontName = fontNameForFamily(edit.fontFamily, StandardFonts)
-			if (!fonts.has(fontName)) fonts.set(fontName, await output.embedFont(fontName))
-			const font = fonts.get(fontName)
-			const fontSize = Math.max(4, Math.min(edit.fontSize, edit.height * 0.9))
-			const boxHeight = Math.max(edit.height, fontSize * 1.15)
-			page.drawRectangle({
-				x: edit.x,
-				y: edit.y - (boxHeight - edit.height) / 2,
-				width: Math.min(
-					Math.max(edit.width, font.widthOfTextAtSize(edit.originalText, fontSize)),
-					page.getWidth() - edit.x,
-				),
-				height: boxHeight,
-				color: rgb(1, 1, 1),
-			})
-			if (edit.replacementText) {
-				const availableWidth = Math.max(edit.width - 1, 1)
-				const textWidth = font.widthOfTextAtSize(edit.replacementText, fontSize)
-				const fittedSize = textWidth > availableWidth
-					? Math.max(4, fontSize * availableWidth / textWidth)
-					: fontSize
-				page.drawText(edit.replacementText, {
-					x: edit.x,
-					y: edit.y + edit.height - font.heightAtSize(fittedSize, { descender: false }),
-					size: fittedSize,
-					font,
-					color: parseColor(edit.color, rgb),
-					maxWidth: availableWidth,
-				})
-			}
-		}
-
-		for (const textItem of addedTexts) {
-			if (!textItem.text.trim()) continue
-			const page = outputPageBySource.get(textItem.pageNumber)
-			if (!page) continue
-			const fontName = fontNameForFamily(textItem.fontFamily, StandardFonts)
-			if (!fonts.has(fontName)) fonts.set(fontName, await output.embedFont(fontName))
-			const font = fonts.get(fontName)
-			page.drawText(textItem.text, {
-				x: textItem.x,
-				y: textItem.y - font.heightAtSize(textItem.fontSize, { descender: false }),
-				size: textItem.fontSize,
-				font,
-				color: parseColor(textItem.color, rgb),
-				maxWidth: Math.max(Math.min(textItem.width, page.getWidth() - textItem.x), 1),
-			})
-		}
-
-		for (const annotation of annotations) {
-			const page = outputPageBySource.get(annotation.pageNumber)
-			if (!page) continue
-			if (annotation.type === 'highlight') {
-				page.drawRectangle({
-					x: annotation.x,
-					y: annotation.y,
-					width: annotation.width,
-					height: annotation.height,
-					color: rgb(1, 0.82, 0.2),
-					opacity: 0.35,
-				})
-			} else if (annotation.type === 'draw') {
-				for (let index = 1; index < annotation.points.length; index += 1) {
-					page.drawLine({
-						start: annotation.points[index - 1],
-						end: annotation.points[index],
-						thickness: 1.8,
-						color: rgb(0.14, 0.43, 0.35),
-					})
-				}
-			} else if (annotation.type === 'image') {
-				const imageBytes = await fetch(annotation.dataUrl).then((response) => response.arrayBuffer())
-				const embeddedImage = annotation.mimeType === 'image/jpeg'
-					? await output.embedJpg(imageBytes)
-					: await output.embedPng(imageBytes)
-				page.drawImage(embeddedImage, {
-					x: annotation.x,
-					y: annotation.y,
-					width: annotation.width,
-					height: annotation.height,
-				})
-			}
-		}
-		return output.save({ useObjectStreams: true })
-	}
-
 	function downloadBytes(bytes, name) {
 		const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }))
 		const link = document.createElement('a')
@@ -1348,6 +1436,69 @@ function PrimePdfEditor() {
 		link.download = name
 		link.click()
 		setTimeout(() => URL.revokeObjectURL(url), 0)
+	}
+
+	async function ensureServerDocument() {
+		if (serverDocumentIdRef.current) {
+			try {
+				const [documentResult, versionsResult] = await Promise.all([
+					getPdfEditorDocument(serverDocumentIdRef.current),
+					getPdfEditorVersions(serverDocumentIdRef.current),
+				])
+				setVersionHistory(versionsResult.versions || documentResult.document.versions || [])
+				return serverDocumentIdRef.current
+			} catch (error) {
+				if (error.status !== 404) throw error
+				serverDocumentIdRef.current = ''
+				setServerDocumentId('')
+			}
+		}
+		const { document: serverDocument } = await uploadPdfEditorDocument(file)
+		serverDocumentIdRef.current = serverDocument.id
+		setServerDocumentId(serverDocument.id)
+		setVersionHistory(serverDocument.versions || [])
+		return serverDocument.id
+	}
+
+	async function createServerEditedPdfBlob() {
+		const documentId = await ensureServerDocument()
+		const operations = {
+			edits: Object.values(editsRef.current),
+			addedTexts: addedTextsRef.current,
+			annotations: annotationsRef.current,
+			pageOrder: pageOrderRef.current,
+			deletedPages: deletedPagesRef.current,
+			pageRotations: pageRotationsRef.current,
+		}
+		try {
+			await previewPdfEditorChanges(documentId, operations)
+		} catch (error) {
+			if (error.code !== 'PDF_EDIT_OVERLAP') throw error
+			const overlapText = error.warnings.flatMap((warning) => warning.overlappingText || []).slice(0, 8).join(', ')
+			const detail = overlapText ? ` Overlapping text: “${overlapText}”.` : ''
+			if (!window.confirm(`The selected redaction area overlaps nearby page content.${detail} Continue and permanently remove all content in the selected area?`)) {
+				return null
+			}
+			operations.confirmOverlap = true
+			await previewPdfEditorChanges(documentId, operations)
+		}
+		const { document: savedDocument } = await applyPdfEditorChanges(documentId, operations)
+		setVersionHistory(savedDocument.versions || [])
+		return downloadPdfEditorVersion(documentId)
+	}
+
+	async function downloadPreviousVersion(version) {
+		if (!serverDocumentIdRef.current) return
+		setIsSaving(true)
+		try {
+			const blob = await downloadPdfEditorVersion(serverDocumentIdRef.current, version)
+			downloadBytes(blob, `${file.name.replace(/\.pdf$/i, '')}-v${version}.pdf`)
+			setNotice(`Downloaded PDF version ${version}.`)
+		} catch (error) {
+			setNotice(error.message || 'Could not download this PDF version.')
+		} finally {
+			setIsSaving(false)
+		}
 	}
 
 	async function downloadEditedPdf() {
@@ -1360,10 +1511,14 @@ function PrimePdfEditor() {
 		setIsSaving(true)
 		setNotice('')
 		try {
-			const result = await createEditedPdfBytes()
+			const result = await createServerEditedPdfBlob()
+			if (!result) {
+				setNotice('The PDF changes were not saved.')
+				return
+			}
 			downloadBytes(result, `${file.name.replace(/\.pdf$/i, '')}-edited.pdf`)
 			setIsSaved(true)
-			setNotice('Edited PDF saved to your device. Your original file was not changed.')
+			setNotice('Edited PDF processed and saved as a new, downloadable version. Your original file was preserved.')
 		} catch (error) {
 			setNotice(error.message || 'Could not export the edited PDF.')
 		} finally {
@@ -1381,7 +1536,12 @@ function PrimePdfEditor() {
 		setIsSaving(true)
 		setNotice('')
 		try {
-			const bytes = await createEditedPdfBytes()
+			const editedBlob = await createServerEditedPdfBlob()
+			if (!editedBlob) {
+				setNotice('The PDF changes were not saved.')
+				return
+			}
+			const bytes = await editedBlob.arrayBuffer()
 			const suggestedName = `${file.name.replace(/\.pdf$/i, '')}-edited.pdf`
 			if (typeof window.showSaveFilePicker === 'function') {
 				try {
@@ -1396,7 +1556,7 @@ function PrimePdfEditor() {
 					if (error.name === 'AbortError') return
 					throw error
 				}
-				setNotice('Edited PDF saved to the location you selected.')
+				setNotice('Edited PDF processed and saved as a new, versioned document. Your original file was preserved.')
 			} else {
 				downloadBytes(bytes, suggestedName)
 				setNotice('This browser does not support choosing a save location. The edited PDF was downloaded instead.')
@@ -1418,7 +1578,12 @@ function PrimePdfEditor() {
 		setNotice('')
 		try {
 			const { PDFDocument } = await import('pdf-lib')
-			const currentBytes = await createEditedPdfBytes()
+			const currentBlob = await createServerEditedPdfBlob()
+			if (!currentBlob) {
+				setNotice('The PDF changes were not saved.')
+				return
+			}
+			const currentBytes = await currentBlob.arrayBuffer()
 			const output = await PDFDocument.load(currentBytes)
 			for (const mergeFile of mergeFiles) {
 				const source = await PDFDocument.load(await mergeFile.arrayBuffer())
@@ -1426,6 +1591,7 @@ function PrimePdfEditor() {
 				pages.forEach((page) => output.addPage(page))
 			}
 			downloadBytes(await output.save({ useObjectStreams: true }), `${file.name.replace(/\.pdf$/i, '')}-merged.pdf`)
+			setIsSaved(true)
 			setNotice(`Merged the edited document with ${mergeFiles.length} PDF file${mergeFiles.length === 1 ? '' : 's'}.`)
 		} catch (error) {
 			setNotice(error.message || 'Could not merge the selected PDFs.')
@@ -1443,13 +1609,19 @@ function PrimePdfEditor() {
 		setNotice('')
 		try {
 			const { PDFDocument } = await import('pdf-lib')
-			const currentBytes = await createEditedPdfBytes()
+			const currentBlob = await createServerEditedPdfBlob()
+			if (!currentBlob) {
+				setNotice('The PDF changes were not saved.')
+				return
+			}
+			const currentBytes = await currentBlob.arrayBuffer()
 			const source = await PDFDocument.load(currentBytes)
 			const selectedPages = parsePageRange(splitRange, source.getPageCount())
 			const output = await PDFDocument.create()
 			const copiedPages = await output.copyPages(source, selectedPages)
 			copiedPages.forEach((page) => output.addPage(page))
 			downloadBytes(await output.save({ useObjectStreams: true }), `${file.name.replace(/\.pdf$/i, '')}-split.pdf`)
+			setIsSaved(true)
 			setNotice(`Downloaded a PDF containing ${selectedPages.length} selected page${selectedPages.length === 1 ? '' : 's'}.`)
 		} catch (error) {
 			setNotice(error.message || 'Could not split this PDF.')
@@ -1479,6 +1651,10 @@ function PrimePdfEditor() {
 		if (!imageFile) return
 		if (!['image/png', 'image/jpeg'].includes(imageFile.type)) {
 			setNotice('Choose a PNG or JPEG image to add to this PDF.')
+			return
+		}
+		if (imageFile.size > 8 * 1024 * 1024) {
+			setNotice('Choose an image smaller than 8 MB.')
 			return
 		}
 		const reader = new FileReader()
@@ -1607,10 +1783,12 @@ function PrimePdfEditor() {
 										<div className="prime-pdf-tool-group prime-pdf-annotation-tools" role="group" aria-label="Add and annotate">
 											<span className="prime-pdf-tool-group-label">Add & annotate</span>
 										{[
-							['erase', 'Erase text', 'Click a native PDF text block to cover it and remove its visible text.'],
+											['erase', 'Redact text', 'Select text to remove it from the exported PDF.'],
 											['text', 'Add text', 'Click a page to add text.'],
 											['highlight', 'Highlight', 'Drag over a page to highlight an area.'],
 											['draw', 'Draw', 'Draw on a page with your pointer or finger.'],
+											['rectangle', 'Rectangle', 'Click a page to add a rectangle.'],
+											['ellipse', 'Ellipse', 'Click a page to add an ellipse.'],
 											['comment', 'Comment', 'Click a page and enter a comment.'],
 											['signature', 'Signature', 'Click a page and type the signature name.'],
 										].map(([tool, label, message]) => (
@@ -1663,6 +1841,20 @@ function PrimePdfEditor() {
 											{isSaving ? 'Preparing PDF…' : 'Download PDF'}
 										</button>
 										</div>
+						<div className="prime-pdf-tool-group prime-pdf-version-group" role="group" aria-label="Document versions">
+							<span className="prime-pdf-tool-group-label">Versions</span>
+							<button className="editor-open-button" type="button" onClick={() => setShowVersionHistory((current) => !current)} aria-expanded={showVersionHistory} disabled={!versionHistory.length}>
+								History ({versionHistory.length})
+							</button>
+							{showVersionHistory && <div className="prime-pdf-version-list">
+								{[...versionHistory].reverse().map((version) => (
+									<button key={version.version} type="button" onClick={() => downloadPreviousVersion(version.version)} disabled={isSaving}>
+										<span>{version.original ? 'Original' : `Version ${version.version}`}{version.version === versionHistory[versionHistory.length - 1]?.version ? ' · Current' : ''}</span>
+										<small>{new Date(version.createdAt).toLocaleString()}</small>
+									</button>
+								))}
+							</div>}
+						</div>
 									</>
 								)}
 							</div>
@@ -1695,6 +1887,34 @@ function PrimePdfEditor() {
 						)}
 
 						{notice && <p className="prime-pdf-notice" role="status">{notice}</p>}
+						<div className="prime-pdf-editor-layout">
+						{pdfDocument && <aside className="prime-pdf-sidebar" aria-label="PDF tools and pages">
+							<div className="prime-pdf-side-section">
+								<h2>Tools</h2>
+								<button className={`prime-pdf-side-tool${!activeTool ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool(''); setNotice('Select a text block on the page to edit it.') }}>Edit text</button>
+								<button className={`prime-pdf-side-tool${activeTool === 'erase' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('erase'); setNotice('Select text to redact it from the exported PDF.') }}>Redact</button>
+								<button className={`prime-pdf-side-tool${activeTool === 'text' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('text'); setNotice('Click a page to add text.') }}>Add text</button>
+								<button className="prime-pdf-side-tool" type="button" onClick={() => imageInputRef.current?.click()}>Images</button>
+								<button className={`prime-pdf-side-tool${activeTool === 'rectangle' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('rectangle'); setNotice('Click a page to place a rectangle.') }}>Rectangle</button>
+								<button className={`prime-pdf-side-tool${activeTool === 'ellipse' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('ellipse'); setNotice('Click a page to place an ellipse.') }}>Ellipse</button>
+								<button className={`prime-pdf-side-tool${activeTool === 'signature' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('signature'); setNotice('Click a page to add a typed signature.') }}>Signature</button>
+							</div>
+							<div className="prime-pdf-side-section prime-pdf-pages-panel">
+								<h2>Pages <span>{pageOrder.filter((index) => !deletedPages.includes(index)).length}</span></h2>
+								{pageOrder.filter((pageIndex) => !deletedPages.includes(pageIndex)).map((pageIndex) => (
+									<PdfThumbnail
+										key={`${file?.name}:${pageIndex + 1}`}
+										document={pdfDocument}
+										pageNumber={pageIndex + 1}
+										active={focusedPageNumber === pageIndex + 1}
+										onSelect={() => {
+											setFocusedPageNumber(pageIndex + 1)
+											document.getElementById(`prime-pdf-page-${pageIndex + 1}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+										}}
+									/>
+								))}
+							</div>
+						</aside>}
 						<div
 							className={`prime-pdf-workspace ${activeTool ? `is-tool-${activeTool}` : ''}`}
 							onDragOver={(event) => event.preventDefault()}
@@ -1705,9 +1925,10 @@ function PrimePdfEditor() {
 							{pdfDocument && pageOrder
 								.filter((pageIndex) => !deletedPages.includes(pageIndex))
 								.map((pageIndex, visibleIndex, visiblePages) => (
-									<div className="prime-pdf-page-wrap" key={`${file.name}:${pageIndex + 1}`}>
+									<div className="prime-pdf-page-wrap" id={`prime-pdf-page-${pageIndex + 1}`} key={`${file.name}:${pageIndex + 1}`}>
 										<div className="prime-pdf-page-controls" aria-label={`Controls for page ${pageIndex + 1}`}>
 											<strong>Page {visibleIndex + 1} <span>of {visiblePages.length}</span></strong>
+											{scannedPages.includes(pageIndex + 1) && <button className="editor-open-button" type="button" onClick={() => recognizeScannedPage(pageIndex + 1)} disabled={!subscriptionActive || isSaving || addedTexts.some((item) => item.ocrLine && item.pageNumber === pageIndex + 1)} title="Recognize text in this scanned page">{ocrPageInProgress === pageIndex + 1 ? 'Recognizing…' : addedTexts.some((item) => item.ocrLine && item.pageNumber === pageIndex + 1) ? 'OCR added' : 'OCR page'}</button>}
 											<button className="editor-open-button" type="button" onClick={() => movePage(pageIndex, -1)} disabled={!visibleIndex}>Move up</button>
 											<button className="editor-open-button" type="button" onClick={() => movePage(pageIndex, 1)} disabled={visibleIndex === visiblePages.length - 1}>Move down</button>
 											<button className="editor-open-button" type="button" onClick={() => rotatePage(pageIndex)}>Rotate 90°</button>
@@ -1733,6 +1954,8 @@ function PrimePdfEditor() {
 											onAnnotationDelete={deleteAnnotation}
 											onImagePlace={placeImage}
 											onPageRendered={onPageRendered}
+							onScannedPage={onScannedPage}
+							onTextSelect={onTextSelect}
 											renderKey={`${pdfRenderGeneration}:${pageIndex + 1}:${pageRotations[pageIndex] || 0}`}
 										/>
 									</div>
@@ -1748,23 +1971,48 @@ function PrimePdfEditor() {
 								</div>
 							)}
 						</div>
+							{pdfDocument && <aside className="prime-pdf-properties" aria-label="Text properties">
+								<h2>Properties</h2>
+								{selectedTextProperties ? <>
+									<p className="prime-pdf-property-selection">Page {selectedTextProperties.pageNumber} · {selectedTextProperties.originalText.slice(0, 52)}{selectedTextProperties.originalText.length > 52 ? '…' : ''}</p>
+									<label>Font size <output>{Math.round(selectedTextProperties.fontSize || 12)} pt</output>
+										<input type="range" min="4" max="72" step="1" value={Math.max(4, Math.min(72, Math.round(selectedTextProperties.fontSize || 12)))} onChange={(event) => updateSelectedTextProperty('fontSize', Number(event.target.value))} />
+									</label>
+									<label>Font family
+										<select value={/courier|mono/i.test(selectedTextProperties.fontFamily || '') ? 'Courier' : /times|serif/i.test(selectedTextProperties.fontFamily || '') ? 'Times New Roman' : 'Arial'} onChange={(event) => updateSelectedTextProperty('fontFamily', event.target.value)}>
+											<option>Arial</option><option>Times New Roman</option><option>Courier</option>
+										</select>
+									</label>
+									<label>Text color <input type="color" value={/^#[0-9a-f]{6}$/i.test(selectedTextProperties.color || '') ? selectedTextProperties.color : '#171c19'} onChange={(event) => updateSelectedTextProperty('color', event.target.value)} /></label>
+									<div className="prime-pdf-property-toggles" aria-label="Text styles">
+										<button className={Number(selectedTextProperties.fontWeight) >= 600 || selectedTextProperties.fontWeight === 'bold' ? 'is-active' : ''} type="button" aria-pressed={Number(selectedTextProperties.fontWeight) >= 600 || selectedTextProperties.fontWeight === 'bold'} onClick={() => updateSelectedTextProperty('fontWeight', Number(selectedTextProperties.fontWeight) >= 600 || selectedTextProperties.fontWeight === 'bold' ? '400' : '700')}>Bold</button>
+										<button className={selectedTextProperties.italic ? 'is-active' : ''} type="button" aria-pressed={Boolean(selectedTextProperties.italic)} onClick={() => updateSelectedTextProperty('italic', !selectedTextProperties.italic)}>Italic</button>
+									</div>
+									<label>Alignment
+										<select value={['left', 'center', 'right'].includes(selectedTextProperties.alignment) ? selectedTextProperties.alignment : 'left'} onChange={(event) => updateSelectedTextProperty('alignment', event.target.value)}>
+											<option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>
+										</select>
+									</label>
+								</> : <p>Select a text block on the page to edit its font, size, color, and alignment.</p>}
+							</aside>}
+						</div>
 					</section>
 					<div className="document-editor-footer">
 						<p>{pdfDocument
 							? activeTool
-								? `${activeTool[0].toUpperCase()}${activeTool.slice(1)} tool is active. ${activeTool === 'draw' || activeTool === 'highlight' ? 'Drag on a page to mark it.' : activeTool === 'erase' ? 'Click a text block to erase it.' : 'Click a page to place it.'}`
+											? `${activeTool[0].toUpperCase()}${activeTool.slice(1)} tool is active. ${activeTool === 'draw' || activeTool === 'highlight' ? 'Drag on a page to mark it.' : activeTool === 'erase' ? 'Click a text block to redact it from the exported PDF.' : 'Click a page to place it.'}`
 								: editCount
 									? `${editCount} unsaved change${editCount === 1 ? '' : 's'} · use the page controls, annotation tools, Undo / Redo, and Save / Download.`
 									: 'Select PDF text to replace it. Use the toolbar to annotate, insert an image/signature/comment, or manage pages.'
 							: subscriptionError
 								? 'Could not verify your PDF editing pass. Retry the check above.'
 								: subscriptionActive
-									? 'Edits are processed in your browser; PDFs are not uploaded to the server.'
+									? 'Your original stays unchanged. Saving sends the PDF privately to the editor service, which creates a versioned export.'
 									: subscriptionChecked
 										? getPdfAccessMessage()
 										: 'Checking PDF editing access…'}</p>
 					</div>
-					<p className="prime-pdf-disclaimer">DOCX conversion creates a visual, image-based PDF, so its source text is not editable as PDF text. Comments and marks are flattened into the exported page, and text replacement uses a white cover rather than securely removing source text. Standard PDF password encryption is not available in the license-free PDF library.</p>
+					<p className="prime-pdf-disclaimer">Text replacement and redaction are applied to the PDF content server-side; removed text is not left behind as a white overlay. Embedded fonts and complex layouts may need a substitute font, and replacement text may wrap. OCR on scanned pages is approximate; review and correct each line before saving. DOCX conversion creates a visual PDF, so its original text is not editable.</p>
 				</div>
 			</section>
 		</main>
