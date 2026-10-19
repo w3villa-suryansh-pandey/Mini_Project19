@@ -1,6 +1,7 @@
 import { clearPdfEditorSessionId } from './pdfEditorSession.js'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+// Use the Vercel/Vite same-origin /api proxy so the session cookie is first-party.
+const API_BASE_URL = ''
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
 const ADMIN_SESSION_CACHE_KEY = 'w3villa-admin-session-verified'
 const USER_SUBSCRIPTION_CACHE_KEY = 'w3villa-user-subscription'
