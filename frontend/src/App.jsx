@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react'
 
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
@@ -9,6 +9,7 @@ import logo from './assets/logo.png'
 import LandingPage from './pages/LandingPage.jsx'
 
 import './App.css'
+import { applyTheme } from './services/theme.js'
 
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 
@@ -152,6 +153,10 @@ function AuthPage({ notice, setNotice }) {
 
   const mode = location.pathname === '/login' ? 'login' : 'signup'
 
+  useLayoutEffect(() => {
+    applyTheme('light')
+  }, [mode])
+
   const [selectedRole, setSelectedRole] = useState('user')
 
   const [showPassword, setShowPassword] = useState(false)
@@ -239,6 +244,8 @@ function AuthPage({ notice, setNotice }) {
       } else {
 
         const result = await signIn(credentials)
+
+        applyTheme('light')
 
         navigate(result.user.role === 'admin' ? '/admin' : '/home', { replace: true })
 

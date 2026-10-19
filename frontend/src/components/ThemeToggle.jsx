@@ -1,15 +1,12 @@
 import { useLayoutEffect, useState } from 'react'
+import { applyTheme } from '../services/theme.js'
 
 function ThemeToggle() {
-	const [theme, setTheme] = useState(() => localStorage.getItem('w3-theme') || 'light')
+	const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')
 	const isDark = theme === 'dark'
 
 	useLayoutEffect(() => {
-		document.documentElement.dataset.theme = theme
-		document.documentElement.style.colorScheme = theme
-		localStorage.setItem('w3-theme', theme)
-		const themeColor = document.querySelector('meta[name="theme-color"]')
-		if (themeColor) themeColor.content = theme === 'dark' ? '#111722' : '#f8faff'
+		applyTheme(theme)
 	}, [theme])
 
 	function toggleTheme() {
