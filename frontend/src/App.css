@@ -13928,6 +13928,8 @@ body {
 .prime-pdf-editor-page .prime-pdf-welcome-details b { margin-right: 4px; color: #785cd1; }
 .prime-pdf-editor-page .prime-pdf-format-note { margin-top: 14px; color: #9299aa; font-size: 9px; }
 :root[data-theme='dark'] .prime-pdf-editor-page .document-editor-heading { border-color: rgba(182, 166, 255, .42); background: linear-gradient(115deg, #29234a, #252b4b 54%, #1e3654); }
+:root[data-theme='dark'] .prime-pdf-editor-page .document-editor-toolbar { border-bottom-color: #41425d; background: linear-gradient(105deg, #24243b, #232e45); }
+:root[data-theme='dark'] .prime-pdf-editor-page .editor-file-mark { border: 1px solid #694657; color: #ffd5ce; background: #3b2b40; }
 :root[data-theme='dark'] .prime-pdf-editor-page .document-editor-heading h1 { color: #f5f2ff; }
 :root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-heading-copy { color: #c0c6dc; }
 :root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-workspace:not(:has(.prime-pdf-page-wrap)) { background: radial-gradient(ellipse at 50% 15%, rgba(97, 76, 174, .34), transparent 46%), linear-gradient(145deg, #1d2235, #1b2a40); }
@@ -13936,6 +13938,28 @@ body {
 :root[data-theme='dark'] .prime-pdf-editor-page .editor-empty-state p { color: #b6bfd4; }
 :root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-welcome-details span { border-color: #454562; color: #c2c4da; background: #292b43; }
 :root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-format-note { color: #a2abc1; }
+:root[data-theme='dark'] .prime-pdf-editor-page .dashboard-eyebrow { color: #c4b5fd; }
+:root[data-theme='dark'] .prime-pdf-editor-page .editor-file-name { color: #f2f4ff; }
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-file-meta,
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-tool-group-label,
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-disclaimer,
+:root[data-theme='dark'] .prime-pdf-editor-page .document-editor-footer p { color: #c3cce0; }
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-tool-group .editor-open-button {
+  border-color: #53617b;
+  color: #e7ebf6;
+  background: linear-gradient(135deg, #303b52, #29364b);
+}
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-tool-group .editor-open-button:hover:not(:disabled) {
+  border-color: #8797b6;
+  color: #fff;
+  background: linear-gradient(135deg, #3b4964, #304363);
+}
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-tool-group .editor-open-button:disabled { color: #aeb8ca; background: #263247; }
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-tool-group .editor-open-button.is-active,
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-tool-group .editor-save-button { border-color: #7166d4; color: #fff; background: linear-gradient(110deg, #6848bc, #326fc1); }
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-access-notice { color: #f0d99e; }
+:root[data-theme='dark'] .prime-pdf-editor-page .prime-pdf-access-notice a,
+:root[data-theme='dark'] .prime-pdf-editor-page .document-editor-footer a { color: #b7caff; }
 @keyframes editor-welcome-glow { from { opacity: .5; transform: translateX(-8px) scale(.9); } to { opacity: 1; transform: translateX(12px) scale(1.08); } }
 @keyframes editor-orbit { to { transform: rotate(360deg); } }
 @keyframes editor-card-arrive { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
