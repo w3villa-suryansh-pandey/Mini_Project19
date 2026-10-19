@@ -126,6 +126,34 @@ async function saveCapturedPayment(order, payment) {
 	}
 }
 
+async function captureAuthorizedPayment(razorpay, order, payment, expectedUserId) {
+	const notes = order?.notes || {}
+	const expectedAmount = Number(notes.amountInPaise)
+	if (
+		payment?.status !== 'authorized' || !payment.id || payment.order_id !== order?.id ||
+		(expectedUserId && notes.userId !== expectedUserId) ||
+		!Number.isInteger(expectedAmount) || expectedAmount < 1 ||
+		order.amount !== expectedAmount || payment.amount !== expectedAmount ||
+		String(order.currency).toLowerCase() !== 'inr' ||
+		String(payment.currency).toLowerCase() !== 'inr'
+	) return { order, payment }
+
+	try {
+		await razorpay.payments.capture(payment.id, expectedAmount, 'INR')
+	} catch (captureError) {
+		// A capture webhook and the browser confirmation can arrive together. Re-fetch
+		// before surfacing an error so an already captured payment still completes.
+		const refreshedPayment = await razorpay.payments.fetch(payment.id)
+		if (refreshedPayment.status !== 'captured') throw captureError
+	}
+
+	const [refreshedOrder, refreshedPayment] = await Promise.all([
+		razorpay.orders.fetch(order.id),
+		razorpay.payments.fetch(payment.id),
+	])
+	return { order: refreshedOrder, payment: refreshedPayment }
+}
+
 function respondWithError(res, status, message) {
 	return res.status(status).json({ error: { message } })
 }
@@ -190,9 +218,12 @@ async function confirmRazorpayPayment(req, res) {
 		return respondWithError(res, 404, 'The payment could not be found for this account.')
 	}
 
-	const payment = await razorpay.payments.fetch(paymentId)
+	let payment = await razorpay.payments.fetch(paymentId)
 	if (payment.order_id !== orderId) {
 		return respondWithError(res, 400, 'The payment does not match its Razorpay order.')
+	}
+	if (payment.status === 'authorized') {
+		({ order, payment } = await captureAuthorizedPayment(razorpay, order, payment, userId))
 	}
 	if (payment.status !== 'captured') {
 		return res.status(202).json({
@@ -244,14 +275,19 @@ async function handleRazorpayWebhook(req, res) {
 	}
 
 	const event = JSON.parse(req.body.toString('utf8'))
-	if (event.event === 'payment.captured') {
-		const payment = event.payload?.payment?.entity
+	if (event.event === 'payment.captured' || event.event === 'payment.authorized') {
+		let payment = event.payload?.payment?.entity
 		if (!payment?.order_id || !payment.id) {
-			return respondWithError(res, 400, 'The Razorpay webhook did not contain a valid captured payment.')
+			return respondWithError(res, 400, 'The Razorpay webhook did not contain a valid payment.')
 		}
-		const order = await razorpay.orders.fetch(payment.order_id)
+		let order = await razorpay.orders.fetch(payment.order_id)
+		if (event.event === 'payment.authorized') {
+			payment = await razorpay.payments.fetch(payment.id)
+			({ order, payment } = await captureAuthorizedPayment(razorpay, order, payment))
+		}
+		if (payment.status !== 'captured') return res.json({ received: true })
 		const savedPayment = await saveCapturedPayment(order, payment)
-		if (!savedPayment) return respondWithError(res, 400, 'The captured payment does not match its Razorpay order.')
+		if (!savedPayment) return respondWithError(res, 400, 'The payment does not match its Razorpay order.')
 	}
 
 	return res.json({ received: true })
@@ -260,6 +296,7 @@ async function handleRazorpayWebhook(req, res) {
 module.exports = {
 	calculateExpiration,
 	capturedPaymentDetails,
+	captureAuthorizedPayment,
 	confirmRazorpayPayment,
 	createCheckoutOrder,
 	getSubscription,

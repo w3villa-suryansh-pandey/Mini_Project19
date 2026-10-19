@@ -10,7 +10,7 @@ import {
 	hasCachedUserSession,
 } from '../services/api.js'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://mini-project19.onrender.com'
+const API_URL = import.meta.env.VITE_API_URL || ''
 
 function ProtectedRoute({ children, requiredRole = 'admin' }) {
 	const [accessState, setAccessState] = useState(() => (
