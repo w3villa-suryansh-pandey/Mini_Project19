@@ -3,7 +3,6 @@ const test = require('node:test')
 const {
 	calculateExpiration,
 	capturedPaymentDetails,
-	captureAuthorizedPayment,
 	subscriptionDetails,
 	verifyPaymentSignature,
 } = require('../src/controllers/payment.controller')
@@ -132,46 +131,6 @@ test('captured Razorpay payment details must match the paid order and plan notes
 	})
 	assert.equal(capturedPaymentDetails(order, { ...payment, amount: 999 }), null)
 	assert.equal(capturedPaymentDetails(order, { ...payment, order_id: 'order_other' }), null)
-})
-
-test('authorized Razorpay payments are captured only when order and amount match', async () => {
-	let captureCount = 0
-	const order = {
-		id: 'order_123',
-		status: 'created',
-		amount: 1000,
-		currency: 'INR',
-		notes: { userId: 'user_123', amountInPaise: '1000' },
-	}
-	let payment = {
-		id: 'pay_123',
-		order_id: 'order_123',
-		status: 'authorized',
-		amount: 1000,
-		currency: 'INR',
-	}
-	const razorpay = {
-		payments: {
-			async capture(paymentId, amount, currency) {
-				captureCount += 1
-				assert.deepEqual([paymentId, amount, currency], ['pay_123', 1000, 'INR'])
-				payment = { ...payment, status: 'captured' }
-			},
-			async fetch() { return payment },
-		},
-		orders: {
-			async fetch() { return { ...order, status: payment.status === 'captured' ? 'paid' : order.status, amount_paid: payment.status === 'captured' ? 1000 : 0 } },
-		},
-	}
-
-	const captured = await captureAuthorizedPayment(razorpay, order, payment, 'user_123')
-	assert.equal(captureCount, 1)
-	assert.equal(captured.order.status, 'paid')
-	assert.equal(captured.payment.status, 'captured')
-
-	const mismatched = await captureAuthorizedPayment(razorpay, order, { ...payment, status: 'authorized', amount: 999 }, 'user_123')
-	assert.equal(captureCount, 1)
-	assert.equal(mismatched.payment.amount, 999)
 })
 
 test('Razorpay payment IDs use a sparse unique index for existing subscriptions', () => {

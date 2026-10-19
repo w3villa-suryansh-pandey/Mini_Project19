@@ -19,12 +19,5 @@ export default defineConfig({
   server: {
     port: 5175,
     strictPort: true,
-    proxy: {
-      '/api': {
-        target: 'https://mini-project19.onrender.com',
-        changeOrigin: true,
-        secure: true,
-      },
-    },
   },
 })

@@ -1,7 +1,6 @@
 import { clearPdfEditorSessionId } from './pdfEditorSession.js'
 
-// Use the Vercel/Vite same-origin /api proxy so the session cookie is first-party.
-const API_BASE_URL = ''
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://mini-project19.onrender.com'
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
 const ADMIN_SESSION_CACHE_KEY = 'w3villa-admin-session-verified'
 const USER_SUBSCRIPTION_CACHE_KEY = 'w3villa-user-subscription'
@@ -114,10 +113,7 @@ async function request(path, options = {}) {
 
 	if (!response.ok) {
 		if (response.status === 401) clearCachedUserSession()
-		const message = response.status === 401
-			? 'Your sign-in session is not active on this backend. Please sign in again.'
-			: result.error?.message || `The API request failed (HTTP ${response.status}).`
-		const error = new Error(message)
+		const error = new Error(result.error?.message || `The API request failed (HTTP ${response.status}).`)
 		error.code = result.error?.code
 		error.status = response.status
 		throw error

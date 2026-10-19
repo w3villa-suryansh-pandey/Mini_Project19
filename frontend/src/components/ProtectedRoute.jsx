@@ -10,8 +10,7 @@ import {
 	hasCachedUserSession,
 } from '../services/api.js'
 
-// Keep session checks on the same-origin /api proxy used by the rest of the app.
-const API_URL = ''
+const API_URL = import.meta.env.VITE_API_URL || 'https://mini-project19.onrender.com'
 
 function ProtectedRoute({ children, requiredRole = 'admin' }) {
 	const [accessState, setAccessState] = useState(() => (

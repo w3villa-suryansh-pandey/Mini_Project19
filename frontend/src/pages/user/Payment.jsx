@@ -47,7 +47,6 @@ function Payment() {
 	const [isPlansLoading, setIsPlansLoading] = useState(true)
 	const [isStartingCheckout, setIsStartingCheckout] = useState(false)
 	const [isPaymentPending, setIsPaymentPending] = useState(false)
-	const [requiresSignIn, setRequiresSignIn] = useState(false)
 	const [notice, setNotice] = useState('')
 	const selectedPlan = plans.find((plan) => plan.id === selectedPlanId)
 	const selectedPrice = selectedPlan ? `₹${Number(selectedPlan.priceRupees).toLocaleString('en-IN')}` : ''
@@ -78,10 +77,7 @@ function Payment() {
 				if (isCurrent) setSubscription(currentSubscription)
 			})
 			.catch((error) => {
-				if (isCurrent) {
-					setNotice(error.message)
-					setRequiresSignIn(error.status === 401)
-				}
+				if (isCurrent) setNotice(error.message)
 			})
 			.finally(() => {
 				if (isCurrent) setIsLoading(false)
@@ -93,7 +89,6 @@ function Payment() {
 	async function startCheckout() {
 		if (!selectedPlan) return
 		setIsStartingCheckout(true)
-		setRequiresSignIn(false)
 		setNotice('')
 		try {
 			const checkout = await createRazorpayOrder(selectedPlan.id)
@@ -122,7 +117,6 @@ function Payment() {
 			razorpay.open()
 		} catch (error) {
 			setNotice(error.message)
-			setRequiresSignIn(error.status === 401)
 			setIsStartingCheckout(false)
 		}
 	}
@@ -151,7 +145,6 @@ function Payment() {
 		} catch (error) {
 			pendingPaymentRef.current = paymentDetails
 			setIsPaymentPending(true)
-			setRequiresSignIn(error.status === 401)
 			setNotice(`${error.message} Your payment details are kept here so you can check again without starting another checkout.`)
 		} finally {
 			setIsStartingCheckout(false)
@@ -178,7 +171,7 @@ function Payment() {
 						<h1>Subscription</h1>
 						<p>Purchase a pass to unlock edited PDF downloads.</p>
 					</div>
-					{notice && <p className="payment-notice" role="status">{notice}{requiresSignIn && <> <Link to="/login">Sign in again</Link></>}</p>}
+					{notice && <p className="payment-notice" role="status">{notice}</p>}
 					{subscription?.active && (
 						<section className="workspace-notice subscription-active-notice" aria-labelledby="subscription-active-title">
 							<span className="subscription-active-mark" aria-hidden="true">✓</span>
@@ -197,7 +190,7 @@ function Payment() {
 								: <p>{isPlansLoading ? 'Loading available plans…' : 'Select a plan to continue to secure Razorpay checkout.'}</p>}
 						</div>
 						{selectedPlan
-							? <button className="payment-checkout-button" type="button" onClick={isPaymentPending ? checkPaymentStatus : startCheckout} disabled={isLoading || isStartingCheckout || requiresSignIn}>
+							? <button className="payment-checkout-button" type="button" onClick={isPaymentPending ? checkPaymentStatus : startCheckout} disabled={isLoading || isStartingCheckout}>
 								{isStartingCheckout ? (isPaymentPending ? 'Checking payment…' : 'Opening checkout…') : isPaymentPending ? 'Check payment status' : `Pay ${selectedPrice}`}
 							</button>
 							: <Link to="/pricing">View passes <span aria-hidden="true">→</span></Link>}
