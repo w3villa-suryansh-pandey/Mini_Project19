@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 
@@ -38,6 +38,7 @@ function loadRazorpay() {
 }
 
 function Payment() {
+	const pendingPaymentRef = useRef(null)
 	const searchParams = new URLSearchParams(window.location.search)
 	const selectedPlanId = searchParams.get('plan')
 	const [plans, setPlans] = useState([])
@@ -45,6 +46,7 @@ function Payment() {
 	const [isLoading, setIsLoading] = useState(true)
 	const [isPlansLoading, setIsPlansLoading] = useState(true)
 	const [isStartingCheckout, setIsStartingCheckout] = useState(false)
+	const [isPaymentPending, setIsPaymentPending] = useState(false)
 	const [notice, setNotice] = useState('')
 	const selectedPlan = plans.find((plan) => plan.id === selectedPlanId)
 	const selectedPrice = selectedPlan ? `₹${Number(selectedPlan.priceRupees).toLocaleString('en-IN')}` : ''
@@ -99,18 +101,10 @@ function Payment() {
 				name: 'S19',
 				description: checkout.description,
 				prefill: { email: checkout.email },
-				handler: async (paymentDetails) => {
-					try {
-						const { subscription: currentSubscription } = await confirmRazorpayPayment(paymentDetails)
-						setSubscription(currentSubscription)
-						setNotice(currentSubscription.active
-							? 'Payment confirmed. Your PDF editing pass is active.'
-							: 'Payment is still processing. Refresh this page shortly to check again.')
-					} catch (error) {
-						setNotice(error.message)
-					} finally {
-						setIsStartingCheckout(false)
-					}
+				handler: (paymentDetails) => {
+					pendingPaymentRef.current = paymentDetails
+					setIsPaymentPending(true)
+					confirmPayment(paymentDetails)
 				},
 				modal: {
 					ondismiss: () => setIsStartingCheckout(false),
@@ -124,6 +118,42 @@ function Payment() {
 		} catch (error) {
 			setNotice(error.message)
 			setIsStartingCheckout(false)
+		}
+	}
+
+	async function confirmPayment(paymentDetails) {
+		setIsStartingCheckout(true)
+		setNotice('Confirming your payment…')
+		try {
+			let result
+			for (let attempt = 0; attempt < 6; attempt += 1) {
+				result = await confirmRazorpayPayment(paymentDetails)
+				setSubscription(result.subscription)
+				if (!result.pending) {
+					pendingPaymentRef.current = null
+					setIsPaymentPending(false)
+					setNotice(result.subscription.active
+						? 'Payment confirmed. Your PDF editing pass is active.'
+						: 'Payment was confirmed, but no active pass was returned. Refresh your subscription status or contact support.')
+					return
+				}
+				if (attempt < 5) await new Promise((resolve) => window.setTimeout(resolve, 1500))
+			}
+			pendingPaymentRef.current = paymentDetails
+			setIsPaymentPending(true)
+			setNotice('Razorpay received your payment, but capture is still pending. Check again in a moment; you do not need to pay again.')
+		} catch (error) {
+			pendingPaymentRef.current = paymentDetails
+			setIsPaymentPending(true)
+			setNotice(`${error.message} Your payment details are kept here so you can check again without starting another checkout.`)
+		} finally {
+			setIsStartingCheckout(false)
+		}
+	}
+
+	function checkPaymentStatus() {
+		if (pendingPaymentRef.current && !isStartingCheckout) {
+			confirmPayment(pendingPaymentRef.current)
 		}
 	}
 
@@ -160,8 +190,8 @@ function Payment() {
 								: <p>{isPlansLoading ? 'Loading available plans…' : 'Select a plan to continue to secure Razorpay checkout.'}</p>}
 						</div>
 						{selectedPlan
-							? <button className="payment-checkout-button" type="button" onClick={startCheckout} disabled={isLoading || isStartingCheckout}>
-								{isStartingCheckout ? 'Opening checkout…' : `Pay ${selectedPrice}`}
+							? <button className="payment-checkout-button" type="button" onClick={isPaymentPending ? checkPaymentStatus : startCheckout} disabled={isLoading || isStartingCheckout}>
+								{isStartingCheckout ? (isPaymentPending ? 'Checking payment…' : 'Opening checkout…') : isPaymentPending ? 'Check payment status' : `Pay ${selectedPrice}`}
 							</button>
 							: <Link to="/pricing">View passes <span aria-hidden="true">→</span></Link>}
 					</section>

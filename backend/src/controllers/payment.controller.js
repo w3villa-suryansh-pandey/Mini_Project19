@@ -195,7 +195,10 @@ async function confirmRazorpayPayment(req, res) {
 		return respondWithError(res, 400, 'The payment does not match its Razorpay order.')
 	}
 	if (payment.status !== 'captured') {
-		return res.status(202).json({ subscription: subscriptionDetails(await findActiveSubscription(userId)) })
+		return res.status(202).json({
+			pending: true,
+			subscription: subscriptionDetails(await findActiveSubscription(userId)),
+		})
 	}
 
 	const savedPayment = await saveCapturedPayment(order, payment)
