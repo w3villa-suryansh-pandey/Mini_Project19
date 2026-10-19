@@ -61,8 +61,34 @@ async function createPlan(req, res) {
 	const validation = validatePlan(req.body)
 	if (validation.error) return respondWithError(res, 400, validation.error)
 
-	const plan = await Plan.create({ id: randomUUID(), ...validation.value })
+	const lastPlan = await Plan.findOne({}).sort({ sortOrder: -1 }).select('sortOrder').lean()
+	const plan = await Plan.create({ id: randomUUID(), sortOrder: (lastPlan?.sortOrder || 0) + 1, ...validation.value })
 	return res.status(201).json({ plan: planForClient(plan.toObject()) })
+}
+
+async function reorderPlans(req, res) {
+	const { planIds } = req.body || {}
+	if (!Array.isArray(planIds) || planIds.some((id) => typeof id !== 'string' || !id) || new Set(planIds).size !== planIds.length) {
+		return respondWithError(res, 400, 'Provide each plan ID once in the desired order.')
+	}
+
+	const existingPlans = await Plan.find({}).select('id').lean()
+	const existingIds = new Set(existingPlans.map((plan) => plan.id))
+	if (planIds.length !== existingIds.size || planIds.some((id) => !existingIds.has(id))) {
+		return respondWithError(res, 409, 'The plan list changed. Refresh the page and try again.')
+	}
+
+	if (planIds.length) {
+		await Plan.bulkWrite(planIds.map((id, index) => ({
+			updateOne: {
+				filter: { id },
+				update: { $set: { sortOrder: index + 1 } },
+			},
+		})))
+	}
+
+	const plans = await Plan.find({}).sort({ sortOrder: 1, createdAt: 1 }).lean()
+	return res.json({ plans: plans.map(planForClient) })
 }
 
 async function updatePlan(req, res) {
@@ -93,4 +119,4 @@ async function deletePlan(req, res) {
 	return res.json({ message: 'Plan deleted.', archived: false })
 }
 
-module.exports = { createPlan, deletePlan, listAdminPlans, listPlans, updatePlan, validatePlan }
+module.exports = { createPlan, deletePlan, listAdminPlans, listPlans, reorderPlans, updatePlan, validatePlan }

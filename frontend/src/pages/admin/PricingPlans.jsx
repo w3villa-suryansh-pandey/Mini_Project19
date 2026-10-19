@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import AccountBadge from '../../components/AccountBadge.jsx'
 import AdminSidebar from '../../components/AdminSidebar.jsx'
-import { createAdminPlan, deleteAdminPlan, getAdminPlans, updateAdminPlan } from '../../services/api.js'
+import { createAdminPlan, deleteAdminPlan, getAdminPlans, reorderAdminPlans, updateAdminPlan } from '../../services/api.js'
 import { getPlanFeatureLabels, PLAN_FEATURE_OPTIONS } from '../../utils/planFeatures.js'
 
 const emptyPlan = { name: '', priceRupees: '', durationValue: '1', durationUnit: 'day', featureKeys: [], isActive: true }
@@ -14,6 +14,7 @@ function PricingPlans() {
 	const [isFormOpen, setIsFormOpen] = useState(false)
 	const [notice, setNotice] = useState('')
 	const [error, setError] = useState('')
+	const [isReordering, setIsReordering] = useState(false)
 
 	async function loadPlans() {
 		setError('')
@@ -100,6 +101,25 @@ function PricingPlans() {
 		}
 	}
 
+	async function movePlan(index, direction) {
+		const nextIndex = index + direction
+		if (nextIndex < 0 || nextIndex >= plans.length || isReordering) return
+
+		const reorderedPlans = [...plans]
+		;[reorderedPlans[index], reorderedPlans[nextIndex]] = [reorderedPlans[nextIndex], reorderedPlans[index]]
+		setError('')
+		setIsReordering(true)
+		try {
+			const { plans: savedPlans } = await reorderAdminPlans(reorderedPlans.map((plan) => plan.id))
+			setPlans(savedPlans)
+			setNotice('Plan order saved.')
+		} catch (orderError) {
+			setError(orderError.message)
+		} finally {
+			setIsReordering(false)
+		}
+	}
+
 	return (
 		<main className="admin-layout">
 			<AdminSidebar active="plans" />
@@ -133,20 +153,21 @@ function PricingPlans() {
 						<div className="users-panel-heading"><div><h2>All plans</h2><p>{plans.length} plans configured</p></div><span className="admin-demo-tag">DATABASE</span></div>
 						<div className="admin-table-scroll">
 							<table className="admin-table plans-table">
-								<thead><tr><th>Plan</th><th>Price</th><th>Duration</th><th>Features</th><th>Status</th><th>Action</th></tr></thead>
+								<thead><tr><th>Plan</th><th>Price</th><th>Duration</th><th>Features</th><th>Status</th><th>Order</th><th>Action</th></tr></thead>
 								<tbody>
-									{plans.map((plan) => (
+									{plans.map((plan, index) => (
 										<tr key={plan.id}>
 											<td><div className="plan-name-cell"><span className="plan-row-mark" aria-hidden="true">✦</span><strong>{plan.name}</strong></div></td>
 											<td><span className="plan-price">₹{Number(plan.priceRupees).toLocaleString('en-IN')}</span></td>
 											<td><span className="plan-duration">{plan.durationValue} {plan.durationUnit}{plan.durationValue === 1 ? '' : 's'}</span></td>
 											<td className="plan-features"><div className="plan-feature-list">{plan.features.map((feature) => <span key={feature}>{feature}</span>)}{plan.features.length === 0 && <span className="plan-no-features">No features enabled</span>}</div></td>
 											<td><span className={`user-status ${plan.isArchived ? 'inactive' : plan.isActive ? 'active' : 'pending'}`}><span />{plan.isArchived ? 'Archived' : plan.isActive ? 'Active' : 'Draft'}</span></td>
+											<td className="plan-order-cell"><button className="plan-order-button" type="button" aria-label={`Move ${plan.name} up`} title="Move up" disabled={index === 0 || isReordering} onClick={() => movePlan(index, -1)}>↑</button><button className="plan-order-button" type="button" aria-label={`Move ${plan.name} down`} title="Move down" disabled={index === plans.length - 1 || isReordering} onClick={() => movePlan(index, 1)}>↓</button></td>
 											<td className="plan-actions-cell"><button className="edit-plan-button" type="button" onClick={() => editPlan(plan)}>Edit</button><button className="delete-plan-button" type="button" onClick={() => removePlan(plan)}>Delete</button></td>
 										</tr>
 									))}
-									{!isLoading && plans.length === 0 && <tr><td className="empty-users" colSpan="6">No plans yet. Create your first plan to get started.</td></tr>}
-									{isLoading && <tr><td className="empty-users" colSpan="6">Loading plans…</td></tr>}
+									{!isLoading && plans.length === 0 && <tr><td className="empty-users" colSpan="7">No plans yet. Create your first plan to get started.</td></tr>}
+									{isLoading && <tr><td className="empty-users" colSpan="7">Loading plans…</td></tr>}
 								</tbody>
 							</table>
 						</div>

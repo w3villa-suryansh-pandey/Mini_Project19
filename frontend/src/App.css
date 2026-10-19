@@ -12034,6 +12034,22 @@ body {
 .plans-panel .user-status.inactive { border-color: #e1e6ef; color: #68758b; background: #f4f6f9; }
 .plans-panel .user-status > span { width: 6px; height: 6px; }
 .plans-panel .plan-actions-cell { white-space: nowrap; }
+.plans-panel .plan-order-cell { white-space: nowrap; }
+.plans-panel .plan-order-button {
+  width: 30px;
+  height: 30px;
+  margin-right: 5px;
+  border: 1px solid #dce3f6;
+  border-radius: 9px;
+  color: #4d52a8;
+  background: #f5f6ff;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+.plans-panel .plan-order-button:hover:not(:disabled) { transform: translateY(-1px); background: #e9ebff; box-shadow: 0 5px 12px rgba(79,70,229,.1); }
+.plans-panel .plan-order-button:disabled { cursor: not-allowed; opacity: .4; }
 .plans-panel .edit-plan-button,
 .plans-panel .delete-plan-button {
   min-height: 32px;
@@ -12061,6 +12077,8 @@ body {
 :root[data-theme='dark'] .plans-panel .user-status { border-color: #356852; color: #8de0b5; background: #1d3a32; }
 :root[data-theme='dark'] .plans-panel .user-status.pending { border-color: #765b35; color: #f4c476; background: #3c3224; }
 :root[data-theme='dark'] .plans-panel .user-status.inactive { border-color: #48566d; color: #c0ccde; background: #273449; }
+:root[data-theme='dark'] .plans-panel .plan-order-button { border-color: #4d5780; color: #d1ccff; background: #302d4a; }
+:root[data-theme='dark'] .plans-panel .plan-order-button:hover:not(:disabled) { background: #3b365e; }
 :root[data-theme='dark'] .plans-panel .edit-plan-button { border-color: #55517c; color: #d1ccff; background: #302d4a; }
 :root[data-theme='dark'] .plans-panel .edit-plan-button:hover { background: #3b365e; }
 :root[data-theme='dark'] .plans-panel .delete-plan-button { border-color: #71464e; color: #ffb6bd; background: #3b292f; }

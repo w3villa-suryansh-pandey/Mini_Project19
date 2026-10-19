@@ -219,6 +219,13 @@ export function updateAdminPlan(planId, plan) {
 	})
 }
 
+export function reorderAdminPlans(planIds) {
+	return request('/api/admin/plans/order', {
+		method: 'PATCH',
+		body: JSON.stringify({ planIds }),
+	})
+}
+
 export function deleteAdminPlan(planId) {
 	return request(`/api/admin/plans/${encodeURIComponent(planId)}`, { method: 'DELETE' })
 }
