@@ -2609,11 +2609,11 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   color: #171c19 !important;
   background: #fff;
   -webkit-text-fill-color: #171c19;
-  box-shadow: 0 0 0 1px rgb(56 79 111 / 25%);
 }
 
 .prime-pdf-text-layer span.prime-pdf-text-editing {
   outline: 1px solid #556f93;
+  box-shadow: 0 0 0 1px rgb(56 79 111 / 25%);
 }
 
 .prime-pdf-workspace.is-adding-text .prime-pdf-page {

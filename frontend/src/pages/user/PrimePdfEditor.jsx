@@ -163,8 +163,15 @@ function PdfPage({
 				textDiv.setAttribute('aria-multiline', 'true')
 				textDiv.contentEditable = editsEnabled ? 'true' : 'false'
 				textDiv.spellcheck = false
+				// The source PDF remains on the canvas beneath this editable layer.
+				// Keep the source span's full width so its white background masks the
+				// entire original run even when the replacement is shorter.
+				if (!textDiv.dataset.pdfOriginalWidth) {
+					textDiv.dataset.pdfOriginalWidth = String(textDiv.offsetWidth || textDiv.getBoundingClientRect().width)
+				}
 				const edit = editsRef.current[`${pageNumber}:${itemIndex}`]
 				if (edit) {
+					textDiv.style.minWidth = `${textDiv.dataset.pdfOriginalWidth}px`
 					textDiv.textContent = edit.replacementText
 					textDiv.dataset.pdfPatch = JSON.stringify(edit)
 					textDiv.dataset.pdfEdited = 'true'
@@ -254,13 +261,15 @@ function PdfPage({
 				event.preventDefault()
 				const itemIndex = Number(textDiv.dataset.pdfTextIndex)
 				textDiv.textContent = textLayer.textContentItemsStr[itemIndex] || ''
+				textDiv.style.minWidth = ''
 				textDiv.classList.remove('prime-pdf-text-editing', 'prime-pdf-text-edited')
 				delete textDiv.dataset.pdfEdited
 				onTextCancel({ pageNumber, itemIndex })
 			}
 			const handleBlur = (event) => {
 				const textDiv = event.target.closest('[data-pdf-text-index]')
-				if (!textDiv || textDiv.dataset.pdfEdited) return
+				if (!textDiv) return
+				// Edits are recorded on input; blur only closes the active edit UI.
 				textDiv.classList.remove('prime-pdf-text-editing')
 			}
 			const handlePageClick = (event) => {
@@ -324,6 +333,7 @@ function PdfPage({
 				if (!originalText?.trim()) return
 				const geometry = currentEdit || getTextPatch(textDiv)
 				textDiv.dataset.pdfEdited = 'true'
+				textDiv.style.minWidth = `${textDiv.dataset.pdfOriginalWidth}px`
 				textDiv.textContent = ''
 				textDiv.classList.add('prime-pdf-text-edited')
 				onTextEdit({
@@ -1331,6 +1341,7 @@ function PrimePdfEditor() {
 		document.querySelectorAll('.prime-pdf-text-layer [data-pdf-text-key]').forEach((textElement) => {
 			const edit = edits[textElement.dataset.pdfTextKey]
 			const originalText = textElement.getAttribute('aria-label')?.replace(/^PDF text: /, '') || ''
+			textElement.style.minWidth = edit ? `${textElement.dataset.pdfOriginalWidth || textElement.offsetWidth}px` : ''
 			textElement.textContent = edit?.replacementText ?? originalText
 			textElement.classList.toggle('prime-pdf-text-edited', Boolean(edit))
 			if (edit) textElement.dataset.pdfEdited = 'true'

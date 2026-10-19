@@ -224,7 +224,9 @@ def apply_operations(document, operations):
         rect = pdf_rect_to_page(page, item.get("x"), item.get("y"), item.get("width"), item.get("height"), baseline=True)
         if rect.is_empty or rect.get_area() < 1:
             raise ValueError("An OCR text region is outside the page or too small.")
-        page.add_redact_annot(rect, fill=False, cross_out=False)
+        # Use an opaque page background for the replacement area. A transparent
+        # redaction can leave image or path-based lettering visible under the new text.
+        page.add_redact_annot(rect, fill=(1, 1, 1), cross_out=False)
         ocr_pages.setdefault(index, []).append(item)
 
     for index in set(per_page) | set(ocr_pages):
@@ -234,7 +236,7 @@ def apply_operations(document, operations):
             rect = pdf_rect_to_page(page, edit.get("x"), edit.get("y"), edit.get("width"), edit.get("height"))
             if rect.is_empty or rect.get_area() < 1:
                 raise ValueError("A text edit rectangle is outside the page or too small.")
-            page.add_redact_annot(rect, fill=False, cross_out=False)
+            page.add_redact_annot(rect, fill=(1, 1, 1), cross_out=False)
             if str(edit.get("replacementText", "")).strip():
                 replacements.append(edit)
         page.apply_redactions(images=2 if index in ocr_pages else 0, graphics=0, text=0)
