@@ -1887,17 +1887,26 @@ function PrimePdfEditor() {
 						)}
 
 						{notice && <p className="prime-pdf-notice" role="status">{notice}</p>}
-						<div className="prime-pdf-editor-layout">
+						<div className={`prime-pdf-editor-layout ${pdfDocument ? 'has-document' : 'is-empty'}`}>
 						{pdfDocument && <aside className="prime-pdf-sidebar" aria-label="PDF tools and pages">
 							<div className="prime-pdf-side-section">
-								<h2>Tools</h2>
-								<button className={`prime-pdf-side-tool${!activeTool ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool(''); setNotice('Select a text block on the page to edit it.') }}>Edit text</button>
-								<button className={`prime-pdf-side-tool${activeTool === 'erase' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('erase'); setNotice('Select text to redact it from the exported PDF.') }}>Redact</button>
-								<button className={`prime-pdf-side-tool${activeTool === 'text' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('text'); setNotice('Click a page to add text.') }}>Add text</button>
-								<button className="prime-pdf-side-tool" type="button" onClick={() => imageInputRef.current?.click()}>Images</button>
-								<button className={`prime-pdf-side-tool${activeTool === 'rectangle' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('rectangle'); setNotice('Click a page to place a rectangle.') }}>Rectangle</button>
-								<button className={`prime-pdf-side-tool${activeTool === 'ellipse' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('ellipse'); setNotice('Click a page to place an ellipse.') }}>Ellipse</button>
-								<button className={`prime-pdf-side-tool${activeTool === 'signature' ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool('signature'); setNotice('Click a page to add a typed signature.') }}>Signature</button>
+								<h2><span>Tools</span><span className="prime-pdf-tool-hint">Choose one</span></h2>
+								{[
+									['', 'T', 'Edit text', 'Select text on the page to edit it.'],
+									['erase', '⌫', 'Redact', 'Select text to redact it from the exported PDF.'],
+									['text', '＋', 'Add text', 'Click a page to add text.'],
+									['highlight', '▰', 'Highlight', 'Drag over a page to highlight an area.'],
+									['draw', '✎', 'Draw', 'Draw on a page with your pointer or finger.'],
+									['rectangle', '□', 'Rectangle', 'Click a page to place a rectangle.'],
+									['ellipse', '○', 'Ellipse', 'Click a page to place an ellipse.'],
+									['comment', '▤', 'Comment', 'Click a page to add a comment.'],
+									['signature', '✍', 'Signature', 'Click a page to add a typed signature.'],
+								].map(([tool, icon, label, message]) => (
+									<button key={label} className={`prime-pdf-side-tool${(activeTool || '') === tool ? ' is-active' : ''}`} type="button" onClick={() => { setActiveTool(tool); setNotice(message) }} aria-pressed={(activeTool || '') === tool}>
+										<span className="prime-pdf-side-tool-icon" aria-hidden="true">{icon}</span><span>{label}</span>
+									</button>
+								))}
+								<button className="prime-pdf-side-tool" type="button" onClick={() => imageInputRef.current?.click()}><span className="prime-pdf-side-tool-icon" aria-hidden="true">▧</span><span>Add image</span></button>
 							</div>
 							<div className="prime-pdf-side-section prime-pdf-pages-panel">
 								<h2>Pages <span>{pageOrder.filter((index) => !deletedPages.includes(index)).length}</span></h2>
