@@ -112,10 +112,9 @@ async function convertPdfToImages(file, format, quality) {
 	const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
 	const output = []
 	const imageFormat = IMAGE_FORMATS[format]
-	let pdf
 
 	try {
-		pdf = await loadingTask.promise
+		const pdf = await loadingTask.promise
 		for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
 			const page = await pdf.getPage(pageNumber)
 			const baseViewport = page.getViewport({ scale: 1 })
@@ -141,8 +140,8 @@ async function convertPdfToImages(file, format, quality) {
 			page.cleanup()
 		}
 	} finally {
-		if (pdf) await pdf.destroy()
-		else await loadingTask.destroy()
+		// PDF.js owns destruction on the loading task, not PDFDocumentProxy.
+		await loadingTask.destroy()
 	}
 
 	return output
