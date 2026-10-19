@@ -157,7 +157,7 @@ def preview_overlap(document, operations):
         if overlapping:
             warnings.append({
                 "pageNumber": page_index + 1,
-                "message": "The selected redaction rectangle also overlaps nearby text.",
+                "message": "The selected redaction rectangle also overlaps nearby page content.",
                 "overlappingText": overlapping[:12],
             })
     return warnings

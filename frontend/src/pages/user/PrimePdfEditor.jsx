@@ -212,16 +212,21 @@ function PdfPage({
 					originalText: textLayer.textContentItemsStr[itemIndex] || '',
 				})
 				textDiv.classList.add('prime-pdf-text-editing')
-				// A PDF text span should behave like a replacement field. Selecting the
-				// full original span prevents typing at the click position from
-				// accidentally appending to the old text.
-				if (!currentEdit && activeToolRef.current !== 'erase') {
-					const selection = window.getSelection()
-					const range = window.document.createRange()
-					range.selectNodeContents(textDiv)
-					selection?.removeAllRanges()
-					selection?.addRange(range)
-				}
+			}
+			const handleTextPointerDown = (event) => {
+				const textDiv = event.target.closest('[data-pdf-text-index]')
+				if (!textDiv || activeToolRef.current === 'erase' || !editsEnabled) return
+				const itemIndex = Number(textDiv.dataset.pdfTextIndex)
+				if (editsRef.current[`${pageNumber}:${itemIndex}`]) return
+				// Stop the browser placing a caret at the click position. The first
+				// click selects the source span so typing replaces the whole text run.
+				event.preventDefault()
+				textDiv.focus()
+				const selection = window.getSelection()
+				const range = window.document.createRange()
+				range.selectNodeContents(textDiv)
+				selection?.removeAllRanges()
+				selection?.addRange(range)
 			}
 			const handleInput = (event) => {
 				const textDiv = event.target.closest('[data-pdf-text-index]')
@@ -330,6 +335,7 @@ function PdfPage({
 				})
 			}
 			textLayerElement.addEventListener('click', handleEraseClick, true)
+			textLayerElement.addEventListener('pointerdown', handleTextPointerDown, true)
 			textLayerElement.addEventListener('focusin', handleFocus)
 			textLayerElement.addEventListener('focusout', handleBlur)
 			textLayerElement.addEventListener('input', handleInput)
@@ -380,6 +386,7 @@ function PdfPage({
 			svg.addEventListener('pointerup', handlePointerUp)
 			cleanupTextEvents = () => {
 				textLayerElement.removeEventListener('click', handleEraseClick, true)
+				textLayerElement.removeEventListener('pointerdown', handleTextPointerDown, true)
 				textLayerElement.removeEventListener('focusin', handleFocus)
 				textLayerElement.removeEventListener('focusout', handleBlur)
 				textLayerElement.removeEventListener('input', handleInput)
