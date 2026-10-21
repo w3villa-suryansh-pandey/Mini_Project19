@@ -5971,8 +5971,8 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
 
 .landing-header .landing-brand img {
   display: block;
-  width: 35px;
-  height: 35px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
 }
 
@@ -6143,8 +6143,8 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   }
 
   .landing-header .landing-brand img {
-    width: 30px;
-    height: 30px;
+    width: 42px;
+    height: 42px;
   }
 }
 
