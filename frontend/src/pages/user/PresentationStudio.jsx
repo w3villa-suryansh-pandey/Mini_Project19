@@ -522,7 +522,7 @@ function PresentationStudio() {
 	const [saveState, setSaveState] = useState('saved')
 	const [notice, setNotice] = useState('')
 	const [isWorking, setIsWorking] = useState(false)
-	const [formatTarget, setFormatTarget] = useState('title')
+	const [formatTarget, setFormatTarget] = useState('')
 	const [newSlideLayout, setNewSlideLayout] = useState('title-content')
 	const activeIndex = Math.max(0, deck.slides.findIndex((slide) => slide.id === activeSlideId))
 	const activeSlide = deck.slides[activeIndex]
@@ -531,7 +531,7 @@ function PresentationStudio() {
 	const extraFormatShape = activeSlide?.extraTextShapes?.find((shape) => shape.shapeIndex === extraFormatIndex)
 	const blockFormatId = formatTarget.startsWith('block:') ? formatTarget.slice(6) : null
 	const selectedBlock = activeSlide?.textBlocks?.find((block) => block.id === blockFormatId)
-	const selectedStyle = formatTarget === 'title'
+	const selectedStyle = formatTarget === 'title' || !formatTarget
 		? activeSlide?.titleStyle || defaultTextStyle('title', deck.theme)
 		: formatTarget === 'body'
 			? activeSlide?.bodyStyle || defaultTextStyle('body', deck.theme)
@@ -865,7 +865,7 @@ function PresentationStudio() {
 								<button className="presentation-insert-text" type="button" onClick={addTextBlock}>＋ Insert text box</button>
 								<label><span>Layout</span><select value={deck.imported ? 'imported' : activeSlide?.layout || 'title-content'} onChange={(event) => applySlideLayout(event.target.value)} disabled={deck.imported}><option value="imported" disabled>Imported</option>{SLIDE_LAYOUTS.map((layout) => <option key={layout.id} value={layout.id}>{layout.label}</option>)}</select></label>
 								{!deck.imported && <label className="presentation-color-control"><span>Slide background</span><input type="color" aria-label="Slide background color" value={activeSlide?.background || `#${colors.background}`} onChange={(event) => updateActiveSlide('background', event.target.value)} /></label>}
-								<label><span>Text box</span><select value={formatTarget} onChange={(event) => setFormatTarget(event.target.value)}><option value="title">Slide title</option><option value="body">Slide body</option>{(activeSlide?.textBlocks || []).map((block, index) => <option key={block.id} value={`block:${block.id}`}>Text box {index + 1}</option>)}{(activeSlide?.extraTextShapes || []).map((shape, index) => <option key={shape.shapeIndex} value={`extra:${shape.shapeIndex}`}>Other text {index + 1}</option>)}</select></label>
+								<label><span>Text box</span><select value={formatTarget || 'title'} onChange={(event) => setFormatTarget(event.target.value)}><option value="title">Slide title</option><option value="body">Slide body</option>{(activeSlide?.textBlocks || []).map((block, index) => <option key={block.id} value={`block:${block.id}`}>Text box {index + 1}</option>)}{(activeSlide?.extraTextShapes || []).map((shape, index) => <option key={shape.shapeIndex} value={`extra:${shape.shapeIndex}`}>Other text {index + 1}</option>)}</select></label>
 								<label><span>Font</span><select value={selectedStyle.fontFamily} onChange={(event) => updateTextStyle('fontFamily', event.target.value)}><option>Aptos</option><option>Aptos Display</option><option>Arial</option><option>Georgia</option><option>Inter</option><option>Verdana</option></select></label>
 								<label><span>Size</span><select value={selectedStyle.fontSize} onChange={(event) => updateTextStyle('fontSize', Number(event.target.value))}>{[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 44, 56, 64, 72].map((size) => <option key={size} value={size}>{size} pt</option>)}</select></label>
 								<label className="presentation-color-control"><span>Color</span><input type="color" aria-label="Text color" value={/^#[0-9a-f]{6}$/i.test(selectedStyle.color) ? selectedStyle.color : '#202642'} onChange={(event) => updateTextStyle('color', event.target.value)} /></label>
