@@ -17,13 +17,41 @@ const THEME_COLORS = {
 	ocean: { background: 'F0FAFC', accent: '087F98', ink: '16333D' },
 	charcoal: { background: '20283B', accent: '9B8CFF', ink: 'F6F5FF' },
 }
+const SLIDE_LAYOUTS = [
+	{ id: 'title-slide', label: 'Title slide' },
+	{ id: 'title-content', label: 'Title and content' },
+	{ id: 'two-column', label: 'Two columns' },
+	{ id: 'section-header', label: 'Section header' },
+	{ id: 'blank', label: 'Blank' },
+]
 
 function createId() {
 	return globalThis.crypto?.randomUUID?.() || `slide-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
-function makeSlide(title = 'New slide', body = 'Add your ideas here.') {
-	return { id: createId(), title, body, titleStyle: null, bodyStyle: null, titlePosition: { x: 8, y: 23 }, bodyPosition: { x: 8, y: 54 }, textBlocks: [], sourcePart: null, titleShapeIndex: null, bodyShapeIndex: null }
+function makeSlide(title = 'New slide', body = 'Add your ideas here.', layout = 'title-content') {
+	const slide = { id: createId(), title, body, layout, background: '', titleStyle: null, bodyStyle: null, titlePosition: { x: 8, y: 16 }, bodyPosition: { x: 8, y: 36 }, textBlocks: [], sourcePart: null, titleShapeIndex: null, bodyShapeIndex: null }
+	if (layout === 'title-slide') {
+		slide.titlePosition = { x: 8, y: 27 }
+		slide.bodyPosition = { x: 8, y: 52 }
+	}
+	if (layout === 'section-header') {
+		slide.titlePosition = { x: 8, y: 35 }
+		slide.bodyPosition = { x: 8, y: 57 }
+	}
+	if (layout === 'two-column') {
+		slide.body = ''
+		slide.titlePosition = { x: 8, y: 12 }
+		slide.textBlocks = [
+			{ id: createId(), text: 'Left column', position: { x: 8, y: 34 }, width: 39, style: defaultTextStyle('body', 'indigo') },
+			{ id: createId(), text: 'Right column', position: { x: 54, y: 34 }, width: 39, style: defaultTextStyle('body', 'indigo') },
+		]
+	}
+	if (layout === 'blank') {
+		slide.title = ''
+		slide.body = ''
+	}
+	return slide
 }
 
 function defaultTextStyle(kind, themeName) {
@@ -158,6 +186,8 @@ function inspectSlide(xml, sourcePart) {
 		|| entries.find((shape) => shape.text && shape.index !== title?.index)
 	return {
 		id: createId(),
+		layout: 'imported',
+		background: '',
 		title: title?.text || 'Untitled slide',
 		body: body?.text || '',
 		extraTextShapes: entries.filter((shape) => shape.text && shape.index !== title?.index && shape.index !== body?.index).map(({ index, text }) => ({ shapeIndex: index, text, style: null, styleDirty: false })),
@@ -295,6 +325,7 @@ function escapeXml(value) {
 
 function buildSlideXml(slide, themeName) {
 	const theme = THEME_COLORS[themeName] || THEME_COLORS.indigo
+	const background = /^#[0-9a-f]{6}$/i.test(slide.background || '') ? slide.background.slice(1).toUpperCase() : theme.background
 	const textShape = (id, name, x, y, width, height, text, style) => {
 		const size = Math.round(Number(style.fontSize || 18) * 100)
 		const bold = style.bold ? ' b="1"' : ''
@@ -311,11 +342,11 @@ function buildSlideXml(slide, themeName) {
 	const titleStyle = slide.titleStyle || defaultTextStyle('title', themeName)
 	const bodyStyle = slide.bodyStyle || defaultTextStyle('body', themeName)
 	return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-	<p:sld xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="${theme.background}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree>
+	<p:sld xmlns:a="${A_NS}" xmlns:r="${R_NS}" xmlns:p="${P_NS}"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="${background}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree>
 	<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
-	${textShape(2, 'Title', Math.round((slide.titlePosition?.x ?? 8) * 121920), Math.round((slide.titlePosition?.y ?? 23) * 68580), Math.max(500000, Math.round((96 - (slide.titlePosition?.x ?? 8)) * 121920)), 1600000, slide.title || 'Untitled slide', titleStyle)}
-	${textShape(3, 'Body', Math.round((slide.bodyPosition?.x ?? 8) * 121920), Math.round((slide.bodyPosition?.y ?? 54) * 68580), Math.max(500000, Math.round((96 - (slide.bodyPosition?.x ?? 8)) * 121920)), 2200000, slide.body || '', bodyStyle)}
-	${(slide.textBlocks || []).map((block, index) => textShape(index + 4, `Text Box ${index + 1}`, Math.round((block.position?.x ?? 20) * 121920), Math.round((block.position?.y ?? 20) * 68580), Math.max(500000, Math.min(6500000, Math.round((96 - (block.position?.x ?? 20)) * 121920))), 2200000, block.text, block.style || defaultTextStyle('body', themeName))).join('')}
+	${slide.layout === 'blank' ? '' : textShape(2, 'Title', Math.round((slide.titlePosition?.x ?? 8) * 121920), Math.round((slide.titlePosition?.y ?? 23) * 68580), Math.max(500000, Math.round((96 - (slide.titlePosition?.x ?? 8)) * 121920)), 1600000, slide.title || 'Untitled slide', titleStyle)}
+	${['blank', 'two-column'].includes(slide.layout) ? '' : textShape(3, 'Body', Math.round((slide.bodyPosition?.x ?? 8) * 121920), Math.round((slide.bodyPosition?.y ?? 54) * 68580), Math.max(500000, Math.round((96 - (slide.bodyPosition?.x ?? 8)) * 121920)), 2200000, slide.body || '', bodyStyle)}
+	${(slide.textBlocks || []).map((block, index) => textShape(index + 4, `Text Box ${index + 1}`, Math.round((block.position?.x ?? 20) * 121920), Math.round((block.position?.y ?? 20) * 68580), Math.max(500000, Math.min(6500000, Math.round((block.width ?? (96 - (block.position?.x ?? 20))) * 121920))), 2200000, block.text, block.style || defaultTextStyle('body', themeName))).join('')}
 	</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`
 }
 
@@ -385,13 +416,28 @@ async function updateImportedArchive(zip, deck) {
 	const layoutTarget = await findLayoutTarget(zip, deck.slides)
 	const typesRoot = contentTypes.documentElement
 	const existingOverrides = new Set([...contentTypes.getElementsByTagNameNS(CT_NS, 'Override')].map((item) => item.getAttribute('PartName')))
-	const slideIdList = []
 	for (let index = 0; index < deck.slides.length; index += 1) {
 		const slide = deck.slides[index]
+		const sourcePart = slide.sourcePart || slide.sourcePartCopy
 		let part = slide.sourcePart
 		let slideXml
-		if (part && zip.file(part)) {
-			slideXml = await zip.file(part).async('string')
+		if (sourcePart && zip.file(sourcePart)) {
+			slideXml = await zip.file(sourcePart).async('string')
+			if (slide.sourcePartCopy) {
+				part = `ppt/slides/slide${nextSlidePart}.xml`
+				nextSlidePart += 1
+				const sourceRels = sourcePart.replace(/\/([^/]+)\.xml$/, '/_rels/$1.xml.rels')
+				const destinationRels = part.replace(/\/([^/]+)\.xml$/, '/_rels/$1.xml.rels')
+				if (zip.file(sourceRels)) zip.file(destinationRels, await zip.file(sourceRels).async('string'))
+				const overridePath = `/${part}`
+				if (!existingOverrides.has(overridePath)) {
+					const override = contentTypes.createElementNS(CT_NS, 'Override')
+					override.setAttribute('PartName', overridePath)
+					override.setAttribute('ContentType', 'application/vnd.openxmlformats-officedocument.presentationml.slide+xml')
+					typesRoot.appendChild(override)
+					existingOverrides.add(overridePath)
+				}
+			}
 			const titleStyle = slide.titleStyleDirty ? slide.titleStyle : null
 			const bodyStyle = slide.bodyStyleDirty ? slide.bodyStyle : null
 			if (slide.titleShapeIndex == null && slide.title.trim()) slideXml = appendTextShape(slideXml, 'S19 title', slide.title, 'title', slide.titleStyle || defaultTextStyle('title', deck.theme))
@@ -477,6 +523,7 @@ function PresentationStudio() {
 	const [notice, setNotice] = useState('')
 	const [isWorking, setIsWorking] = useState(false)
 	const [formatTarget, setFormatTarget] = useState('title')
+	const [newSlideLayout, setNewSlideLayout] = useState('title-content')
 	const activeIndex = Math.max(0, deck.slides.findIndex((slide) => slide.id === activeSlideId))
 	const activeSlide = deck.slides[activeIndex]
 	const colors = THEME_COLORS[deck.theme] || THEME_COLORS.indigo
@@ -493,7 +540,7 @@ function PresentationStudio() {
 
 	useEffect(() => {
 		if (!deck.slides.length) return undefined
-		setSaveState('saving')
+		const savingTimer = window.setTimeout(() => setSaveState('saving'), 0)
 		const timer = window.setTimeout(() => {
 			try {
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(deck))
@@ -506,7 +553,10 @@ function PresentationStudio() {
 				setSaveState('unavailable')
 			}
 		}, 350)
-		return () => window.clearTimeout(timer)
+		return () => {
+			window.clearTimeout(savingTimer)
+			window.clearTimeout(timer)
+		}
 	}, [deck])
 
 	useEffect(() => {
@@ -598,11 +648,67 @@ function PresentationStudio() {
 		}))
 	}
 
-	function addSlide() {
-		const slide = makeSlide('New slide', 'Add your ideas here.')
+	function addSlide(layout = newSlideLayout) {
+		const slide = makeSlide(
+			layout === 'blank' ? '' : layout === 'title-slide' ? 'Presentation title' : 'New slide',
+			layout === 'title-slide' ? 'Add a subtitle' : 'Add your ideas here.',
+			layout,
+		)
 		setDeck((current) => ({ ...current, slides: [...current.slides, slide] }))
 		setActiveSlideId(slide.id)
+		setFormatTarget('title')
 		setNotice('Slide added.')
+	}
+
+	function applySlideLayout(layout) {
+		if (!activeSlide || deck.imported || !SLIDE_LAYOUTS.some((item) => item.id === layout)) return
+		setDeck((current) => ({
+			...current,
+			slides: current.slides.map((slide) => {
+				if (slide.id !== activeSlideId) return slide
+				const layoutSlide = makeSlide(slide.title || 'New slide', slide.body || 'Add your ideas here.', layout)
+				return {
+					...slide,
+					layout,
+					title: layout === 'blank' ? slide.title : (slide.title || 'New slide'),
+					body: ['blank', 'two-column'].includes(layout) ? slide.body : (slide.body || 'Add your ideas here.'),
+					titlePosition: layoutSlide.titlePosition,
+					bodyPosition: layoutSlide.bodyPosition,
+					textBlocks: layout === 'two-column' && !slide.textBlocks?.length
+						? layoutSlide.textBlocks.map((block, index) => ({ ...block, text: index === 0 && slide.body ? slide.body : block.text }))
+						: slide.textBlocks,
+				}
+			}),
+		}))
+		setNotice(`${SLIDE_LAYOUTS.find((item) => item.id === layout)?.label} layout applied.`)
+	}
+
+	function duplicateActiveSlide() {
+		if (!activeSlide) return
+		const copy = {
+			...activeSlide,
+			id: createId(),
+			sourcePart: null,
+			sourcePartCopy: activeSlide.sourcePart || activeSlide.sourcePartCopy || null,
+			textBlocks: (activeSlide.textBlocks || []).map((block) => ({ ...block, id: createId(), position: { ...block.position }, style: block.style ? { ...block.style } : block.style })),
+			extraTextShapes: (activeSlide.extraTextShapes || []).map((shape) => ({ ...shape, style: shape.style ? { ...shape.style } : shape.style })),
+			titlePosition: { ...activeSlide.titlePosition },
+			bodyPosition: { ...activeSlide.bodyPosition },
+		}
+		const next = [...deck.slides]
+		next.splice(activeIndex + 1, 0, copy)
+		setDeck((current) => ({ ...current, slides: next }))
+		setActiveSlideId(copy.id)
+		setNotice('Slide duplicated.')
+	}
+
+	function moveActiveSlide(offset) {
+		const destination = activeIndex + offset
+		if (destination < 0 || destination >= deck.slides.length) return
+		const next = [...deck.slides]
+		const [slide] = next.splice(activeIndex, 1)
+		next.splice(destination, 0, slide)
+		setDeck((current) => ({ ...current, slides: next }))
 	}
 
 	function removeActiveSlide() {
@@ -610,6 +716,8 @@ function PresentationStudio() {
 			setNotice('A presentation must contain at least one slide.')
 			return
 		}
+		const hasContent = Boolean(activeSlide?.title?.trim() || activeSlide?.body?.trim() || activeSlide?.textBlocks?.some((block) => block.text?.trim()) || activeSlide?.extraTextShapes?.some((shape) => shape.text?.trim()))
+		if (hasContent && !window.confirm(`Delete “${activeSlide.title || `Slide ${activeIndex + 1}`}”? This slide contains content.`)) return
 		const next = deck.slides.filter((slide) => slide.id !== activeSlideId)
 		setDeck((current) => ({ ...current, slides: next }))
 		setActiveSlideId(next[Math.max(0, activeIndex - 1)].id)
@@ -743,17 +851,20 @@ function PresentationStudio() {
 							<div className="presentation-slide-list-heading"><span>Slides</span><span>{String(deck.slides.length).padStart(2, '0')}</span></div>
 							{deck.slides.map((slide, index) => (
 								<button type="button" key={slide.id} className={`presentation-slide-thumb${slide.id === activeSlideId ? ' active' : ''}`} onClick={() => setActiveSlideId(slide.id)} aria-current={slide.id === activeSlideId ? 'true' : undefined}>
-									<span className="presentation-slide-thumb-canvas" style={{ '--slide-background': deck.imported ? '#f4f5f8' : `#${colors.background}`, '--slide-ink': deck.imported ? '#263247' : `#${colors.ink}` }}><b>{slide.title || 'Untitled slide'}</b><i>{slide.body || 'Add slide text'}</i></span>
+									<span className="presentation-slide-thumb-canvas" style={{ '--slide-background': deck.imported ? '#f4f5f8' : slide.background || `#${colors.background}`, '--slide-ink': deck.imported ? '#263247' : `#${colors.ink}` }}><b>{slide.title || 'Untitled slide'}</b><i>{slide.body || slide.textBlocks?.[0]?.text || 'Add slide text'}</i></span>
 									<span className="presentation-slide-thumb-label"><span>{String(index + 1).padStart(2, '0')}</span>{slide.title || 'Untitled slide'}</span>
 								</button>
 							))}
-							<button className="presentation-add-slide" type="button" onClick={addSlide}>＋ Add slide</button>
+							<label className="presentation-layout-field"><span>New slide layout</span><select value={newSlideLayout} onChange={(event) => setNewSlideLayout(event.target.value)}>{SLIDE_LAYOUTS.map((layout) => <option key={layout.id} value={layout.id}>{layout.label}</option>)}</select></label>
+							<button className="presentation-add-slide" type="button" onClick={() => addSlide()}>＋ Add slide</button>
 						</aside>
 
 						<section className="presentation-stage" aria-label={`Editing slide ${activeIndex + 1}`}>
-							<div className="presentation-stage-toolbar"><span>SLIDE {String(activeIndex + 1).padStart(2, '0')} <i>/</i> {String(deck.slides.length).padStart(2, '0')}</span><div><button type="button" onClick={() => setActiveSlideId(deck.slides[Math.max(0, activeIndex - 1)].id)} disabled={activeIndex === 0} aria-label="Previous slide">←</button><button type="button" onClick={() => setActiveSlideId(deck.slides[Math.min(deck.slides.length - 1, activeIndex + 1)].id)} disabled={activeIndex === deck.slides.length - 1} aria-label="Next slide">→</button><button type="button" className="presentation-remove-slide" onClick={removeActiveSlide} aria-label="Remove current slide">Remove slide</button></div></div>
+							<div className="presentation-stage-toolbar"><span>SLIDE {String(activeIndex + 1).padStart(2, '0')} <i>/</i> {String(deck.slides.length).padStart(2, '0')}</span><div><button type="button" onClick={() => moveActiveSlide(-1)} disabled={activeIndex === 0} aria-label="Move slide earlier" title="Move earlier">↑</button><button type="button" onClick={() => moveActiveSlide(1)} disabled={activeIndex === deck.slides.length - 1} aria-label="Move slide later" title="Move later">↓</button><button type="button" onClick={() => setActiveSlideId(deck.slides[Math.max(0, activeIndex - 1)].id)} disabled={activeIndex === 0} aria-label="Previous slide">←</button><button type="button" onClick={() => setActiveSlideId(deck.slides[Math.min(deck.slides.length - 1, activeIndex + 1)].id)} disabled={activeIndex === deck.slides.length - 1} aria-label="Next slide">→</button><button type="button" onClick={duplicateActiveSlide} aria-label="Duplicate current slide" title="Duplicate slide">Duplicate</button><button type="button" className="presentation-remove-slide" onClick={removeActiveSlide} aria-label="Remove current slide">Remove slide</button></div></div>
 							<div className="presentation-text-toolbar" aria-label="Text formatting">
 								<button className="presentation-insert-text" type="button" onClick={addTextBlock}>＋ Insert text box</button>
+								<label><span>Layout</span><select value={deck.imported ? 'imported' : activeSlide?.layout || 'title-content'} onChange={(event) => applySlideLayout(event.target.value)} disabled={deck.imported}><option value="imported" disabled>Imported</option>{SLIDE_LAYOUTS.map((layout) => <option key={layout.id} value={layout.id}>{layout.label}</option>)}</select></label>
+								{!deck.imported && <label className="presentation-color-control"><span>Slide background</span><input type="color" aria-label="Slide background color" value={activeSlide?.background || `#${colors.background}`} onChange={(event) => updateActiveSlide('background', event.target.value)} /></label>}
 								<label><span>Text box</span><select value={formatTarget} onChange={(event) => setFormatTarget(event.target.value)}><option value="title">Slide title</option><option value="body">Slide body</option>{(activeSlide?.textBlocks || []).map((block, index) => <option key={block.id} value={`block:${block.id}`}>Text box {index + 1}</option>)}{(activeSlide?.extraTextShapes || []).map((shape, index) => <option key={shape.shapeIndex} value={`extra:${shape.shapeIndex}`}>Other text {index + 1}</option>)}</select></label>
 								<label><span>Font</span><select value={selectedStyle.fontFamily} onChange={(event) => updateTextStyle('fontFamily', event.target.value)}><option>Aptos</option><option>Aptos Display</option><option>Arial</option><option>Georgia</option><option>Inter</option><option>Verdana</option></select></label>
 								<label><span>Size</span><select value={selectedStyle.fontSize} onChange={(event) => updateTextStyle('fontSize', Number(event.target.value))}>{[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 44, 56, 64, 72].map((size) => <option key={size} value={size}>{size} pt</option>)}</select></label>
@@ -761,11 +872,10 @@ function PresentationStudio() {
 								<div className="presentation-style-toggles"><button type="button" className={selectedStyle.bold ? 'selected' : ''} aria-label="Bold" aria-pressed={Boolean(selectedStyle.bold)} onClick={() => updateTextStyle('bold', !selectedStyle.bold)}><b>B</b></button><button type="button" className={selectedStyle.italic ? 'selected' : ''} aria-label="Italic" aria-pressed={Boolean(selectedStyle.italic)} onClick={() => updateTextStyle('italic', !selectedStyle.italic)}><i>I</i></button><button type="button" className={selectedStyle.underline ? 'selected' : ''} aria-label="Underline" aria-pressed={Boolean(selectedStyle.underline)} onClick={() => updateTextStyle('underline', !selectedStyle.underline)}><u>U</u></button></div>
 								<label><span>Align</span><select value={selectedStyle.align} onChange={(event) => updateTextStyle('align', event.target.value)}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
 							</div>
-							<div ref={canvasRef} className={`presentation-canvas${deck.theme === 'charcoal' && !deck.imported ? ' charcoal' : ''}`} onPointerMove={moveTextDrag} onPointerUp={() => { dragStateRef.current = null }} onPointerCancel={() => { dragStateRef.current = null }} style={deck.imported ? undefined : { '--slide-background': `#${colors.background}`, '--slide-ink': `#${colors.ink}`, '--slide-accent': `#${colors.accent}` }}>
-								<label className="presentation-title-edit" style={{ left: `${activeSlide?.titlePosition?.x ?? 8}%`, top: `${activeSlide?.titlePosition?.y ?? 23}%`, width: `min(78%, calc(100% - ${activeSlide?.titlePosition?.x ?? 8}% - 4%))` }}><button className="presentation-drag-handle" type="button" aria-label="Move slide title" title="Drag to move" onPointerDown={(event) => startTextDrag(event, 'title')}>⠿ Move</button><span className="sr-only">Slide title</span><textarea style={textPreviewStyle(activeSlide?.titleStyle || defaultTextStyle('title', deck.theme))} rows="2" value={activeSlide?.title || ''} maxLength="180" placeholder="Add a slide title" onFocus={() => setFormatTarget('title')} onChange={(event) => updateActiveSlide('title', event.target.value)} /></label>
-								<div className="presentation-slide-rule" />
-								<label className="presentation-body-edit" style={{ left: `${activeSlide?.bodyPosition?.x ?? 8}%`, top: `${activeSlide?.bodyPosition?.y ?? 54}%`, width: `min(78%, calc(100% - ${activeSlide?.bodyPosition?.x ?? 8}% - 4%))` }}><button className="presentation-drag-handle" type="button" aria-label="Move slide body" title="Drag to move" onPointerDown={(event) => startTextDrag(event, 'body')}>⠿ Move</button><span className="sr-only">Slide body</span><textarea style={textPreviewStyle(activeSlide?.bodyStyle || defaultTextStyle('body', deck.theme))} value={activeSlide?.body || ''} maxLength="2400" placeholder="Add supporting details, one idea per line" onFocus={() => setFormatTarget('body')} onChange={(event) => updateActiveSlide('body', event.target.value)} /></label>
-								{(activeSlide?.textBlocks || []).map((block, index) => <div key={block.id} className={`presentation-text-block${formatTarget === `block:${block.id}` ? ' selected' : ''}`} style={{ left: `${block.position?.x ?? 20}%`, top: `${block.position?.y ?? 36}%`, width: `min(52%, calc(100% - ${block.position?.x ?? 20}% - 4%))` }} onFocusCapture={() => setFormatTarget(`block:${block.id}`)}><div className="presentation-text-block-controls"><button className="presentation-drag-handle" type="button" aria-label={`Move text box ${index + 1}`} title="Drag to move" onPointerDown={(event) => startTextDrag(event, `block:${block.id}`)}>⠿ Move</button><button className="presentation-delete-block" type="button" aria-label={`Delete text box ${index + 1}`} onClick={() => removeTextBlock(block.id)}>×</button></div><textarea aria-label={`Text box ${index + 1}`} style={textPreviewStyle(block.style || defaultTextStyle('body', deck.theme))} value={block.text} maxLength="2400" onChange={(event) => updateTextBlock(block.id, event.target.value)} /></div>)}
+							<div ref={canvasRef} className={`presentation-canvas${deck.theme === 'charcoal' && !deck.imported ? ' charcoal' : ''}`} onPointerMove={moveTextDrag} onPointerUp={() => { dragStateRef.current = null }} onPointerCancel={() => { dragStateRef.current = null }} style={deck.imported ? undefined : { '--slide-background': activeSlide?.background || `#${colors.background}`, '--slide-ink': `#${colors.ink}`, '--slide-accent': `#${colors.accent}` }}>
+								{(deck.imported || activeSlide?.layout !== 'blank') && <label className="presentation-title-edit" style={{ left: `${activeSlide?.titlePosition?.x ?? 8}%`, top: `${activeSlide?.titlePosition?.y ?? 23}%`, width: `min(78%, calc(100% - ${activeSlide?.titlePosition?.x ?? 8}% - 4%))` }}><button className="presentation-drag-handle" type="button" aria-label="Move slide title" title="Drag to move" onPointerDown={(event) => startTextDrag(event, 'title')}>⠿ Move</button><span className="sr-only">Slide title</span><textarea style={textPreviewStyle(activeSlide?.titleStyle || defaultTextStyle('title', deck.theme))} rows="2" value={activeSlide?.title || ''} maxLength="180" placeholder="Add a slide title" onFocus={() => setFormatTarget('title')} onChange={(event) => updateActiveSlide('title', event.target.value)} /></label>}
+								{!['blank', 'two-column'].includes(activeSlide?.layout) && <><div className="presentation-slide-rule" /><label className="presentation-body-edit" style={{ left: `${activeSlide?.bodyPosition?.x ?? 8}%`, top: `${activeSlide?.bodyPosition?.y ?? 54}%`, width: `min(78%, calc(100% - ${activeSlide?.bodyPosition?.x ?? 8}% - 4%))` }}><button className="presentation-drag-handle" type="button" aria-label="Move slide body" title="Drag to move" onPointerDown={(event) => startTextDrag(event, 'body')}>⠿ Move</button><span className="sr-only">Slide body</span><textarea style={textPreviewStyle(activeSlide?.bodyStyle || defaultTextStyle('body', deck.theme))} value={activeSlide?.body || ''} maxLength="2400" placeholder="Add supporting details, one idea per line" onFocus={() => setFormatTarget('body')} onChange={(event) => updateActiveSlide('body', event.target.value)} /></label></>}
+								{(activeSlide?.textBlocks || []).map((block, index) => <div key={block.id} className={`presentation-text-block${formatTarget === `block:${block.id}` ? ' selected' : ''}`} style={{ left: `${block.position?.x ?? 20}%`, top: `${block.position?.y ?? 36}%`, width: `${block.width ?? 52}%` }} onFocusCapture={() => setFormatTarget(`block:${block.id}`)}><div className="presentation-text-block-controls"><button className="presentation-drag-handle" type="button" aria-label={`Move text box ${index + 1}`} title="Drag to move" onPointerDown={(event) => startTextDrag(event, `block:${block.id}`)}>⠿ Move</button><button className="presentation-delete-block" type="button" aria-label={`Delete text box ${index + 1}`} onClick={() => removeTextBlock(block.id)}>×</button></div><textarea aria-label={`Text box ${index + 1}`} style={textPreviewStyle(block.style || defaultTextStyle('body', deck.theme))} value={block.text} maxLength="2400" onChange={(event) => updateTextBlock(block.id, event.target.value)} /></div>)}
 								<span className="presentation-slide-brand">S19 PRESENTATION STUDIO</span>
 							</div>
 							{deck.imported && activeSlide?.extraTextShapes?.length > 0 && <section className="presentation-extra-text" aria-label="Other editable slide text"><h3>Other slide text</h3>{activeSlide.extraTextShapes.map((shape, index) => <label key={shape.shapeIndex}><span>Text box {index + 1}</span><textarea style={textPreviewStyle(shape.style || defaultTextStyle('body', deck.theme))} value={shape.text} maxLength="2400" onFocus={() => setFormatTarget(`extra:${shape.shapeIndex}`)} onChange={(event) => updateExtraShape(shape.shapeIndex, event.target.value)} /></label>)}</section>}

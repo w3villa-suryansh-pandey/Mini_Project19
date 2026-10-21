@@ -9671,6 +9671,8 @@ body {
   cursor: pointer;
 }
 .presentation-add-slide:hover { border-color: #8e88e5; background: #f7f6ff; }
+.presentation-layout-field { display: grid; gap: 5px; color: #77839a; font-size: 8px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.presentation-layout-field select { min-height: 32px; padding: 0 8px; border: 1px solid #e0e5ef; border-radius: 7px; color: #33415a; background: #fff; font-size: 10px; }
 
 .presentation-stage { display: flex; min-width: 0; flex-direction: column; align-items: center; padding: 17px clamp(14px, 3vw, 44px) 22px; background: #f3f5fa; }
 .presentation-stage-toolbar { width: 100%; max-width: 1020px; justify-content: space-between; margin-bottom: 16px; color: #738097; font-size: 9px; font-weight: 800; letter-spacing: 0.09em; }
@@ -9752,12 +9754,14 @@ body {
 :root[data-theme='dark'] .presentation-slide-thumb:hover,
 :root[data-theme='dark'] .presentation-slide-thumb.active { border-color: #5a5b9e; background: #272b46; }
 :root[data-theme='dark'] .presentation-add-slide,
+:root[data-theme='dark'] .presentation-layout-field select,
 :root[data-theme='dark'] .presentation-stage-toolbar button,
 :root[data-theme='dark'] .presentation-text-toolbar,
 :root[data-theme='dark'] .presentation-text-toolbar select,
 :root[data-theme='dark'] .presentation-style-toggles button,
 :root[data-theme='dark'] .presentation-text-toolbar .presentation-color-control input { border-color: #3a4659; color: #d6deeb; background: #202b3c; }
 :root[data-theme='dark'] .presentation-text-toolbar > label > span { color: #9ba8bb; }
+:root[data-theme='dark'] .presentation-layout-field { color: #9ba8bb; }
 :root[data-theme='dark'] .presentation-style-toggles button.selected { border-color: #716dc1; color: #d8d5ff; background: #343456; }
 :root[data-theme='dark'] .presentation-stage { background: #141d2c; }
 :root[data-theme='dark'] .presentation-format-note,
