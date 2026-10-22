@@ -137,6 +137,11 @@ async function createCheckoutOrder(req, res) {
 	if (!Number.isInteger(plan.priceInPaise) || plan.priceInPaise < 100) {
 		return respondWithError(res, 400, 'The selected plan must cost at least ₹1.00.')
 	}
+	const userId = req.user._id.toString()
+	const activeSubscription = await findActiveSubscription(userId)
+	if (activeSubscription && plan.priceInPaise <= activeSubscription.amountInPaise) {
+		return respondWithError(res, 409, 'You already have an active pass. Choose a plan with a higher price to upgrade.')
+	}
 
 	const razorpay = getRazorpay()
 	if (!razorpay) return respondWithError(res, 503, 'Razorpay payments are not configured yet.')
@@ -146,7 +151,6 @@ async function createCheckoutOrder(req, res) {
 		return respondWithError(res, 403, 'This frontend origin is not allowed to start checkout.')
 	}
 
-	const userId = req.user._id.toString()
 	const order = await razorpay.orders.create({
 		amount: plan.priceInPaise,
 		currency: 'INR',

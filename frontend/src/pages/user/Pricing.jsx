@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
-import { getPricingPlans } from '../../services/api.js'
+import { getPricingPlans, getUserSubscription } from '../../services/api.js'
 
 
 function Pricing() {
 	const [plans, setPlans] = useState([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [notice, setNotice] = useState('')
+	const [subscription, setSubscription] = useState(null)
 
 	useEffect(() => {
 		let isCurrent = true
@@ -20,6 +21,13 @@ function Pricing() {
 			})
 			.finally(() => {
 				if (isCurrent) setIsLoading(false)
+			})
+		getUserSubscription()
+			.then(({ subscription: currentSubscription }) => {
+				if (isCurrent) setSubscription(currentSubscription)
+			})
+			.catch((error) => {
+				if (isCurrent) setNotice(error.message)
 			})
 
 		return () => { isCurrent = false }
@@ -37,7 +45,7 @@ function Pricing() {
 					</div>
 					<div className="pricing-billing-note">
 						<span className="pricing-note-dot" aria-hidden="true" />
-						<span>One-time payment · Prices in INR · Access starts after payment</span>
+						<span>{subscription?.active ? `Active pass: ${subscription.planName || subscription.planId}. You can upgrade to a higher-priced plan.` : 'One-time payment · Prices in INR · Access starts after payment'}</span>
 					</div>
 					<section className="pdf-pricing-grid" aria-label="PDF editing subscription plans">
 						{plans.map((plan, index) => (
@@ -52,9 +60,11 @@ function Pricing() {
 									<span>/ {plan.durationValue} {plan.durationUnit}{plan.durationValue === 1 ? '' : 's'}</span>
 								</div>
 								<p className="pdf-plan-billing">One-time payment</p>
-								<Link className="pdf-plan-action" to={`/payment?plan=${plan.id}`}>
-									Select plan <span aria-hidden="true">→</span>
-								</Link>
+								{subscription?.active && Number(plan.priceRupees) * 100 <= subscription.amountInPaise
+									? <button className="pdf-plan-action" type="button" disabled>{plan.id === subscription.planId ? 'Current plan' : 'Unavailable while active'}</button>
+									: <Link className="pdf-plan-action" to={`/payment?plan=${plan.id}`}>
+										{subscription?.active ? 'Upgrade to this plan' : 'Select plan'} <span aria-hidden="true">→</span>
+									</Link>}
 								<div className="pdf-plan-divider" />
 								<p className="pdf-plan-includes">INCLUDED TOOLS</p>
 								<ul className="pdf-plan-features">

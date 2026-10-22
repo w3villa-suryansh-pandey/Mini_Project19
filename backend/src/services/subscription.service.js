@@ -9,6 +9,7 @@ function subscriptionDetails(subscription, now = new Date()) {
 		active,
 		planId: active ? subscription.planId : null,
 		planName: active ? subscription.planName : null,
+		amountInPaise: active ? subscription.amountInPaise : null,
 		startsAt: active ? subscription.startsAt : null,
 		expiresAt: active ? subscription.expiresAt : null,
 		featureKeys,
@@ -21,7 +22,7 @@ async function findActiveSubscription(userId) {
 		status: 'active',
 		startsAt: { $lte: new Date() },
 		expiresAt: { $gt: new Date() },
-	}).sort({ expiresAt: -1 }).lean()
+	}).sort({ amountInPaise: -1, expiresAt: -1 }).lean()
 }
 
 module.exports = { findActiveSubscription, subscriptionDetails }

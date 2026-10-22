@@ -39,6 +39,7 @@ function loadRazorpay() {
 
 function Payment() {
 	const pendingPaymentRef = useRef(null)
+	const [preparedCheckout, setPreparedCheckout] = useState(null)
 	const searchParams = new URLSearchParams(window.location.search)
 	const selectedPlanId = searchParams.get('plan')
 	const [plans, setPlans] = useState([])
@@ -47,12 +48,14 @@ function Payment() {
 	const [isPlansLoading, setIsPlansLoading] = useState(true)
 	const [isStartingCheckout, setIsStartingCheckout] = useState(false)
 	const [isPaymentPending, setIsPaymentPending] = useState(false)
+	const [isRazorpayTestMode, setIsRazorpayTestMode] = useState(false)
 	const [notice, setNotice] = useState('')
 	const selectedPlan = plans.find((plan) => plan.id === selectedPlanId)
 	const selectedPrice = selectedPlan ? `₹${Number(selectedPlan.priceRupees).toLocaleString('en-IN')}` : ''
 	const selectedDuration = selectedPlan
 		? `${selectedPlan.durationValue} ${selectedPlan.durationUnit}${selectedPlan.durationValue === 1 ? '' : 's'}`
 		: ''
+	const isUpgradeBlocked = Boolean(subscription?.active && selectedPlan && Number(selectedPlan.priceRupees) * 100 <= subscription.amountInPaise)
 
 	useEffect(() => {
 		let isCurrent = true
@@ -92,6 +95,26 @@ function Payment() {
 		setNotice('')
 		try {
 			const checkout = await createRazorpayOrder(selectedPlan.id)
+			if (checkout.keyId.startsWith('rzp_test_')) {
+				setPreparedCheckout(checkout)
+				setIsRazorpayTestMode(true)
+				setIsStartingCheckout(false)
+				return
+			}
+			await openCheckout(checkout)
+		} catch (error) {
+			setPreparedCheckout(null)
+			setIsRazorpayTestMode(false)
+			setNotice(error.message)
+			setIsStartingCheckout(false)
+		}
+	}
+
+	async function openCheckout(checkout) {
+		setIsStartingCheckout(true)
+		setNotice('')
+		try {
+			setPreparedCheckout(null)
 			await loadRazorpay()
 			const razorpay = new window.Razorpay({
 				key: checkout.keyId,
@@ -107,7 +130,11 @@ function Payment() {
 					confirmPayment(paymentDetails)
 				},
 				modal: {
-					ondismiss: () => setIsStartingCheckout(false),
+					ondismiss: () => {
+						setIsStartingCheckout(false)
+						setPreparedCheckout(null)
+						setIsRazorpayTestMode(false)
+					},
 				},
 			})
 			razorpay.on('payment.failed', (event) => {
@@ -116,6 +143,8 @@ function Payment() {
 			})
 			razorpay.open()
 		} catch (error) {
+			setPreparedCheckout(null)
+			setIsRazorpayTestMode(false)
 			setNotice(error.message)
 			setIsStartingCheckout(false)
 		}
@@ -132,6 +161,7 @@ function Payment() {
 				if (!result.pending) {
 					pendingPaymentRef.current = null
 					setIsPaymentPending(false)
+					setIsRazorpayTestMode(false)
 					setNotice(result.subscription.active
 						? 'Payment confirmed. Your PDF editing pass is active.'
 						: 'Payment was confirmed, but no active pass was returned. Refresh your subscription status or contact support.')
@@ -190,11 +220,21 @@ function Payment() {
 								: <p>{isPlansLoading ? 'Loading available plans…' : 'Select a plan to continue to secure Razorpay checkout.'}</p>}
 						</div>
 						{selectedPlan
-							? <button className="payment-checkout-button" type="button" onClick={isPaymentPending ? checkPaymentStatus : startCheckout} disabled={isLoading || isStartingCheckout}>
-								{isStartingCheckout ? (isPaymentPending ? 'Checking payment…' : 'Opening checkout…') : isPaymentPending ? 'Check payment status' : `Pay ${selectedPrice}`}
+							? <button className="payment-checkout-button" type="button" onClick={isPaymentPending ? checkPaymentStatus : preparedCheckout ? () => openCheckout(preparedCheckout) : startCheckout} disabled={isLoading || isStartingCheckout || isUpgradeBlocked}>
+								{isStartingCheckout ? (isPaymentPending ? 'Checking payment…' : 'Opening checkout…') : isPaymentPending ? 'Check payment status' : isUpgradeBlocked ? 'Choose a higher plan' : preparedCheckout ? 'Open test checkout' : `Pay ${selectedPrice}`}
 							</button>
 							: <Link to="/pricing">View passes <span aria-hidden="true">→</span></Link>}
 					</section>
+					{isUpgradeBlocked && <p className="payment-notice" role="status">Your {subscription.planName || 'current'} pass is active. Choose a plan with a higher price to upgrade.</p>}
+					{isRazorpayTestMode && (
+						<section className="workspace-notice payment-test-card" aria-labelledby="payment-test-card-title">
+							<div>
+								<h2 id="payment-test-card-title">Razorpay test card</h2>
+								<p>Use these details in the checkout popup: card number <strong>4100 2800 0000 1007</strong>, CVV <strong>123</strong>, expiry <strong>12/26</strong>.</p>
+								<p>This card works only with Razorpay test mode.</p>
+							</div>
+						</section>
+					)}
 					<p className="subscription-expiry-note">Access is activated only after Razorpay verifies successful payment. {subscription?.active ? `Your current pass is valid until ${formattedExpiry}.` : ''}</p>
 				</div>
 			</section>

@@ -2000,6 +2000,17 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
   filter: brightness(0.92);
 }
 
+.pdf-plan-action:disabled {
+  justify-content: center;
+  color: #778078;
+  background: #eef0ed;
+  border-color: #d8ddd7;
+  font: inherit;
+  font-size: 10px;
+  cursor: not-allowed;
+  filter: none;
+}
+
 .featured .pdf-plan-action:hover {
   border-color: #2f425d;
   background: #2f425d;
@@ -2061,6 +2072,15 @@ html[data-theme="dark"] .dashboard-signout:focus-visible {
 
 .payment-selected-plan {
   color: #536158 !important;
+}
+
+.payment-test-card {
+  margin-top: 12px;
+}
+
+.payment-test-card strong {
+  color: #3b4942;
+  letter-spacing: 0.03em;
 }
 
 .payment-selected-plan strong {
