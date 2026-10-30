@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
+import { loadFeatureWork, saveFeatureWork } from '../../utils/featureWork.js'
 
 
 const ACCEPTED_FILE_TYPES = '.jpg,.jpeg,.png,.webp,.bmp,.pdf'
@@ -78,12 +79,59 @@ function FileCompressor() {
 	const featureAccess = useFeatureAccess('file_compressor')
 	const dashboardFileConsumedRef = useRef(false)
 	const fileInputRef = useRef(null)
+	const workRestoredRef = useRef(false)
 	const downloadUrlsRef = useRef(new Map())
 	const [files, setFiles] = useState([])
 	const [quality, setQuality] = useState(0.75)
 	const [isCompressing, setIsCompressing] = useState(false)
 	const [isDragging, setIsDragging] = useState(false)
 	const [notice, setNotice] = useState('')
+	const workSnapshotRef = useRef({ files, quality })
+	workSnapshotRef.current = { files, quality }
+
+	useEffect(() => {
+		let current = true
+		loadFeatureWork('file-compressor').then((saved) => {
+			if (!current || !saved) return
+			setQuality(saved.quality ?? 0.75)
+			const restoredFiles = (saved.files || []).filter((item) => item?.file).map((item) => {
+				if (item.result?.blob) {
+					const downloadUrl = URL.createObjectURL(item.result.blob)
+					downloadUrlsRef.current.set(item.id, downloadUrl)
+					return { ...item, status: 'done', result: { ...item.result, downloadUrl } }
+				}
+				return { ...item, status: 'ready', result: null }
+			})
+			setFiles(restoredFiles)
+		}).catch(() => undefined).finally(() => { if (current) workRestoredRef.current = true })
+		return () => { current = false }
+	}, [])
+
+	useEffect(() => {
+		if (!workRestoredRef.current) return
+		const timer = window.setTimeout(() => {
+			saveFeatureWork('file-compressor', {
+				quality,
+				files: files.map(({ id, file, status, result, error }) => ({
+					id, file, status, error,
+					result: result?.blob ? { blob: result.blob, name: result.name } : null,
+				})),
+			}).catch(() => undefined)
+		}, 250)
+		return () => window.clearTimeout(timer)
+	}, [files, quality])
+
+	useEffect(() => () => {
+		if (!workRestoredRef.current) return
+		const { files: currentFiles, quality: currentQuality } = workSnapshotRef.current
+		saveFeatureWork('file-compressor', {
+			quality: currentQuality,
+			files: currentFiles.map(({ id, file, status, result, error }) => ({
+				id, file, status, error,
+				result: result?.blob ? { blob: result.blob, name: result.name } : null,
+			})),
+		}).catch(() => undefined)
+	}, [])
 
 	useEffect(() => () => {
 		downloadUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))

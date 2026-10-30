@@ -5,6 +5,7 @@ import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess
 
 const STORAGE_KEY = 'w3villa-presentation-deck'
 const LIBRARY_KEY = 'w3villa-presentation-library'
+const ACTIVE_SLIDE_KEY = 'w3villa-presentation-active-slide'
 const DB_NAME = 'w3villa-presentation-files'
 const DB_STORE = 'sources'
 const P_NS = 'http://schemas.openxmlformats.org/presentationml/2006/main'
@@ -518,7 +519,14 @@ function PresentationStudio() {
 	const [initialDeck] = useState(getSavedDeck)
 	const [deck, setDeck] = useState(initialDeck)
 	const [deckLibrary, setDeckLibrary] = useState(getSavedLibrary)
-	const [activeSlideId, setActiveSlideId] = useState(initialDeck.slides[0]?.id)
+	const [activeSlideId, setActiveSlideId] = useState(() => {
+		try {
+			const savedActiveId = localStorage.getItem(ACTIVE_SLIDE_KEY)
+			return initialDeck.slides.some((slide) => slide.id === savedActiveId) ? savedActiveId : initialDeck.slides[0]?.id
+		} catch {
+			return initialDeck.slides[0]?.id
+		}
+	})
 	const [saveState, setSaveState] = useState('saved')
 	const [notice, setNotice] = useState('')
 	const [isWorking, setIsWorking] = useState(false)
@@ -526,6 +534,10 @@ function PresentationStudio() {
 	const [newSlideLayout, setNewSlideLayout] = useState('title-content')
 	const activeIndex = Math.max(0, deck.slides.findIndex((slide) => slide.id === activeSlideId))
 	const activeSlide = deck.slides[activeIndex]
+
+	useEffect(() => {
+		try { localStorage.setItem(ACTIVE_SLIDE_KEY, activeSlideId || '') } catch { /* Browser storage may be unavailable. */ }
+	}, [activeSlideId])
 	const colors = THEME_COLORS[deck.theme] || THEME_COLORS.indigo
 	const extraFormatIndex = formatTarget.startsWith('extra:') ? Number(formatTarget.slice(6)) : null
 	const extraFormatShape = activeSlide?.extraTextShapes?.find((shape) => shape.shapeIndex === extraFormatIndex)

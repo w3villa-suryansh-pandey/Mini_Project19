@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { createWorker } from 'tesseract.js'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
+import { loadFeatureWork, saveFeatureWork } from '../../utils/featureWork.js'
 
 
 const toolOptions = [
@@ -198,6 +199,7 @@ function ImageTools() {
   const location = useLocation()
   const navigate = useNavigate()
   const dashboardFileConsumedRef = useRef(false)
+  const workRestoredRef = useRef(false)
   const featureAccess = useFeatureAccess('image_tools')
   const [selectedTool, setSelectedTool] = useState(toolOptions[0].id)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -208,6 +210,39 @@ function ImageTools() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [notice, setNotice] = useState('')
+  const workSnapshotRef = useRef({ selectedTool, selectedFile, resultPreview, extractedText, ocrLanguage, notice })
+  workSnapshotRef.current = { selectedTool, selectedFile, resultPreview, extractedText, ocrLanguage, notice }
+
+  useEffect(() => {
+    let current = true
+    loadFeatureWork('image-tools').then(async (saved) => {
+      if (!current || !saved) return
+      setSelectedTool(saved.selectedTool || toolOptions[0].id)
+      setOcrLanguage(saved.ocrLanguage || 'eng')
+      setExtractedText(saved.extractedText || '')
+      setResultPreview(saved.resultPreview || '')
+      if (saved.selectedFile) await openImageFile(saved.selectedFile)
+      if (current) {
+        setExtractedText(saved.extractedText || '')
+        setResultPreview(saved.resultPreview || '')
+        setNotice(saved.notice || '')
+      }
+    }).catch(() => undefined).finally(() => { if (current) workRestoredRef.current = true })
+    return () => { current = false }
+  }, [])
+
+  useEffect(() => {
+    if (!workRestoredRef.current) return
+    const timer = window.setTimeout(() => {
+      saveFeatureWork('image-tools', { selectedTool, selectedFile, resultPreview, extractedText, ocrLanguage, notice }).catch(() => undefined)
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [extractedText, notice, ocrLanguage, resultPreview, selectedFile, selectedTool])
+
+  useEffect(() => () => {
+    if (!workRestoredRef.current) return
+    saveFeatureWork('image-tools', workSnapshotRef.current).catch(() => undefined)
+  }, [])
 
   const activeTool = useMemo(
     () => toolOptions.find((tool) => tool.id === selectedTool) || toolOptions[0],

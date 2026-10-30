@@ -1,6 +1,21 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
+import { loadFeatureWork, saveFeatureWork } from '../../utils/featureWork.js'
+
+function sanitizeDraft(html) {
+	const template = document.createElement('template')
+	template.innerHTML = html
+	template.content.querySelectorAll('script,iframe,object,embed').forEach((element) => element.remove())
+	template.content.querySelectorAll('*').forEach((element) => {
+		for (const attribute of [...element.attributes]) {
+			if (/^on/i.test(attribute.name) || (/^(href|src)$/i.test(attribute.name) && /^\s*javascript:/i.test(attribute.value))) {
+				element.removeAttribute(attribute.name)
+			}
+		}
+	})
+	return template.innerHTML
+}
 
 
 function WritingPad() {
@@ -10,9 +25,40 @@ function WritingPad() {
 	const signatureCanvasRef = useRef(null)
 	const savedSelectionRef = useRef(null)
 	const drawingRef = useRef(false)
+	const saveTimerRef = useRef(null)
+	const restoreCompleteRef = useRef(false)
+	const [isRestoring, setIsRestoring] = useState(true)
 	const [notice, setNotice] = useState('')
 	const [isSignatureOpen, setIsSignatureOpen] = useState(false)
 	const [signatureHasInk, setSignatureHasInk] = useState(false)
+
+	useEffect(() => {
+		let current = true
+		loadFeatureWork('writing-pad').then((saved) => {
+			if (current && saved?.html && editorRef.current) editorRef.current.innerHTML = sanitizeDraft(saved.html)
+		}).catch(() => undefined).finally(() => {
+			if (current) {
+				restoreCompleteRef.current = true
+				setIsRestoring(false)
+			}
+		})
+		return () => {
+			current = false
+			if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current)
+			if (restoreCompleteRef.current) {
+				const html = editorRef.current?.innerHTML || ''
+				saveFeatureWork('writing-pad', { html }).catch(() => undefined)
+			}
+		}
+	}, [])
+
+	function saveDraft() {
+		if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current)
+		saveTimerRef.current = window.setTimeout(() => {
+			const html = editorRef.current?.innerHTML
+			saveFeatureWork('writing-pad', { html: html || '' }).catch(() => undefined)
+		}, 250)
+	}
 
 	function captureSelection() {
 		const selection = window.getSelection()
@@ -35,6 +81,7 @@ function WritingPad() {
 		document.execCommand(command, false, value)
 		captureSelection()
 		editorRef.current?.focus()
+		saveDraft()
 	}
 
 	function setBlockStyle(tagName) {
@@ -52,6 +99,7 @@ function WritingPad() {
 		})
 		captureSelection()
 		editorRef.current?.focus()
+		saveDraft()
 	}
 
 	function insertImage(event) {
@@ -89,6 +137,7 @@ function WritingPad() {
 				editorRef.current?.append(image)
 			}
 			editorRef.current?.focus()
+			saveDraft()
 			setNotice('Image added to your writing pad.')
 		}
 		reader.onerror = () => setNotice('The selected image could not be read.')
@@ -167,6 +216,7 @@ function WritingPad() {
 			editorRef.current?.append(signature)
 		}
 		editorRef.current?.focus()
+		saveDraft()
 		setIsSignatureOpen(false)
 		setSignatureHasInk(false)
 		setNotice('Signature added to your writing pad.')
@@ -278,15 +328,15 @@ function WritingPad() {
 						<div
 							ref={editorRef}
 							className="writing-pad-editor"
-							contentEditable
 							suppressContentEditableWarning
 							role="textbox"
 							aria-label="Write your document"
 							aria-multiline="true"
+							contentEditable={!isRestoring}
 							data-placeholder="Start writing here…"
 							onMouseUp={captureSelection}
 							onKeyUp={captureSelection}
-							onInput={() => setNotice('')}
+							onInput={() => { setNotice(''); saveDraft() }}
 						/>
 
 						<footer className="writing-pad-footer">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
 import { convertDocxToPdf } from '../../utils/docxToPdf.js'
 import { FeatureAccessNotice, useFeatureAccess } from '../../utils/featureAccess.jsx'
+import { loadFeatureWork, saveFeatureWork } from '../../utils/featureWork.js'
 
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024
@@ -178,6 +179,7 @@ async function convertImageFormats(files, format, quality) {
 function FileConverter() {
 	const featureAccess = useFeatureAccess('file_converter')
 	const fileInputRef = useRef(null)
+	const workRestoredRef = useRef(false)
 	const outputUrlsRef = useRef([])
 	const [mode, setMode] = useState('images-to-pdf')
 	const [format, setFormat] = useState('png')
@@ -187,6 +189,49 @@ function FileConverter() {
 	const [isConverting, setIsConverting] = useState(false)
 	const [isDragging, setIsDragging] = useState(false)
 	const [notice, setNotice] = useState('')
+	const workSnapshotRef = useRef({ mode, format, quality, files, outputs })
+	workSnapshotRef.current = { mode, format, quality, files, outputs }
+
+	useEffect(() => {
+		let current = true
+		loadFeatureWork('file-converter').then((saved) => {
+			if (!current || !saved) return
+			setMode(saved.mode || 'images-to-pdf')
+			setFormat(saved.format || 'png')
+			setQuality(saved.quality ?? 0.85)
+			setFiles(Array.isArray(saved.files) ? saved.files : [])
+			const restoredOutputs = (saved.outputs || []).filter((item) => item?.blob).map((item) => {
+				const url = URL.createObjectURL(item.blob)
+				outputUrlsRef.current.push(url)
+				return { ...item, url }
+			})
+			setOutputs(restoredOutputs)
+		}).catch(() => undefined).finally(() => { if (current) workRestoredRef.current = true })
+		return () => { current = false }
+	}, [])
+
+	useEffect(() => {
+		if (!workRestoredRef.current) return
+		const timer = window.setTimeout(() => {
+			saveFeatureWork('file-converter', {
+				mode, format, quality, files,
+				outputs: outputs.map(({ name, blob }) => ({ name, blob })),
+			}).catch(() => undefined)
+		}, 250)
+		return () => window.clearTimeout(timer)
+	}, [files, format, mode, outputs, quality])
+
+	useEffect(() => () => {
+		if (!workRestoredRef.current) return
+		const current = workSnapshotRef.current
+		saveFeatureWork('file-converter', {
+			mode: current.mode,
+			format: current.format,
+			quality: current.quality,
+			files: current.files,
+			outputs: current.outputs.map(({ name, blob }) => ({ name, blob })),
+		}).catch(() => undefined)
+	}, [])
 
 	useEffect(() => () => {
 		outputUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))

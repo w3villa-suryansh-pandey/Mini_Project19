@@ -7,6 +7,7 @@ import {
 	downloadPdfEditorVersion,
 	getPdfEditorDocument,
 	getPdfEditorVersions,
+	getCachedCurrentUser,
 	getUserProfile,
 	getUserSubscription,
 	previewPdfEditorChanges,
@@ -765,7 +766,8 @@ function PrimePdfEditor() {
 			try {
 				const sessionId = getPdfEditorSessionId()
 				if (isCurrent) setEditorSessionId(sessionId)
-				const { profile } = await getUserProfile()
+				const cachedUser = getCachedCurrentUser()
+				const profile = cachedUser?.email ? cachedUser : (await getUserProfile()).profile
 				if (!isCurrent) return
 				const email = profile.email?.trim().toLowerCase()
 				if (!email) throw new Error('Your account email could not be verified for PDF session restore.')

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
-import { getUserProfile } from '../../services/api.js'
+import { getCachedCurrentUser, getUserProfile } from '../../services/api.js'
 
 const destinations = [
 	{ title: 'Dashboard', description: 'See your workspace at a glance and jump back into your recent tools.', href: '/dashboard', icon: 'dashboard', label: 'Open dashboard', tone: 'violet' },
@@ -48,7 +48,8 @@ function WorkflowIcon({ name }) {
 }
 
 function WorkspaceHome() {
-	const [firstName, setFirstName] = useState('there')
+	const cachedUser = useMemo(() => getCachedCurrentUser(), [])
+	const [firstName, setFirstName] = useState(cachedUser?.name?.trim()?.split(/\s+/)?.[0] || 'there')
 	const [isReturningUser, setIsReturningUser] = useState(false)
 	const [welcomeReady, setWelcomeReady] = useState(false)
 	const [welcomeVisitKey, setWelcomeVisitKey] = useState('')
@@ -56,6 +57,18 @@ function WorkspaceHome() {
 	const [typedMessage, setTypedMessage] = useState('')
 
 	useEffect(() => {
+		if (cachedUser) {
+			const visitedKey = `s19-workspace-home-seen-${cachedUser.id}`
+			try {
+				const hasVisited = window.sessionStorage.getItem(visitedKey) === 'true'
+				setIsReturningUser(hasVisited)
+				if (!hasVisited) setWelcomeVisitKey(visitedKey)
+			} catch {
+				setIsReturningUser(false)
+			}
+			setWelcomeReady(true)
+			return undefined
+		}
 		let isCurrent = true
 		getUserProfile()
 			.then(({ profile }) => {
@@ -78,7 +91,7 @@ function WorkspaceHome() {
 				if (isCurrent) setWelcomeReady(true)
 			})
 		return () => { isCurrent = false }
-	}, [])
+	}, [cachedUser])
 
 	const welcomeHeading = `${isReturningUser ? 'Welcome back' : 'Welcome'}, ${firstName}`
 	const welcomeMessage = isReturningUser

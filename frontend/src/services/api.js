@@ -64,6 +64,16 @@ export function hasCachedAdminSession() {
 	}
 }
 
+export function getCachedCurrentUser() {
+	if (!hasCachedUserSession() && !hasCachedAdminSession()) return null
+	try {
+		const cachedUser = window.sessionStorage.getItem(CURRENT_USER_CACHE_KEY)
+		return cachedUser ? JSON.parse(cachedUser) : null
+	} catch {
+		return null
+	}
+}
+
 export function cacheAdminSession(user) {
 	try {
 		window.sessionStorage.setItem(ADMIN_SESSION_CACHE_KEY, 'true')
@@ -275,14 +285,8 @@ export function getUserProfile() {
 }
 
 export function getCurrentUser() {
-	try {
-		const cachedUser = window.sessionStorage.getItem(CURRENT_USER_CACHE_KEY)
-		if (cachedUser && (hasCachedUserSession() || hasCachedAdminSession())) {
-			return Promise.resolve({ user: JSON.parse(cachedUser), subscription: getCachedUserSubscription() })
-		}
-	} catch {
-		// Ignore stale or unavailable session storage and verify with the API.
-	}
+	const cachedUser = getCachedCurrentUser()
+	if (cachedUser) return Promise.resolve({ user: cachedUser, subscription: getCachedUserSubscription() })
 	return request('/api/auth/me')
 		.then((result) => {
 			if (result.user?.role === 'admin') {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import WorkspaceHeader from '../../components/WorkspaceHeader.jsx'
-import { getUserProfile, getUserSubscription } from '../../services/api.js'
+import { getCachedCurrentUser, getUserProfile, getUserSubscription } from '../../services/api.js'
 
 function ActionIcon({ type }) {
 	const paths = {
@@ -15,8 +15,9 @@ function ActionIcon({ type }) {
 function UserDashboard() {
 	const uploadInputRef = useRef(null)
 	const navigate = useNavigate()
-	const [profile, setProfile] = useState({ name: '', email: '' })
-	const [isLoading, setIsLoading] = useState(true)
+	const cachedUser = useMemo(() => getCachedCurrentUser(), [])
+	const [profile, setProfile] = useState({ name: cachedUser?.name || '', email: cachedUser?.email || '' })
+	const [isLoading, setIsLoading] = useState(!cachedUser)
 	const [error, setError] = useState('')
 	const [subscription, setSubscription] = useState(null)
 	const [lastPurchasedPlan, setLastPurchasedPlan] = useState(null)
@@ -53,6 +54,7 @@ function UserDashboard() {
 	}
 
 	useEffect(() => {
+		if (cachedUser) return undefined
 		let isCurrent = true
 		getUserProfile()
 			.then(({ profile: savedProfile }) => {
@@ -68,7 +70,7 @@ function UserDashboard() {
 			})
 			.finally(() => { if (isCurrent) setIsLoading(false) })
 		return () => { isCurrent = false }
-	}, [])
+	}, [cachedUser])
 
 	useEffect(() => {
 		let isCurrent = true
