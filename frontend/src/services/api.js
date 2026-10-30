@@ -4,12 +4,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://mini-project19.onr
 const USER_SESSION_CACHE_KEY = 'w3villa-user-session-verified'
 const ADMIN_SESSION_CACHE_KEY = 'w3villa-admin-session-verified'
 const USER_SUBSCRIPTION_CACHE_KEY = 'w3villa-user-subscription'
+const CURRENT_USER_CACHE_KEY = 'w3villa-current-user'
 
 export function cacheUserSession(user, subscription) {
 	try {
 		if (user?.role === 'user') {
 			window.sessionStorage.setItem(USER_SESSION_CACHE_KEY, 'true')
 			window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
+			window.sessionStorage.setItem(CURRENT_USER_CACHE_KEY, JSON.stringify(user))
 			if (subscription) {
 				cacheUserSubscription(subscription)
 			} else {
@@ -18,6 +20,7 @@ export function cacheUserSession(user, subscription) {
 		} else if (user?.role === 'admin') {
 			window.sessionStorage.setItem(ADMIN_SESSION_CACHE_KEY, 'true')
 			window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
+			window.sessionStorage.setItem(CURRENT_USER_CACHE_KEY, JSON.stringify(user))
 			window.sessionStorage.removeItem(USER_SUBSCRIPTION_CACHE_KEY)
 			clearPdfEditorSessionId()
 		} else {
@@ -61,9 +64,10 @@ export function hasCachedAdminSession() {
 	}
 }
 
-export function cacheAdminSession() {
+export function cacheAdminSession(user) {
 	try {
 		window.sessionStorage.setItem(ADMIN_SESSION_CACHE_KEY, 'true')
+		if (user) window.sessionStorage.setItem(CURRENT_USER_CACHE_KEY, JSON.stringify(user))
 	} catch {
 		// Session storage may be unavailable; protected routes will verify normally.
 	}
@@ -72,6 +76,7 @@ export function cacheAdminSession() {
 export function clearCachedAdminSession() {
 	try {
 		window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
+		window.sessionStorage.removeItem(CURRENT_USER_CACHE_KEY)
 	} catch {
 		// Session storage may be unavailable.
 	}
@@ -82,6 +87,7 @@ export function clearCachedUserSession() {
 		window.sessionStorage.removeItem(USER_SESSION_CACHE_KEY)
 		window.sessionStorage.removeItem(ADMIN_SESSION_CACHE_KEY)
 		window.sessionStorage.removeItem(USER_SUBSCRIPTION_CACHE_KEY)
+		window.sessionStorage.removeItem(CURRENT_USER_CACHE_KEY)
 		clearPdfEditorSessionId()
 	} catch {
 		// Session storage may be unavailable.
@@ -269,7 +275,23 @@ export function getUserProfile() {
 }
 
 export function getCurrentUser() {
+	try {
+		const cachedUser = window.sessionStorage.getItem(CURRENT_USER_CACHE_KEY)
+		if (cachedUser && (hasCachedUserSession() || hasCachedAdminSession())) {
+			return Promise.resolve({ user: JSON.parse(cachedUser), subscription: getCachedUserSubscription() })
+		}
+	} catch {
+		// Ignore stale or unavailable session storage and verify with the API.
+	}
 	return request('/api/auth/me')
+		.then((result) => {
+			if (result.user?.role === 'admin') {
+				cacheAdminSession(result.user)
+			} else {
+				cacheUserSession(result.user, result.subscription)
+			}
+			return result
+		})
 }
 
 export function getAdminProfile() {

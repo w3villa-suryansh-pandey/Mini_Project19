@@ -42,7 +42,7 @@ function ProtectedRoute({ children, requiredRole = 'admin' }) {
 					setAccessState('forbidden')
 				} else if (response.ok) {
 					const { user, subscription } = await response.json()
-					if (user?.role === 'admin') cacheAdminSession()
+					if (user?.role === 'admin') cacheAdminSession(user)
 					else if (user?.role === 'user') cacheUserSession(user, subscription)
 					setAccessState(user?.role === requiredRole ? 'allowed' : 'forbidden')
 				} else {
